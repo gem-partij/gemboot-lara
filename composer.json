@@ -1,0 +1,19 @@
+{
+    "name": "gem-partij/gemboot-lara",
+    "description": "Gemboot Lara - Laravel package for supporting SMVC development method",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Angger Priyardhan Putro",
+            "email": "anggerpputro@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Gemboot\\": "src/"
+        }
+    },
+    "require": {}
+}
