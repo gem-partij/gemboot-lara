@@ -1,6 +1,7 @@
 {
     "name": "gem-partij/gemboot-lara",
     "description": "Gemboot Lara - Laravel package for supporting SMVC development method",
+    "keywords": ["laravel", "framework", "gemboot", "php"],
     "type": "project",
     "license": "MIT",
     "authors": [
@@ -9,11 +10,15 @@
             "email": "anggerpputro@gmail.com"
         }
     ],
-    "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
             "Gemboot\\": "src/"
         }
     },
-    "require": {}
+    "require": {
+        "php": ">=7",
+        "laravel/framework": "^5.5|^6",
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
