@@ -37,9 +37,9 @@ trait MainModelAbilities
             }
 
             if ($mode == 'or') {
-                return $q->orWhere($this->getTable().'.'.$field, 'LIKE', $string_like);
+                return $query->orWhere($this->getTable().'.'.$field, 'LIKE', $string_like);
             } else {
-                return $q->where($this->getTable().'.'.$field, 'LIKE', $string_like);
+                return $query->where($this->getTable().'.'.$field, 'LIKE', $string_like);
             }
         } else {
             $primary = $this->getKeyName();
