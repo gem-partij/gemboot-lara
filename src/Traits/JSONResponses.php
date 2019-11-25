@@ -14,6 +14,13 @@ trait JSONResponses
 
     protected function encapsulateResponse($status, $data, $message = null)
     {
+        try {
+            if (!is_array($data)) {
+                $data = $data->toArray();
+            }
+        } catch (\Exception $e) {
+        }
+
         return [
             'status' => $status,
             'message' => empty($message) ? $status : $message,
@@ -46,20 +53,15 @@ trait JSONResponses
                 ob_start();
             }
 
-            $encapsulated = $this->encapsulateResponse(
+            $encapsulatedData = $this->encapsulateResponse(
                 $status,
                 $data,
                 $message
             );
-
-            if (! empty($this->logAccessTag) && request()->isMethod('GET')) {
-                log_access($this->logAccessTag);
-            }
-
             return response()->json(
-                $encapsulated,
+                $encapsulatedData,
                 $status
-            )->withHeaders($headers);
+            );
         } catch (\Exception $e) {
             if (env('APP_DEBUG')) {
                 $data = $e->getTrace();
