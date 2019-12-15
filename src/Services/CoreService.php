@@ -128,7 +128,7 @@ class CoreService implements CoreServiceContract
                     : 30
                 );
             } else {
-                $cacheKey = $this->get_cache_key($this->modelTableName, "listAll()-".implode("-", request()->all()), 'group');
+                $cacheKey = $this->get_cache_key($this->modelTableName, "listAll()-".json_encode(request()->all()), 'group');
                 $cacheTags = $this->get_cache_tags($this->modelTableName);
 
                 $cacheDriver = cache();
