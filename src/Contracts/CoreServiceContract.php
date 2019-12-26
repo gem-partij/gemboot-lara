@@ -1,7 +1,7 @@
 <?php
 namespace Gemboot\Contracts;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
+// use Illuminate\Database\Eloquent\Model as Eloquent;
 
 /**
  * CoreServiceContract
@@ -11,7 +11,7 @@ interface CoreServiceContract
     /**
      * Get a listing of the resource.
     **/
-    public function listAll(Eloquent $model = null, $disable_search = false);
+    public function listAll($model = null, $disable_search = false);
 
     /**
      * Store a newly created resource in storage.
@@ -26,7 +26,7 @@ interface CoreServiceContract
     /**
      * Get the specified resource.
     **/
-    public function firstOrFail(Eloquent $model, $addWith = true);
+    public function firstOrFail($model, $addWith = true);
 
     /**
      * Update the specified resource in storage.
@@ -41,7 +41,7 @@ interface CoreServiceContract
     /**
      * Update the specified resource in storage use the model given.
     **/
-    public function updateUseModel(Eloquent $model, $requestData, $merge_data_with = []);
+    public function updateUseModel($model, $requestData, $merge_data_with = []);
 
     /**
      * Remove the specified resource from storage.

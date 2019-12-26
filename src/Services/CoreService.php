@@ -51,7 +51,7 @@ class CoreService implements CoreServiceContract
     /**
      * Get a listing of the resource.
     **/
-    public function listAll(Eloquent $model = null, $disable_search = false)
+    public function listAll($model = null, $disable_search = false)
     {
         try {
             if (! is_null($model)) {
@@ -190,7 +190,7 @@ class CoreService implements CoreServiceContract
     /**
      * Get the specified resource.
     **/
-    public function firstOrFail(Eloquent $model, $addWith = true)
+    public function firstOrFail($model, $addWith = true)
     {
         $this->model = $model;
 
@@ -223,7 +223,7 @@ class CoreService implements CoreServiceContract
     /**
      * Update the specified resource in storage use the model given.
     **/
-    public function updateUseModel(Eloquent $model, $requestData, $merge_data_with = [])
+    public function updateUseModel($model, $requestData, $merge_data_with = [])
     {
         $model->fill(array_merge($requestData, $merge_data_with));
         $model->save();
