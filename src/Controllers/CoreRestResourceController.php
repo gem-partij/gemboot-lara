@@ -99,9 +99,14 @@ abstract class CoreRestResourceController extends CoreRestController implements 
                 ]);
             }
 
-            $this->beforeStoreHooks($request);
+            $before_store_resp = $this->beforeStoreHooks($request);
 
-            $saved_data = $this->service->store($request->all(), $this->merge_store_data_with);
+            // jika before store tidak return apa-apa
+            if (is_null($before_store_resp)) {
+                $saved_data = $this->service->store($request->all(), $this->merge_store_data_with);
+            } else {
+                $saved_data = $before_store_resp;
+            }
 
             $this->afterStoreHooks($saved_data, $request);
 
@@ -175,9 +180,14 @@ abstract class CoreRestResourceController extends CoreRestController implements 
                 ]);
             }
 
-            $this->beforeUpdateHooks($request, $id);
+            $before_update_resp = $this->beforeUpdateHooks($request, $id);
 
-            $saved_data = $this->service->update($request->all(), $id, $this->merge_update_data_with);
+            // jika before store tidak return apa-apa
+            if (is_null($before_update_resp)) {
+                $saved_data = $this->service->update($request->all(), $id, $this->merge_update_data_with);
+            } else {
+                $saved_data = $before_update_resp;
+            }
 
             $this->afterUpdateHooks($saved_data, $request, $id);
 
