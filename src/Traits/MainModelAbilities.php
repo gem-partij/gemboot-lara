@@ -37,9 +37,19 @@ trait MainModelAbilities
             }
 
             if ($mode == 'or') {
-                return $query->orWhere($this->getTable().'.'.$field, 'LIKE', $string_like);
+                if (strpos($field, '.') !== false) {
+                    $exploded = explode('.', $field);
+                    return $this->getQueryOrWhereHas($query, $exploded[0], $exploded[1], 'LIKE', $string_like);
+                } else {
+                    return $query->orWhere($this->getTable().'.'.$field, 'LIKE', $string_like);
+                }
             } else {
-                return $query->where($this->getTable().'.'.$field, 'LIKE', $string_like);
+                if (strpos($field, '.') !== false) {
+                    $exploded = explode('.', $field);
+                    return $this->getQueryWhereHas($query, $exploded[0], $exploded[1], 'LIKE', $string_like);
+                } else {
+                    return $query->where($this->getTable().'.'.$field, 'LIKE', $string_like);
+                }
             }
         } else {
             $primary = $this->getKeyName();
@@ -73,9 +83,19 @@ trait MainModelAbilities
             }
 
             if ($mode == 'or') {
-                return $query->orWhere($this->getTable().'.'.$field, '=', $string);
+                if (strpos($field, '.') !== false) {
+                    $exploded = explode('.', $field);
+                    return $this->getQueryOrWhereHas($query, $exploded[0], $exploded[1], '=', $string);
+                } else {
+                    return $query->orWhere($this->getTable().'.'.$field, '=', $string);
+                }
             } else {
-                return $query->where($this->getTable().'.'.$field, '=', $string);
+                if (strpos($field, '.') !== false) {
+                    $exploded = explode('.', $field);
+                    return $this->getQueryWhereHas($query, $exploded[0], $exploded[1], '=', $string);
+                } else {
+                    return $query->where($this->getTable().'.'.$field, '=', $string);
+                }
             }
         } else {
             $primary = $this->getKeyName();

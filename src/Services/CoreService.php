@@ -4,15 +4,21 @@ namespace Gemboot\Services;
 use Gemboot\Contracts\CoreServiceContract;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Gemboot\Models\CoreModel;
+use Gemboot\Traits\GembootHelpers;
+use Gemboot\Observers\CoreEloquentCachingObserver;
 
 class CoreService implements CoreServiceContract
 {
+    use GembootHelpers;
+
     protected $model;
     protected $with = [];
     protected $orderBy = [];
 
     protected $modelPrimaryKeyName = "";
     protected $modelTableName = "";
+
+    protected $observer = null;
 
     public function __construct(Eloquent $model, $with = [], $orderBy = [])
     {
@@ -27,11 +33,19 @@ class CoreService implements CoreServiceContract
     public function setWith($with)
     {
         $this->with = $with;
+        return $this;
     }
 
     public function setOrderBy($orderBy)
     {
         $this->orderBy = $orderBy;
+        return $this;
+    }
+
+    public function setObserver(CoreEloquentCachingObserver $observer)
+    {
+        $this->observer = $observer;
+        return $this;
     }
 
     /**
@@ -107,16 +121,29 @@ class CoreService implements CoreServiceContract
                 return $this->model->paginate(999);
             }
 
-            $cacheKey = get_cache_key($this->modelTableName, "listAll()-".implode("-", request()->all()), 'group');
-            $cacheTags = get_cache_tags($this->modelTableName);
-
-            return cache()->tags($cacheTags)->remember($cacheKey, 60*60*24, function () {
+            if (empty($this->observer)) {
                 return $this->model->paginate(
                     request()->has('page_len')
                     ? request('page_len')
                     : 30
                 );
-            });
+            } else {
+                $cacheKey = $this->get_cache_key($this->modelTableName, "listAll()-".json_encode(request()->all()), 'group');
+                $cacheTags = $this->get_cache_tags($this->modelTableName);
+
+                $cacheDriver = cache();
+                if (env('CACHE_DRIVER') != 'file') {
+                    $cacheDriver = $cacheDriver->tags($cacheTags);
+                }
+
+                return $cacheDriver->remember($cacheKey, 60*60*24, function () {
+                    return $this->model->paginate(
+                        request()->has('page_len')
+                        ? request('page_len')
+                        : 30
+                    );
+                });
+            }
         } catch (\Exception $e) {
             throw $e;
         }
@@ -138,17 +165,26 @@ class CoreService implements CoreServiceContract
     **/
     public function findOrFail($id, $addWith = true)
     {
-        $cacheKey = get_cache_key($this->modelTableName, $id);
-        $cacheTags = get_cache_tags($this->modelTableName);
+        $cacheKey = $this->get_cache_key($this->modelTableName, $id);
+        $cacheTags = $this->get_cache_tags($this->modelTableName);
 
         if (! empty($this->with) && $addWith) {
             $this->model = $this->model->with($this->with);
             $cacheKey .= '-addwith';
         }
 
-        return cache()->tags($cacheTags)->remember($cacheKey, 60*60*24, function () use ($id) {
+        if (empty($this->observer)) {
             return $this->model->findOrFail($id);
-        });
+        } else {
+            $cacheDriver = cache();
+            if (env('CACHE_DRIVER') != 'file') {
+                $cacheDriver = $cacheDriver->tags($cacheTags);
+            }
+
+            return $cacheDriver->remember($cacheKey, 60*60*24, function () use ($id) {
+                return $this->model->findOrFail($id);
+            });
+        }
     }
 
     /**
@@ -183,6 +219,17 @@ class CoreService implements CoreServiceContract
     {
         return $this->model->updateOrCreate($whereData, array_merge($requestData, $merge_data_with));
     }
+
+    /**
+     * Update the specified resource in storage use the model given.
+    **/
+    public function updateUseModel($model, $requestData, $merge_data_with = [])
+    {
+        $model->fill(array_merge($requestData, $merge_data_with));
+        $model->save();
+        return $model;
+    }
+
 
     /**
      * Remove the specified resource from storage.
