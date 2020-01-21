@@ -102,19 +102,21 @@ class CoreService implements CoreServiceContract
                 }
             }
 
-            $order = request()->has('order') ? request('order') : $this->modelPrimaryKeyName;
-            $atoz = request()->has('atoz') ? request('atoz') : 'asc';
+            if (request()->has('order')) {
+                $order = request()->has('order') ? request('order') : $this->modelPrimaryKeyName;
+                $atoz = request()->has('atoz') ? request('atoz') : 'asc';
 
-            // support multiple order by
-            if (! is_array($order)) {
-                $order = [$order];
-            }
-            if (! is_array($atoz)) {
-                $atoz = [$atoz];
-            }
-            foreach ($order as $i => $order_item) {
-                $atoz_item = isset($atoz[$i]) ? $atoz[$i] : 'asc';
-                $this->model = $this->model->order($order_item, $atoz_item);
+                // support multiple order by
+                if (! is_array($order)) {
+                    $order = [$order];
+                }
+                if (! is_array($atoz)) {
+                    $atoz = [$atoz];
+                }
+                foreach ($order as $i => $order_item) {
+                    $atoz_item = isset($atoz[$i]) ? $atoz[$i] : 'asc';
+                    $this->model = $this->model->order($order_item, $atoz_item);
+                }
             }
 
             if (request()->has('page_len') && request('page_len') == 'all') {
