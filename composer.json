@@ -15,6 +15,13 @@
             "Gemboot\\": "src/"
         }
     },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gemboot\\GembootServiceProvider"
+            ]
+        }
+    },
     "require": {
         "php": ">=7",
         "laravel/framework": "^5.5|^6",

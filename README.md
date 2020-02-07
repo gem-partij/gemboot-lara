@@ -18,6 +18,15 @@ Require the `gem-partij/gemboot-lara` package in your `composer.json` and update
 composer require gem-partij/gemboot-lara
 ```
 
+After updating composer, add the ServiceProvider to the providers array in config/app.php
+```php
+'providers' => [
+    // ...
+    \Gemboot\GembootServiceProvider::class,
+];
+```
+
+
 ## Gemboot Gateway
 
 ### Middleware
