@@ -67,9 +67,12 @@ class CheckToken
 
         $headers = $request->headers->all();
         $headers_formatted = [];
-        foreach ($headers as $key => $item) {
-            $headers_formatted[$key] = $item[0];
+        if (isset($headers['authorization'])) {
+            $headers_formatted['authorization'] = $headers['authorization'][0];
         }
+        // foreach ($headers as $key => $item) {
+        //     $headers_formatted[$key] = $item[0];
+        // }
 
         $client = new GuzzleClient([
             'verify' => false
