@@ -24,7 +24,8 @@
     },
     "require": {
         "php": ">=5.4",
-        "laravel/framework": "5.0.*|5.1.*|5.2.*|5.3.*|5.4.*"
+        "laravel/framework": "5.0.*|5.1.*|5.2.*|5.3.*|5.4.*",
+        "guzzlehttp/guzzle": "^6.3"
     },
     "minimum-stability": "dev",
     "prefer-stable": true
