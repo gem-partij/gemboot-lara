@@ -108,9 +108,11 @@ abstract class CoreRestResourceController extends CoreRestController implements 
                 $saved_data = $before_store_resp;
             }
 
-            $this->afterStoreHooks($saved_data, $request);
+            $after_store_resp = $this->afterStoreHooks($saved_data, $request);
 
             \DB::commit();
+
+            $after_store_commit_resp = $this->afterStoreCommitHooks($saved_data, $request);
 
             return $this->responseSuccess([
                 'saved' => $saved_data
@@ -189,9 +191,11 @@ abstract class CoreRestResourceController extends CoreRestController implements 
                 $saved_data = $before_update_resp;
             }
 
-            $this->afterUpdateHooks($saved_data, $request, $id);
+            $after_update_resp = $this->afterUpdateHooks($saved_data, $request, $id);
 
             \DB::commit();
+
+            $after_update_commit_resp = $this->afterUpdateCommitHooks($saved_data, $request, $id);
 
             return $this->responseSuccess([
                 'saved' => $saved_data
@@ -249,11 +253,19 @@ abstract class CoreRestResourceController extends CoreRestController implements 
     {
     }
 
+    protected function afterStoreCommitHooks($savedData, $request)
+    {
+    }
+
     protected function beforeUpdateHooks($request, $id)
     {
     }
 
     protected function afterUpdateHooks($savedData, $request, $id)
+    {
+    }
+
+    protected function afterUpdateCommitHooks($savedData, $request)
     {
     }
 }
