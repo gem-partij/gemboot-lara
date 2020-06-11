@@ -18,6 +18,9 @@ class CoreService implements CoreServiceContract
     protected $modelPrimaryKeyName = "";
     protected $modelTableName = "";
 
+    protected $defaultCacheLifetime = 60*60*24;
+    protected $cacheKeyPrefix = "";
+    protected $cacheKeyPostfix = "";
     protected $observer = null;
 
     public function __construct(Eloquent $model, $with = [], $orderBy = [])
@@ -46,6 +49,38 @@ class CoreService implements CoreServiceContract
     {
         $this->observer = $observer;
         return $this;
+    }
+
+    public function setDefaultCacheLifetime($lifetime)
+    {
+        $lifetime = (int) $lifetime;
+        $this->defaultCacheLifetime = $lifetime;
+        return $this;
+    }
+
+    public function getModelPrimaryKeyName()
+    {
+        $this->modelPrimaryKeyName = $this->model->getKeyName();
+        return $this->modelPrimaryKeyName;
+    }
+
+    public function getModelTableName()
+    {
+        $this->modelTableName = $this->model->getTable();
+        return $this->modelTableName;
+    }
+
+    public function generateCacheKey($main_name, $prefix = null, $postfix = null)
+    {
+        if (empty($prefix)) {
+            $prefix = strtolower(request()->method().request()->path());
+        }
+
+        if (empty($postfix)) {
+            $postfix = json_encode(request()->all());
+        }
+
+        return $prefix."-".$main_name."-".$postfix;
     }
 
     /**
@@ -103,7 +138,7 @@ class CoreService implements CoreServiceContract
             }
 
             if (request()->has('order')) {
-                $order = request()->has('order') ? request('order') : $this->modelPrimaryKeyName;
+                $order = request()->has('order') ? request('order') : $this->getModelPrimaryKeyName();
                 $atoz = request()->has('atoz') ? request('atoz') : 'asc';
 
                 // support multiple order by
@@ -130,15 +165,15 @@ class CoreService implements CoreServiceContract
                     : 30
                 );
             } else {
-                $cacheKey = $this->get_cache_key($this->modelTableName, "listAll()-".json_encode(request()->all()), 'group');
-                $cacheTags = $this->get_cache_tags($this->modelTableName);
+                $cacheKey = $this->get_cache_key($this->getModelTableName(), $this->generateCacheKey("listAll()"), 'group');
+                $cacheTags = $this->get_cache_tags($this->getModelTableName());
 
                 $cacheDriver = cache();
                 if (env('CACHE_DRIVER') != 'file') {
                     $cacheDriver = $cacheDriver->tags($cacheTags);
                 }
 
-                return $cacheDriver->remember($cacheKey, 60*60*24, function () {
+                return $cacheDriver->remember($cacheKey, $this->defaultCacheLifetime, function () {
                     return $this->model->paginate(
                         request()->has('page_len')
                         ? request('page_len')
@@ -167,8 +202,8 @@ class CoreService implements CoreServiceContract
     **/
     public function findOrFail($id, $addWith = true)
     {
-        $cacheKey = $this->get_cache_key($this->modelTableName, $id);
-        $cacheTags = $this->get_cache_tags($this->modelTableName);
+        $cacheKey = $this->get_cache_key($this->getModelTableName(), $this->generateCacheKey($id));
+        $cacheTags = $this->get_cache_tags($this->getModelTableName());
 
         if (! empty($this->with) && $addWith) {
             $this->model = $this->model->with($this->with);
@@ -183,7 +218,7 @@ class CoreService implements CoreServiceContract
                 $cacheDriver = $cacheDriver->tags($cacheTags);
             }
 
-            return $cacheDriver->remember($cacheKey, 60*60*24, function () use ($id) {
+            return $cacheDriver->remember($cacheKey, $this->defaultCacheLifetime, function () use ($id) {
                 return $this->model->findOrFail($id);
             });
         }
@@ -196,11 +231,26 @@ class CoreService implements CoreServiceContract
     {
         $this->model = $model;
 
+        $cacheKey = $this->get_cache_key($this->getModelTableName(), $this->generateCacheKey($id));
+        $cacheTags = $this->get_cache_tags($this->getModelTableName());
+
         if (! empty($this->with) && $addWith) {
             $this->model = $this->model->with($this->with);
+            $cacheKey .= '-addwith';
         }
 
-        return $this->model->firstOrFail();
+        if (empty($this->observer)) {
+            return $this->model->findOrFail($id);
+        } else {
+            $cacheDriver = cache();
+            if (env('CACHE_DRIVER') != 'file') {
+                $cacheDriver = $cacheDriver->tags($cacheTags);
+            }
+
+            return $cacheDriver->remember($cacheKey, $this->defaultCacheLifetime, function () {
+                return $this->model->firstOrFail();
+            });
+        }
     }
 
     /**
