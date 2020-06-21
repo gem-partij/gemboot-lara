@@ -231,26 +231,27 @@ class CoreService implements CoreServiceContract
     {
         $this->model = $model;
 
-        $cacheKey = $this->get_cache_key($this->getModelTableName(), $this->generateCacheKey($id));
-        $cacheTags = $this->get_cache_tags($this->getModelTableName());
+        // $cacheKey = $this->get_cache_key($this->getModelTableName(), $this->generateCacheKey($id));
+        // $cacheTags = $this->get_cache_tags($this->getModelTableName());
 
         if (! empty($this->with) && $addWith) {
             $this->model = $this->model->with($this->with);
             $cacheKey .= '-addwith';
         }
 
-        if (empty($this->observer)) {
-            return $this->model->findOrFail($id);
-        } else {
-            $cacheDriver = cache();
-            if (env('CACHE_DRIVER') != 'file') {
-                $cacheDriver = $cacheDriver->tags($cacheTags);
-            }
-
-            return $cacheDriver->remember($cacheKey, $this->defaultCacheLifetime, function () {
-                return $this->model->firstOrFail();
-            });
-        }
+        return $this->model->firstOrFail();
+        // if (empty($this->observer)) {
+        //     return $this->model->findOrFail($id);
+        // } else {
+        //     $cacheDriver = cache();
+        //     if (env('CACHE_DRIVER') != 'file') {
+        //         $cacheDriver = $cacheDriver->tags($cacheTags);
+        //     }
+        //
+        //     return $cacheDriver->remember($cacheKey, $this->defaultCacheLifetime, function () {
+        //         return $this->model->firstOrFail();
+        //     });
+        // }
     }
 
     /**
