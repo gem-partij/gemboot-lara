@@ -236,7 +236,7 @@ class CoreService implements CoreServiceContract
 
         if (! empty($this->with) && $addWith) {
             $this->model = $this->model->with($this->with);
-            $cacheKey .= '-addwith';
+            // $cacheKey .= '-addwith';
         }
 
         return $this->model->firstOrFail();
