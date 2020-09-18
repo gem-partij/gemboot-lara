@@ -1,6 +1,13 @@
 <?php
 namespace Gemboot\Traits;
 
+use Gemboot\Exceptions\BadRequestException;
+use Gemboot\Exceptions\UnauthorizedException;
+use Gemboot\Exceptions\ForbiddenException;
+use Gemboot\Exceptions\NotFoundException;
+
+use Gemboot\Exceptions\ServerErrorException;
+
 trait JSONResponses
 {
     public static $STATUS_OK = 200;
@@ -204,6 +211,24 @@ trait JSONResponses
             return $this->responseNotFound([
                 'error' => $e->getMessage()
             ]);
+        } catch (BadRequestException $e) {
+            return $this->responseBadRequest([
+                'error' => $e->getMessage()
+            ]);
+        } catch (UnauthorizedException $e) {
+            return $this->responseUnauthorized([
+                'error' => $e->getMessage()
+            ]);
+        } catch (ForbiddenException $e) {
+            return $this->responseForbidden([
+                'error' => $e->getMessage()
+            ]);
+        } catch (NotFoundException $e) {
+            return $this->responseNotFound([
+                'error' => $e->getMessage()
+            ]);
+        } catch (ServerErrorException $e) {
+            return $this->responseException($e);
         } catch (\Exception $e) {
             return $this->responseException($e);
         }
@@ -228,6 +253,29 @@ trait JSONResponses
             return $this->responseNotFound([
                 'error' => $e->getMessage()
             ]);
+        } catch (BadRequestException $e) {
+            \DB::rollback();
+            return $this->responseBadRequest([
+                'error' => $e->getMessage()
+            ]);
+        } catch (UnauthorizedException $e) {
+            \DB::rollback();
+            return $this->responseUnauthorized([
+                'error' => $e->getMessage()
+            ]);
+        } catch (ForbiddenException $e) {
+            \DB::rollback();
+            return $this->responseForbidden([
+                'error' => $e->getMessage()
+            ]);
+        } catch (NotFoundException $e) {
+            \DB::rollback();
+            return $this->responseNotFound([
+                'error' => $e->getMessage()
+            ]);
+        } catch (ServerErrorException $e) {
+            \DB::rollback();
+            return $this->responseException($e);
         } catch (\Exception $e) {
             \DB::rollback();
             return $this->responseException($e);
