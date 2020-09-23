@@ -1,5 +1,5 @@
 <?php
-namespace App\Traits;
+namespace Gemboot\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
 
