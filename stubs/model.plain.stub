@@ -1,0 +1,34 @@
+<?php
+
+namespace {{ namespace }};
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Gemboot\Models\CoreModel as GembootModel;
+
+class {{ class }} extends GembootModel
+{
+    use SoftDeletes;
+
+    protected $connection= '{{ connection }}';
+    protected $table = '{{ table }}';
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+    ];
+
+    /**==========
+     * APPENDS
+    **/
+
+    /**==========
+     * RELATIONS
+    **/
+
+    /**==========
+     * SCOPES
+    **/
+}

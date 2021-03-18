@@ -1,0 +1,19 @@
+<?php
+
+namespace {{ namespace }};
+
+use Illuminate\Http\Request;
+use Gemboot\Services\CoreService as GembootService;
+
+use {{ namespacedModel }};
+
+class {{ class }} extends GembootService
+{
+    public function __construct({{ model }} $model = null, $with = [], $orderBy = [])
+    {
+        if (empty($model)) {
+            $model = new {{ model }}();
+        }
+        parent::__construct($model, $with, $orderBy);
+    }
+}
