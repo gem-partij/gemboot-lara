@@ -72,6 +72,32 @@ class UserControllerApi extends Controller {
 }
 ```
 
+will get the same response:
+
+```json
+/* Success Response */
+{
+    "status": 200,
+    "message": "Success!",
+    "data": [
+        /* all user data... */
+    ]
+}
+
+/* Error Response */
+{
+    "status": 500, /* it could be 400 to 500 error status code */
+    "message": "Error!",
+    "data": [
+        /* all error data... */
+    ]
+}
+```
+
+## Documentation, Installation, and Usage Instructions
+
+See the [DOCUMENTATION](https://github.com/gem-partij/gemboot-lara/tree/master/docs) for detailed installation and usage instructions.
+
 
 ## Support Policy
 
