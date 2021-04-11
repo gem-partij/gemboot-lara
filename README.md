@@ -55,3 +55,28 @@ The defaults are set in `config/gemboot_gw.php`. Publish the config to copy the 
 ```sh
 php artisan vendor:publish --tag="gemboot"
 ```
+
+
+## Testing
+
+Run the tests with:
+
+``` bash
+composer test
+```
+
+
+## Security
+
+If you discover any security-related issues, please email anggerpputro@gmail.com instead of using the issue tracker.
+
+
+## Credits
+
+- [Angger Priyardhan Putro](https://github.com/anggerpputro)
+- [All Contributors](../../contributors)
+
+
+## License
+
+The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
