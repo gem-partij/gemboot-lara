@@ -114,9 +114,9 @@ abstract class CoreRestResourceController extends CoreRestController implements 
 
             $after_store_commit_resp = $this->afterStoreCommitHooks($saved_data, $request);
 
-            return $this->responseSuccessOrException(function() use ($saved_data) {
-                return ['saved' => $saved_data];
-            });
+            return $this->responseSuccess([
+                'saved' => $saved_data
+            ]);
         } catch (\Exception $e) {
             \DB::rollback();
             return $this->responseException($e);
@@ -199,9 +199,9 @@ abstract class CoreRestResourceController extends CoreRestController implements 
 
             $after_update_commit_resp = $this->afterUpdateCommitHooks($saved_data, $request, $id);
 
-            return $this->responseSuccessOrException(function() use ($saved_data) {
-                return ['saved' => $saved_data];
-            });
+            return $this->responseSuccess([
+                'saved' => $saved_data
+            ]);
         } catch (ModelNotFoundException $e) {
             \DB::rollback();
             return $this->responseNotFound([
@@ -229,9 +229,9 @@ abstract class CoreRestResourceController extends CoreRestController implements 
         try {
             $data = $this->service->delete($id);
 
-            return $this->responseSuccessOrException(function() {
-                return ['deleted' => $data];
-            });
+            return $this->responseSuccess([
+                'deleted' => $data
+            ]);
         } catch (ModelNotFoundException $e) {
             return $this->responseNotFound([
                 'error' => 'ID:'.$id.' Not Found!'

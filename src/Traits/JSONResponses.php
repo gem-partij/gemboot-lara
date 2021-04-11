@@ -95,7 +95,7 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseSuccess($data= [], $message= 'Success!')
+    public function responseSuccess($data= [], $message= 'Success!')
     {
         // $data['message'] = $message;
         return $this->response(static::$STATUS_OK, $data, $message);
@@ -109,7 +109,7 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseBadRequest($data= [], $message= 'Bad Request!')
+    public function responseBadRequest($data= [], $message= 'Bad Request!')
     {
         // $data['message'] = $message;
         return $this->response(static::$STATUS_BAD_REQUEST, $data, $message);
@@ -123,7 +123,7 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseUnauthorized($data= [], $message= 'Unauthorized!')
+    public function responseUnauthorized($data= [], $message= 'Unauthorized!')
     {
         // $data['message'] = $message;
         return $this->response(static::$STATUS_UNAUTHORIZED, $data, $message);
@@ -137,7 +137,7 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseForbidden($data= [], $message= 'Forbidden!')
+    public function responseForbidden($data= [], $message= 'Forbidden!')
     {
         // $data['message'] = $message;
         return $this->response(static::$STATUS_FORBIDDEN, $data, $message);
@@ -151,7 +151,7 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseNotFound($data= [], $message= 'Not Found!')
+    public function responseNotFound($data= [], $message= 'Not Found!')
     {
         // $data['message'] = $message;
         return $this->response(static::$STATUS_NOT_FOUND, $data, $message);
@@ -165,7 +165,7 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseError($data= [], $message= 'Server Error!')
+    public function responseError($data= [], $message= 'Server Error!')
     {
         // $data['message'] = $message;
         return $this->response(static::$STATUS_SERVER_ERROR, $data, $message);
@@ -178,7 +178,7 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseException($exception)
+    public function responseException($exception)
     {
         \Log::error($exception->getMessage());
         \Log::error($exception->getTraceAsString());
@@ -202,7 +202,7 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseSuccessOrException(callable $callback)
+    public function responseSuccessOrException(callable $callback)
     {
         try {
             $data = $callback();
@@ -242,7 +242,7 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseSuccessOrExceptionUsingTransaction(callable $callback)
+    public function responseSuccessOrExceptionUsingTransaction(callable $callback)
     {
         \DB::beginTransaction();
         try {

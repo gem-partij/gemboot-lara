@@ -32,7 +32,7 @@
             "GembootNotFoundException": "Gemboot\\Exceptions\\NotFoundException",
             "GembootServerErrorException": "Gemboot\\Exceptions\\ServerErrorException",
             "GembootUnauthorizedException": "Gemboot\\Exceptions\\UnauthorizedException",
-            "GembootResponse": "Gemboot\\Facades\\GembootResponse"
+            "GembootResponse": "Gemboot\\Facades\\GembootResponseFacade"
         }
     },
     "require": {
