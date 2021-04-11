@@ -209,7 +209,8 @@ trait JSONResponses
             return $this->responseSuccess($data);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return $this->responseNotFound([
-                'error' => $e->getMessage()
+                // 'error' => $e->getMessage()
+                'error' => "Data Not Found!"
             ]);
         } catch (BadRequestException $e) {
             return $this->responseBadRequest([
@@ -251,7 +252,8 @@ trait JSONResponses
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             \DB::rollback();
             return $this->responseNotFound([
-                'error' => $e->getMessage()
+                // 'error' => $e->getMessage()
+                'error' => "Data Not Found!"
             ]);
         } catch (BadRequestException $e) {
             \DB::rollback();

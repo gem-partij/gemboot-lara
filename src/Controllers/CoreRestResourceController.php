@@ -114,9 +114,9 @@ abstract class CoreRestResourceController extends CoreRestController implements 
 
             $after_store_commit_resp = $this->afterStoreCommitHooks($saved_data, $request);
 
-            return $this->responseSuccess([
-                'saved' => $saved_data
-            ]);
+            return $this->responseSuccessOrException(function() use ($saved_data) {
+                return ['saved' => $saved_data];
+            });
         } catch (\Exception $e) {
             \DB::rollback();
             return $this->responseException($e);
@@ -139,16 +139,18 @@ abstract class CoreRestResourceController extends CoreRestController implements 
     public function show($id)
     {
         try {
-            if ($this->cache_seconds['show'] > 0) {
-                $cache_key = $this->modelTableName.'_show_'.implode('_', request()->all());
-                $cache_seconds = $this->cache_seconds['show'];
+            return $this->responseSuccessOrException(function() use ($id) {
+                if ($this->cache_seconds['show'] > 0) {
+                    $cache_key = $this->modelTableName.'_show_'.implode('_', request()->all());
+                    $cache_seconds = $this->cache_seconds['show'];
 
-                return Cache::remember($cache_key, $cache_seconds, function () use ($id) {
+                    return Cache::remember($cache_key, $cache_seconds, function () use ($id) {
+                        return $this->service->findOrFail($id, $this->addWithOnShow);
+                    });
+                } else {
                     return $this->service->findOrFail($id, $this->addWithOnShow);
-                });
-            } else {
-                return $this->service->findOrFail($id, $this->addWithOnShow);
-            }
+                }
+            });
         } catch (ModelNotFoundException $e) {
             return $this->responseNotFound([
                 'error' => 'ID:'.$id.' Not Found!'
@@ -197,9 +199,9 @@ abstract class CoreRestResourceController extends CoreRestController implements 
 
             $after_update_commit_resp = $this->afterUpdateCommitHooks($saved_data, $request, $id);
 
-            return $this->responseSuccess([
-                'saved' => $saved_data
-            ]);
+            return $this->responseSuccessOrException(function() use ($saved_data) {
+                return ['saved' => $saved_data];
+            });
         } catch (ModelNotFoundException $e) {
             \DB::rollback();
             return $this->responseNotFound([
@@ -227,9 +229,9 @@ abstract class CoreRestResourceController extends CoreRestController implements 
         try {
             $data = $this->service->delete($id);
 
-            return $this->responseSuccess([
-                'deleted' => $data
-            ]);
+            return $this->responseSuccessOrException(function() {
+                return ['deleted' => $data];
+            });
         } catch (ModelNotFoundException $e) {
             return $this->responseNotFound([
                 'error' => 'ID:'.$id.' Not Found!'

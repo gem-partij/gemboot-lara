@@ -1,0 +1,1 @@
+C:37:"PHPUnit\Runner\DefaultTestResultCache":190:{a:2:{s:7:"defects";a:1:{s:59:"Gemboot\Tests\Unit\CommandGembootTest::call_gemboot_command";i:4;}s:5:"times";a:1:{s:59:"Gemboot\Tests\Unit\CommandGembootTest::call_gemboot_command";d:0.004;}}}
