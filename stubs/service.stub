@@ -9,6 +9,7 @@ use {{ namespacedModel }};
 
 class {{ class }} extends GembootService
 {
+
     public function __construct({{ model }} $model = null, $with = [], $orderBy = [])
     {
         if (empty($model)) {
@@ -16,4 +17,5 @@ class {{ class }} extends GembootService
         }
         parent::__construct($model, $with, $orderBy);
     }
+    
 }

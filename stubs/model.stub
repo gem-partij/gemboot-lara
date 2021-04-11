@@ -2,23 +2,23 @@
 
 namespace {{ namespace }};
 
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Gemboot\Models\CoreModel as GembootModel;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class {{ class }} extends GembootModel
 {
     use SoftDeletes;
 
-    protected $connection= '{{ connection }}';
-    protected $table = '{{ table }}';
+    // protected $connection= '';
+    // protected $table = '';
 
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
-    protected $fillable = [
-    ];
+    // protected $fillable = [
+    // ];
 
     /**==========
      * APPENDS

@@ -4,8 +4,10 @@ namespace Gemboot;
 use Illuminate\Support\ServiceProvider;
 
 use Gemboot\GembootResponse;
-use Gemboot\Commands\MakeController;
 use Gemboot\Commands\GembootTest;
+use Gemboot\Commands\MakeController;
+use Gemboot\Commands\MakeModel;
+use Gemboot\Commands\MakeService;
 
 class GembootServiceProvider extends ServiceProvider
 {
@@ -18,8 +20,10 @@ class GembootServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
-                // MakeController::class,
                 GembootTest::class,
+                MakeController::class,
+                MakeModel::class,
+                MakeService::class,
             ]);
         }
     }

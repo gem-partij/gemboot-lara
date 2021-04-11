@@ -2,16 +2,18 @@
 
 namespace {{ namespace }};
 
+use GembootResourceController;
 use Illuminate\Http\Request;
-use Gemboot\Controllers\CoreRestController as GembootController;
 
 use {{ namespacedModel }};
 use {{ namespacedService }};
 
-class {{ class }} extends GembootController
+class {{ class }} extends GembootResourceController
 {
-    public function __construct({{ Model }} $model, {{ Service }} $service)
+
+    public function __construct({{ model }} $model, {{ service }} $service)
     {
         parent::__construct($model, $service);
     }
+    
 }

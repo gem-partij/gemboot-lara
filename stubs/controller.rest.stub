@@ -1,0 +1,19 @@
+<?php
+
+namespace {{ namespace }};
+
+use GembootController;
+use Illuminate\Http\Request;
+
+use {{ namespacedModel }};
+use {{ namespacedService }};
+
+class {{ class }} extends GembootController
+{
+
+    public function __construct({{ model }} $model, {{ service }} $service)
+    {
+        parent::__construct($model, $service);
+    }
+    
+}
