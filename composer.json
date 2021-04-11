@@ -32,7 +32,16 @@
             "GembootNotFoundException": "Gemboot\\Exceptions\\NotFoundException",
             "GembootServerErrorException": "Gemboot\\Exceptions\\ServerErrorException",
             "GembootUnauthorizedException": "Gemboot\\Exceptions\\UnauthorizedException",
-            "GembootResponse": "Gemboot\\Facades\\GembootResponseFacade"
+
+            "GembootResponse": "Gemboot\\Facades\\GembootResponseFacade",
+
+            "GembootController": "Gemboot\\Controllers\\CoreRestController",
+            "GembootProxyController": "Gemboot\\Controllers\\CoreRestProxyController",
+            "GembootResourceController": "Gemboot\\Controllers\\CoreRestResourceController",
+
+            "GembootModel": "Gemboot\\Models\\CoreModel",
+
+            "GembootService": "Gemboot\\Services\\CoreService"
         }
     },
     "require": {
