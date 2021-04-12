@@ -165,7 +165,7 @@ protected $middleware = [
 
 The defaults are set in `config/gemboot_gw.php`. Publish the config to copy the file to your own config:
 ```sh
-php artisan vendor:publish --tag="gemboot"
+php artisan vendor:publish --tag="gemboot-gateway"
 ```
 
 
