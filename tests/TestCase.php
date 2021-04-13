@@ -3,6 +3,7 @@ namespace Gemboot\Tests;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Gemboot\GembootServiceProvider;
+use Gemboot\Tests\Controllers\TestUserController;
 
 // class TestCase extends \PHPUnit\Framework\TestCase {
 class TestCase extends \Orchestra\Testbench\TestCase {
@@ -49,6 +50,20 @@ class TestCase extends \Orchestra\Testbench\TestCase {
 
         $this->beforeApplicationDestroyed(function () {
             $this->artisan('migrate:rollback', ['--database' => 'testbench'])->run();
+        });
+    }
+
+    /**
+     * Define routes setup.
+     *
+     * @param  \Illuminate\Routing\Router  $router
+     *
+     * @return void
+     */
+    protected function defineRoutes($router)
+    {
+        $router->middleware(['api'])->prefix('test')->group(function() use ($router) {
+            $router->get('/', [TestUserController::class, 'index']);
         });
     }
 

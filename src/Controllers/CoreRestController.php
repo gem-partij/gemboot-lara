@@ -1,14 +1,14 @@
 <?php
 namespace Gemboot\Controllers;
 
-use App\Http\Controllers\Controller;
+use Gemboot\Controllers\CoreController;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 
 use Gemboot\Models\CoreModel;
 use Gemboot\Services\CoreService;
 use Gemboot\Traits\JSONResponses;
 
-abstract class CoreRestController extends Controller
+abstract class CoreRestController extends CoreController
 {
     use JSONResponses;
 
