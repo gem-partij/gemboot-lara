@@ -51,6 +51,13 @@ untuk melihat opsi yang tersedia bisa ketikkan di console
 php artisan gemboot:make-model --help
 ```
 
+#### 2.1. Basic Model
+untuk generate basic gemboot model silahkan ketikkan di console
+```sh
+php artisan gemboot:make-model TestUser
+```
+- _TestUser_ adalah nama model yang akan digenerate, bisa diisi bebas sesuai kebutuhan
+
 
 ## Service
 untuk melihat opsi yang tersedia bisa ketikkan di console
