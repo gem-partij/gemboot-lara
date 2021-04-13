@@ -28,8 +28,8 @@ class TestUser extends GembootModel {
      * @var array
      */
     protected $hidden = [
-        'password',
-        'remember_token',
+        // 'password',
+        // 'remember_token',
     ];
 
     /**

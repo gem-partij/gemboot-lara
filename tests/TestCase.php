@@ -63,7 +63,8 @@ class TestCase extends \Orchestra\Testbench\TestCase {
     protected function defineRoutes($router)
     {
         $router->middleware(['api'])->prefix('test')->group(function() use ($router) {
-            $router->get('/', [TestUserController::class, 'index']);
+            // $router->get('/', [TestUserController::class, 'index']);
+            $router->apiResource('users', TestUserController::class);
         });
     }
 
