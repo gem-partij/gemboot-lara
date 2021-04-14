@@ -58,6 +58,27 @@ php artisan gemboot:make-model TestUser
 ```
 - _TestUser_ adalah nama model yang akan digenerate, bisa diisi bebas sesuai kebutuhan
 
+#### 2.2. Generate Model + Controller
+untuk generate gemboot model + buat sekalian controllernya silahkan ketikkan di console
+```sh
+php artisan gemboot:make-model TestUser --controller
+```
+- _TestUser_ adalah nama model yang akan digenerate, bisa diisi bebas sesuai kebutuhan
+
+#### 2.3. Generate Model + Service
+untuk generate gemboot model + buat sekalian servicenya silahkan ketikkan di console
+```sh
+php artisan gemboot:make-model TestUser --service
+```
+- _TestUser_ adalah nama model yang akan digenerate, bisa diisi bebas sesuai kebutuhan
+
+#### 2.4. Generate Model + Controller + Service
+untuk generate gemboot model + buat sekalian controller dan servicenya silahkan ketikkan di console
+```sh
+php artisan gemboot:make-model TestUser --all
+```
+- _TestUser_ adalah nama model yang akan digenerate, bisa diisi bebas sesuai kebutuhan
+
 
 ## Service
 untuk melihat opsi yang tersedia bisa ketikkan di console
@@ -65,3 +86,19 @@ untuk melihat opsi yang tersedia bisa ketikkan di console
 ```sh
 php artisan gemboot:make-service --help
 ```
+
+#### 3.1. Basic Service
+untuk generate basic gemboot service silahkan ketikkan di console
+```sh
+php artisan gemboot:make-service UserService User
+```
+- _UserService_ adalah nama model yang akan digenerate, bisa diisi bebas sesuai kebutuhan
+- _User_ adalah nama model yang akan di importkan ke servicenya, bisa diisi bebas sesuai kebutuhan (akan generate otomatis jika belum ada modelnya)
+
+#### 3.2. Generate Service + Controller
+untuk generate gemboot service + controllernya silahkan ketikkan di console
+```sh
+php artisan gemboot:make-service UserService User --controller
+```
+- _UserService_ adalah nama model yang akan digenerate, bisa diisi bebas sesuai kebutuhan
+- _User_ adalah nama model yang akan di importkan ke servicenya, bisa diisi bebas sesuai kebutuhan (akan generate otomatis jika belum ada modelnya)
