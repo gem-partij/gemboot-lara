@@ -63,7 +63,7 @@ trait MainModelAbilities
             $primary = $this->getKeyName();
             $cols = $this->getTableColumns();
 
-            return $query->where(function ($q) use ($mode, $primary, $cols, $string_like, $arr_date_fields) {
+            return $query->where(function (Builder $q) use ($mode, $primary, $cols, $string_like, $arr_date_fields) {
                 if ($mode == 'or') {
                     foreach (array_diff($cols, $arr_date_fields) as $col) {
                         if ($col !== $primary) {
@@ -116,7 +116,7 @@ trait MainModelAbilities
             $primary = $this->getKeyName();
             $cols = $this->getTableColumns();
 
-            return $query->where(function ($q) use ($mode, $primary, $cols, $string, $arr_date_fields) {
+            return $query->where(function (Builder $q) use ($mode, $primary, $cols, $string, $arr_date_fields) {
                 if ($mode == 'or') {
                     foreach (array_diff($cols, $arr_date_fields) as $col) {
                         if ($col !== $primary) {
@@ -144,7 +144,7 @@ trait MainModelAbilities
     **/
     public function scopeSearchMultiple(Builder $query, $string = [], $field = [], $mode = 'or')
     {
-        return $query->where(function ($q) use ($mode, $string, $field) {
+        return $query->where(function (Builder $q) use ($mode, $string, $field) {
             foreach ($string as $i => $string_item) {
                 if ($string_item != '') {
                     if (! isset($field[$i])) {
@@ -187,7 +187,7 @@ trait MainModelAbilities
     **/
     public function scopeSearchExactMultiple(Builder $query, $string = [], $field = [], $mode = 'or')
     {
-        return $query->where(function ($q) use ($mode, $string, $field) {
+        return $query->where(function (Builder $q) use ($mode, $string, $field) {
             foreach ($string as $i => $string_item) {
                 if ($string_item != '') {
                     if (! isset($field[$i])) {
@@ -274,14 +274,14 @@ trait MainModelAbilities
 
     protected function getQueryWhereHas(Builder &$query, $relation_name, $col_name, $operator, $string_search)
     {
-        return $query->whereHas($relation_name, function ($q) use ($col_name, $operator, $string_search) {
+        return $query->whereHas($relation_name, function (Builder $q) use ($col_name, $operator, $string_search) {
             $q->where($col_name, $operator, $string_search);
         });
     }
 
     protected function getQueryOrWhereHas(Builder &$query, $relation_name, $col_name, $operator, $string_search)
     {
-        return $query->orWhereHas($relation_name, function ($q) use ($col_name, $operator, $string_search) {
+        return $query->orWhereHas($relation_name, function (Builder $q) use ($col_name, $operator, $string_search) {
             $q->where($col_name, $operator, $string_search);
         });
     }

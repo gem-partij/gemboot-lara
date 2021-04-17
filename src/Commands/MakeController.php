@@ -99,7 +99,7 @@ class MakeController extends GeneratorCommand
     {
         $modelClass = $this->parseModel($this->option('model'));
 
-        if (! @class_exists($modelClass)) {
+        if (! class_exists($modelClass)) {
             if ($this->confirm("A {$modelClass} model does not exist. Do you want to generate it?", true)) {
                 $this->call('gemboot:make-model', ['name' => $modelClass]);
             }
@@ -146,7 +146,7 @@ class MakeController extends GeneratorCommand
         $modelClass = $this->parseModel($this->option('model'));
         $serviceClass = $this->parseService($this->option('service'));
 
-        if (! @class_exists($serviceClass)) {
+        if (! class_exists($serviceClass)) {
             if ($this->confirm("A {$serviceClass} service does not exist. Do you want to generate it?", true)) {
                 $this->call('gemboot:make-service', [
                     'name' => $serviceClass,

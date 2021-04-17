@@ -121,7 +121,7 @@ class MakeService extends GeneratorCommand
     {
         $modelClass = $this->parseModel($this->argument('model'));
 
-        if (! @class_exists($modelClass)) {
+        if (! class_exists($modelClass)) {
             if ($this->confirm("A {$modelClass} model does not exist. Do you want to generate it?", true)) {
                 $this->call('gemboot:make-model', ['name' => $modelClass]);
             }
