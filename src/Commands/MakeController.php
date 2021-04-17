@@ -57,7 +57,7 @@ class MakeController extends GeneratorCommand
 	 */
 	protected function getDefaultNamespace($rootNamespace)
 	{
-		return $this->option('resource') ? $rootNamespace . '\Http\Controllers\Api\Resource' : $rootNamespace . '\Http\Controllers\Api';
+		return $this->option('resource') ? $rootNamespace . '\Http\Controllers\Api\Resources' : $rootNamespace . '\Http\Controllers\Api';
 	}
 
     /**

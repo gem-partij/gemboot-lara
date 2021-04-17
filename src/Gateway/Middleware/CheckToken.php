@@ -2,6 +2,7 @@
 namespace Gemboot\Gateway\Middleware;
 
 use Closure;
+use Illuminate\Http\Request;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Client as GuzzleClient;
 use Gemboot\Traits\JSONResponses;
@@ -18,7 +19,7 @@ class CheckToken
      * @param  string|null  $guard
      * @return mixed
      */
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next)
     {
         if ($request->header('Authorization')) {
             // validate token to auth service
@@ -54,7 +55,7 @@ class CheckToken
         }
     }
 
-    protected function validateToken($request)
+    protected function validateToken(Request $request)
     {
         // get bearer token
         // $token = $request->bearerToken();

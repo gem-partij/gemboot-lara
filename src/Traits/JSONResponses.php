@@ -1,6 +1,7 @@
 <?php
 namespace Gemboot\Traits;
 
+use Exception;
 use Gemboot\Exceptions\BadRequestException;
 use Gemboot\Exceptions\UnauthorizedException;
 use Gemboot\Exceptions\ForbiddenException;
@@ -67,7 +68,7 @@ trait JSONResponses
                 $encapsulated,
                 $status
             )->withHeaders($headers);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             if (env('APP_DEBUG')) {
                 $data = $e->getTrace();
                 $message = $e->getMessage();
@@ -178,7 +179,7 @@ trait JSONResponses
      *
      * @return json
      */
-    public function responseException($exception)
+    public function responseException(Exception $exception)
     {
         \Log::error($exception->getMessage());
         \Log::error($exception->getTraceAsString());
@@ -230,7 +231,7 @@ trait JSONResponses
             ]);
         } catch (ServerErrorException $e) {
             return $this->responseException($e);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->responseException($e);
         }
     }
@@ -278,7 +279,7 @@ trait JSONResponses
         } catch (ServerErrorException $e) {
             \DB::rollback();
             return $this->responseException($e);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             \DB::rollback();
             return $this->responseException($e);
         }

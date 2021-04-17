@@ -7,6 +7,7 @@
 [![Monthly Downloads](https://poser.pugx.org/gem-partij/gemboot-lara/d/monthly)](https://packagist.org/packages/gem-partij/gemboot-lara)
 [![Daily Downloads](https://poser.pugx.org/gem-partij/gemboot-lara/d/daily)](https://packagist.org/packages/gem-partij/gemboot-lara)
 [![composer.lock](https://poser.pugx.org/gem-partij/gemboot-lara/composerlock)](https://packagist.org/packages/gem-partij/gemboot-lara)
+[![SensioLabsInsight](https://insight.sensiolabs.com/projects/5615a2e5-ef3f-4cdf-ac7f-6dee5fe4f811/mini.png)](https://insight.sensiolabs.com/projects/5615a2e5-ef3f-4cdf-ac7f-6dee5fe4f811)
 
 Laravel package for supporting SMVC development method
 
