@@ -12,12 +12,6 @@ abstract class CoreRestController extends CoreController
 {
     use JSONResponses;
 
-    // protected $repo;
-    //
-    // public function __construct(CoreRepository $repo) {
-    //     $this->repo = $repo;
-    // }
-
     protected $model;
     protected $with = [];
     protected $orderBy = [];

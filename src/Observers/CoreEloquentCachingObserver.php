@@ -12,17 +12,6 @@ abstract class CoreEloquentCachingObserver
     }
 
     /**
-     * Handle the Eloquent "retrieved" event.
-     *
-     * @return void
-     */
-    // public function retrieved($data)
-    // {
-    //     $cacheKey = get_cache_key($this->cacheTag, $data->id);
-    //     cache()->tags($this->getTags())->put($cacheKey, $data, $this->cacheSeconds);
-    // }
-
-    /**
      * Handle the Eloquent "saved" event.
      *
      * @return void

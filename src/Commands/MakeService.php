@@ -84,7 +84,6 @@ class MakeService extends GeneratorCommand
 	 */
 	protected function getDefaultNamespace($rootNamespace)
 	{
-        // return $this->option('resource') ? $rootNamespace . '\Services\Resource' : $rootNamespace . '\Services';
         return $rootNamespace . '\Services';
 	}
 

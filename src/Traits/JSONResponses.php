@@ -50,7 +50,6 @@ trait JSONResponses
                 $headers['Content-Encoding'] = 'gzip';
                 ob_start('ob_gzhandler');
             } else {
-                // $headers['Transfer-Encoding'] = 'chunk';
                 ob_start();
             }
 
@@ -98,7 +97,6 @@ trait JSONResponses
      */
     public function responseSuccess($data= [], $message= 'Success!')
     {
-        // $data['message'] = $message;
         return $this->response(static::$STATUS_OK, $data, $message);
     }
 
@@ -112,7 +110,6 @@ trait JSONResponses
      */
     public function responseBadRequest($data= [], $message= 'Bad Request!')
     {
-        // $data['message'] = $message;
         return $this->response(static::$STATUS_BAD_REQUEST, $data, $message);
     }
 
@@ -126,7 +123,6 @@ trait JSONResponses
      */
     public function responseUnauthorized($data= [], $message= 'Unauthorized!')
     {
-        // $data['message'] = $message;
         return $this->response(static::$STATUS_UNAUTHORIZED, $data, $message);
     }
 
@@ -140,7 +136,6 @@ trait JSONResponses
      */
     public function responseForbidden($data= [], $message= 'Forbidden!')
     {
-        // $data['message'] = $message;
         return $this->response(static::$STATUS_FORBIDDEN, $data, $message);
     }
 
@@ -154,7 +149,6 @@ trait JSONResponses
      */
     public function responseNotFound($data= [], $message= 'Not Found!')
     {
-        // $data['message'] = $message;
         return $this->response(static::$STATUS_NOT_FOUND, $data, $message);
     }
 
@@ -168,7 +162,6 @@ trait JSONResponses
      */
     public function responseError($data= [], $message= 'Server Error!')
     {
-        // $data['message'] = $message;
         return $this->response(static::$STATUS_SERVER_ERROR, $data, $message);
     }
 
@@ -210,7 +203,6 @@ trait JSONResponses
             return $this->responseSuccess($data);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return $this->responseNotFound([
-                // 'error' => $e->getMessage()
                 'error' => "Data Not Found!"
             ]);
         } catch (BadRequestException $e) {
@@ -253,7 +245,6 @@ trait JSONResponses
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             \DB::rollback();
             return $this->responseNotFound([
-                // 'error' => $e->getMessage()
                 'error' => "Data Not Found!"
             ]);
         } catch (BadRequestException $e) {
