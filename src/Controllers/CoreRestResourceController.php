@@ -2,6 +2,7 @@
 namespace Gemboot\Controllers;
 
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Http\Request;
 use Cache;
 
@@ -20,7 +21,7 @@ abstract class CoreRestResourceController extends CoreRestController implements 
         'show' => 0, // default 0 seconds
     ];
 
-    public function __construct(CoreModel $model = null, CoreService $service = null)
+    public function __construct(Eloquent $model = null, CoreService $service = null)
     {
         if (is_null($service)) {
             $service = new CoreService($model, $this->with, $this->orderBy);

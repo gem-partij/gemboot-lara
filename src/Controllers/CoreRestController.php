@@ -32,7 +32,7 @@ abstract class CoreRestController extends CoreController
 
     protected $logAccessTag = "";
 
-    public function __construct(CoreModel $model = null, CoreService $service = null)
+    public function __construct(Eloquent $model = null, CoreService $service = null)
     {
         if(! is_null($model)) {
             $this->model = $model;
