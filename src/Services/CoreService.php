@@ -165,8 +165,8 @@ class CoreService implements CoreServiceContract
                     : 30
                 );
             } else {
-                $cacheKey = $this->get_cache_key($this->getModelTableName(), $this->generateCacheKey("listAll()"), 'group');
-                $cacheTags = $this->get_cache_tags($this->getModelTableName());
+                $cacheKey = $this->getCacheKey($this->getModelTableName(), $this->generateCacheKey("listAll()"), 'group');
+                $cacheTags = $this->getCacheTags($this->getModelTableName());
 
                 $cacheDriver = cache();
                 if (env('CACHE_DRIVER') != 'file') {
@@ -202,8 +202,8 @@ class CoreService implements CoreServiceContract
     **/
     public function findOrFail($id, $addWith = true)
     {
-        $cacheKey = $this->get_cache_key($this->getModelTableName(), $this->generateCacheKey($id));
-        $cacheTags = $this->get_cache_tags($this->getModelTableName());
+        $cacheKey = $this->getCacheKey($this->getModelTableName(), $this->generateCacheKey($id));
+        $cacheTags = $this->getCacheTags($this->getModelTableName());
 
         if (! empty($this->with) && $addWith) {
             $this->model = $this->model->with($this->with);

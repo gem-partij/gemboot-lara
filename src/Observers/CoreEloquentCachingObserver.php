@@ -8,7 +8,7 @@ abstract class CoreEloquentCachingObserver
 
     protected function getTags()
     {
-        return get_cache_tags($this->cacheTag);
+        return getCacheTags($this->cacheTag);
     }
 
     /**
