@@ -3,7 +3,7 @@ namespace Gemboot\Contracts;
 
 use Illuminate\Database\Eloquent\Builder;
 
-interface CoreModelContract
+interface CoreModelInterface
 {
     public function scopeSearch(Builder $query, $string, $field = '', $mode = 'or');
 

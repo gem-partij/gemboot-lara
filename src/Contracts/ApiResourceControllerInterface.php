@@ -3,7 +3,7 @@ namespace Gemboot\Contracts;
 
 use Illuminate\Http\Request;
 
-interface ApiResourceControllerContract
+interface ApiResourceControllerInterface
 {
     public function index();
     public function show($id);

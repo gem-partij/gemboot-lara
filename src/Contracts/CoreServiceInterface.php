@@ -4,7 +4,7 @@ namespace Gemboot\Contracts;
 /**
  * CoreServiceContract
  */
-interface CoreServiceContract
+interface CoreServiceInterface
 {
     /**
      * Get a listing of the resource.

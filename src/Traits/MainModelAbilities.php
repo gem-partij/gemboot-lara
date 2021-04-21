@@ -1,7 +1,7 @@
 <?php
 namespace Gemboot\Traits;
 
-use Gemboot\Contracts\CoreModelContract;
+use Gemboot\Contracts\CoreModelInterface as CoreModelContract;
 use Illuminate\Database\Eloquent\Builder;
 
 trait MainModelAbilities

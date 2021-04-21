@@ -9,7 +9,7 @@ use Cache;
 use Gemboot\Controllers\CoreRestController;
 use Gemboot\Models\CoreModel;
 use Gemboot\Services\CoreService;
-use Gemboot\Contracts\ApiResourceControllerContract as ResourceContract;
+use Gemboot\Contracts\ApiResourceControllerInterface as ResourceContract;
 
 abstract class CoreRestResourceController extends CoreRestController implements ResourceContract
 {

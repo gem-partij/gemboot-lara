@@ -1,7 +1,7 @@
 <?php
 namespace Gemboot\Services;
 
-use Gemboot\Contracts\CoreServiceContract;
+use Gemboot\Contracts\CoreServiceInterface as CoreServiceContract;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Gemboot\Models\CoreModel;
 use Gemboot\Traits\GembootHelpers;
