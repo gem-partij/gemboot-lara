@@ -97,62 +97,8 @@ class CoreService implements CoreServiceContract
                 $this->model = $this->model->with($this->with);
             }
 
-            $search = null;
-            $search_field = null;
-            $search_mode = null;
-            $search_exact = false;
-            if (request()->has('search') && !$disable_search) {
-                $search = request('search');
-                $search_field = request()->has('search_field') ? request('search_field') : '';
-                $search_mode = request()->has('search_mode') ? request('search_mode') : 'or';
-                $search_exact = false;
-            } elseif (request()->has('search_exact') && !$disable_search) {
-                $search = request('search_exact');
-                $search_field = request()->has('search_field') ? request('search_field') : '';
-                $search_mode = request()->has('search_mode') ? request('search_mode') : 'or';
-                $search_exact = true;
-            }
-
-            if (! is_null($search)) {
-                if (!is_array($search) && !is_array($search_field)) {
-                    if ($search_exact) {
-                        $this->model = $this->model->searchExact($search, $search_field, $search_mode);
-                    } else {
-                        $this->model = $this->model->search($search, $search_field, $search_mode);
-                    }
-                } else {
-                    // support multiple search
-                    if (! is_array($search)) {
-                        $search = [$search];
-                    }
-                    if (! is_array($search_field)) {
-                        $search_field = [$search_field];
-                    }
-
-                    if ($search_exact) {
-                        $this->model = $this->model->searchExactMultiple($search, $search_field, $search_mode);
-                    } else {
-                        $this->model = $this->model->searchMultiple($search, $search_field, $search_mode);
-                    }
-                }
-            }
-
-            if (request()->has('order')) {
-                $order = request()->has('order') ? request('order') : $this->getModelPrimaryKeyName();
-                $atoz = request()->has('atoz') ? request('atoz') : 'asc';
-
-                // support multiple order by
-                if (! is_array($order)) {
-                    $order = [$order];
-                }
-                if (! is_array($atoz)) {
-                    $atoz = [$atoz];
-                }
-                foreach ($order as $i => $order_item) {
-                    $atoz_item = isset($atoz[$i]) ? $atoz[$i] : 'asc';
-                    $this->model = $this->model->order($order_item, $atoz_item);
-                }
-            }
+            $this->model = $this->generateModelSearch($this->model, $disable_search);
+            $this->model = $this->generateModelOrder($this->model);
 
             if (request()->has('page_len') && request('page_len') == 'all') {
                 return $this->model->paginate(999);
@@ -182,6 +128,23 @@ class CoreService implements CoreServiceContract
                 });
             }
         } catch (\Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Get a count of the resource.
+    **/
+    public function countAll($model = null, $disable_search = false) {
+        try {
+            if (! is_null($model)) {
+                $this->model = $model;
+            }
+
+            $this->model = $this->generateModelSearch($this->model, $disable_search);
+
+            return $this->model->count();
+        } catch(\Exception $e) {
             throw $e;
         }
     }
@@ -276,5 +239,79 @@ class CoreService implements CoreServiceContract
         $data = $this->findOrFail($id, false);
         $data->delete();
         return $data;
+    }
+
+
+    protected function generateModelSearch($model = null, $disable_search = false) {
+        if (is_null($model)) {
+            $model = $this->model;
+        }
+
+        $search = null;
+        $search_field = null;
+        $search_mode = null;
+        $search_exact = false;
+        if (request()->has('search') && !$disable_search) {
+            $search = request('search');
+            $search_field = request()->has('search_field') ? request('search_field') : '';
+            $search_mode = request()->has('search_mode') ? request('search_mode') : 'or';
+            $search_exact = false;
+        } elseif (request()->has('search_exact') && !$disable_search) {
+            $search = request('search_exact');
+            $search_field = request()->has('search_field') ? request('search_field') : '';
+            $search_mode = request()->has('search_mode') ? request('search_mode') : 'or';
+            $search_exact = true;
+        }
+
+        if (! is_null($search)) {
+            if (!is_array($search) && !is_array($search_field)) {
+                if ($search_exact) {
+                    $model = $model->searchExact($search, $search_field, $search_mode);
+                } else {
+                    $model = $model->search($search, $search_field, $search_mode);
+                }
+            } else {
+                // support multiple search
+                if (! is_array($search)) {
+                    $search = [$search];
+                }
+                if (! is_array($search_field)) {
+                    $search_field = [$search_field];
+                }
+
+                if ($search_exact) {
+                    $model = $model->searchExactMultiple($search, $search_field, $search_mode);
+                } else {
+                    $model = $model->searchMultiple($search, $search_field, $search_mode);
+                }
+            }
+        }
+
+        return $model;
+    }
+
+    protected function generateModelOrder($model = null) {
+        if (is_null($model)) {
+            $model = $this->model;
+        }
+
+        if (request()->has('order')) {
+            $order = request()->has('order') ? request('order') : $this->getModelPrimaryKeyName();
+            $atoz = request()->has('atoz') ? request('atoz') : 'asc';
+
+            // support multiple order by
+            if (! is_array($order)) {
+                $order = [$order];
+            }
+            if (! is_array($atoz)) {
+                $atoz = [$atoz];
+            }
+            foreach ($order as $i => $order_item) {
+                $atoz_item = isset($atoz[$i]) ? $atoz[$i] : 'asc';
+                $model = $model->order($order_item, $atoz_item);
+            }
+        }
+
+        return $model;
     }
 }
