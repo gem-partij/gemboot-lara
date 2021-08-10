@@ -14,7 +14,7 @@ class GembootControllerTest extends TestCase {
     **/
     public function test_get_all_data() {
         $response = $this->getJson('/test/users');
-        ob_get_clean();
+        // ob_get_clean();
 
         $response
             ->assertStatus(200)
@@ -43,7 +43,7 @@ class GembootControllerTest extends TestCase {
         $data = TestUser::factory()->make();
 
         $response = $this->postJson('/test/users', $data->toArray());
-        ob_get_clean();
+        // ob_get_clean();
 
         $response
             ->assertStatus(200)
@@ -68,7 +68,7 @@ class GembootControllerTest extends TestCase {
         $data = TestUser::factory()->create();
 
         $response = $this->getJson('/test/users/'.$data->id);
-        ob_get_clean();
+        // ob_get_clean();
 
         $response
             ->assertStatus(200)
@@ -93,7 +93,7 @@ class GembootControllerTest extends TestCase {
         $data_update = TestUser::factory()->make();
 
         $response = $this->putJson('/test/users/'.$data->id, $data_update->toArray());
-        ob_get_clean();
+        // ob_get_clean();
 
         $response
             ->assertStatus(200)
@@ -118,7 +118,7 @@ class GembootControllerTest extends TestCase {
         $data = TestUser::factory()->create();
 
         $response = $this->deleteJson('/test/users/'.$data->id);
-        ob_get_clean();
+        // ob_get_clean();
 
         $response
             ->assertStatus(200)

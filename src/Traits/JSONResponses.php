@@ -45,6 +45,8 @@ trait JSONResponses
     protected function response($status, $data, $message = null, $status_message = null)
     {
         try {
+            ob_get_clean();
+
             $accept_encoding = request()->header('accept-encoding');
 
             $headers = [
