@@ -154,9 +154,14 @@ class CoreService implements CoreServiceContract
     **/
     public function store($requestData, $merge_data_with = [])
     {
+        $this->beforeStoreHooks($requestData, $merge_data_with);
+
         $data = $this->model;
         $data->fill(array_merge($requestData, $merge_data_with));
         $data->save();
+
+        $this->afterStoreHooks($data, $requestData, $merge_data_with);
+
         return $data;
     }
 
@@ -206,9 +211,14 @@ class CoreService implements CoreServiceContract
     **/
     public function update($requestData, $id, $merge_data_with = [])
     {
+        $this->beforeUpdateHooks($requestData, $id, $merge_data_with);
+
         $data = $this->findOrFail($id, false);
         $data->fill(array_merge($requestData, $merge_data_with));
         $data->save();
+
+        $this->afterUpdateHooks($data, $requestData, $id, $merge_data_with);
+
         return $data;
     }
 
@@ -236,8 +246,13 @@ class CoreService implements CoreServiceContract
     **/
     public function delete($id)
     {
+        $this->beforeDeleteHooks($id);
+
         $data = $this->findOrFail($id, false);
         $data->delete();
+
+        $this->afterDeleteHooks($data, $id);
+
         return $data;
     }
 
@@ -313,5 +328,35 @@ class CoreService implements CoreServiceContract
         }
 
         return $model;
+    }
+
+
+    /**
+     * =========================
+     * HOOKS
+     * ---------
+    **/
+    protected function beforeStoreHooks(&$requestData, &$merge_data_with)
+    {
+    }
+
+    protected function afterStoreHooks(&$savedData, &$requestData, &$merge_data_with)
+    {
+    }
+
+    protected function beforeUpdateHooks(&$requestData, &$id, &$merge_data_with)
+    {
+    }
+
+    protected function afterUpdateHooks(&$savedData, &$requestData, &$id, &$merge_data_with)
+    {
+    }
+
+    protected function beforeDeleteHooks(&$id)
+    {
+    }
+
+    protected function afterDeleteHooks(&$deletedData, &$id)
+    {
     }
 }
