@@ -6,6 +6,12 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Http\Request;
 use Cache;
 
+use Exception;
+use Gemboot\Exceptions\BadRequestException;
+use Gemboot\Exceptions\UnauthorizedException;
+use Gemboot\Exceptions\ForbiddenException;
+use Gemboot\Exceptions\NotFoundException;
+
 use Gemboot\Controllers\CoreRestController;
 use Gemboot\Models\CoreModel;
 use Gemboot\Services\CoreService;
@@ -118,7 +124,55 @@ abstract class CoreRestResourceController extends CoreRestController implements 
             return $this->responseSuccess([
                 'saved' => $saved_data
             ]);
-        } catch (\Exception $e) {
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            \DB::rollback();
+            $err_message = "Data Not Found!";
+            return $this->responseNotFound([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (BadRequestException $e) {
+            \DB::rollback();
+            $err_message = $e->getMessage();
+            return $this->responseBadRequest([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (UnauthorizedException $e) {
+            \DB::rollback();
+            $err_message = $e->getMessage();
+            return $this->responseUnauthorized([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (ForbiddenException $e) {
+            \DB::rollback();
+            $err_message = $e->getMessage();
+            return $this->responseForbidden([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (NotFoundException $e) {
+            \DB::rollback();
+            $err_message = $e->getMessage();
+            return $this->responseNotFound([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (ServerErrorException $e) {
+            \DB::rollback();
+            return $this->responseException($e);
+        } catch (Exception $e) {
             \DB::rollback();
             return $this->responseException($e);
         }
@@ -156,7 +210,41 @@ abstract class CoreRestResourceController extends CoreRestController implements 
             return $this->responseNotFound([
                 'error' => 'ID:'.$id.' Not Found!'
             ]);
-        } catch (\Exception $e) {
+        } catch (BadRequestException $e) {
+            $err_message = $e->getMessage();
+            return $this->responseBadRequest([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (UnauthorizedException $e) {
+            $err_message = $e->getMessage();
+            return $this->responseUnauthorized([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (ForbiddenException $e) {
+            $err_message = $e->getMessage();
+            return $this->responseForbidden([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (NotFoundException $e) {
+            $err_message = $e->getMessage();
+            return $this->responseNotFound([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (ServerErrorException $e) {
+            return $this->responseException($e);
+        } catch (Exception $e) {
             return $this->responseException($e);
         }
     }
@@ -203,12 +291,55 @@ abstract class CoreRestResourceController extends CoreRestController implements 
             return $this->responseSuccess([
                 'saved' => $saved_data
             ]);
-        } catch (ModelNotFoundException $e) {
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             \DB::rollback();
+            $err_message = "Data Not Found!";
             return $this->responseNotFound([
-                'error' => 'ID:'.$id.' Not Found!'
-            ]);
-        } catch (\Exception $e) {
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (BadRequestException $e) {
+            \DB::rollback();
+            $err_message = $e->getMessage();
+            return $this->responseBadRequest([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (UnauthorizedException $e) {
+            \DB::rollback();
+            $err_message = $e->getMessage();
+            return $this->responseUnauthorized([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (ForbiddenException $e) {
+            \DB::rollback();
+            $err_message = $e->getMessage();
+            return $this->responseForbidden([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (NotFoundException $e) {
+            \DB::rollback();
+            $err_message = $e->getMessage();
+            return $this->responseNotFound([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (ServerErrorException $e) {
+            \DB::rollback();
+            return $this->responseException($e);
+        } catch (Exception $e) {
             \DB::rollback();
             return $this->responseException($e);
         }
@@ -233,11 +364,56 @@ abstract class CoreRestResourceController extends CoreRestController implements 
             return $this->responseSuccess([
                 'deleted' => $data
             ]);
-        } catch (ModelNotFoundException $e) {
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            \DB::rollback();
+            $err_message = "Data Not Found!";
             return $this->responseNotFound([
-                'error' => 'ID:'.$id.' Not Found!'
-            ]);
-        } catch (\Exception $e) {
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (BadRequestException $e) {
+            \DB::rollback();
+            $err_message = $e->getMessage();
+            return $this->responseBadRequest([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (UnauthorizedException $e) {
+            \DB::rollback();
+            $err_message = $e->getMessage();
+            return $this->responseUnauthorized([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (ForbiddenException $e) {
+            \DB::rollback();
+            $err_message = $e->getMessage();
+            return $this->responseForbidden([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (NotFoundException $e) {
+            \DB::rollback();
+            $err_message = $e->getMessage();
+            return $this->responseNotFound([
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (ServerErrorException $e) {
+            \DB::rollback();
+            return $this->responseException($e);
+        } catch (Exception $e) {
+            \DB::rollback();
             return $this->responseException($e);
         }
     }
