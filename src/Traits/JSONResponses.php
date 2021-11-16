@@ -328,4 +328,25 @@ trait JSONResponses
             return $this->responseException($e);
         }
     }
+
+
+    /**
+     * Response Bad Request, (validation error laravel)
+     *
+     * @param \Illuminate\Support\MessageBag $errors
+     *
+     * @return json
+     */
+    public function responseValidationError(\Illuminate\Support\MessageBag $errors) {
+        $err_message = null;
+        $all_errors = $errors->all();
+
+        if(count($all_errors) > 0) {
+            $err_message = $all_errors[0];
+        }
+
+        return $this->responseBadRequest([
+            'error' => $errors,
+        ], $err_message, $err_message);
+    }
 }
