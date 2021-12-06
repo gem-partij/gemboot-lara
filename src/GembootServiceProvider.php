@@ -3,6 +3,7 @@ namespace Gemboot;
 
 use Illuminate\Support\ServiceProvider;
 
+use Gemboot\GembootRequest;
 use Gemboot\GembootResponse;
 use Gemboot\Commands\GembootTest;
 use Gemboot\Commands\MakeController;
@@ -37,6 +38,10 @@ class GembootServiceProvider extends ServiceProvider
     public function register()
     {
         // Register a class in the service container
+        $this->app->bind('gemboot-request', function($app) {
+            return new GembootRequest();
+        });
+
         $this->app->bind('gemboot-response', function($app) {
             return new GembootResponse();
         });
