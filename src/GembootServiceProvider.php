@@ -26,6 +26,11 @@ class GembootServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__.'/../config/gemboot_gw.php' => config_path('gemboot_gw.php'),
             ], 'gemboot-gateway');
+
+            // Export gemboot auth config
+            $this->publishes([
+                __DIR__.'/../config/gemboot_auth.php' => config_path('gemboot_auth.php'),
+            ], 'gemboot-auth');
         }
     }
 

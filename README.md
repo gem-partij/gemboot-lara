@@ -149,6 +149,7 @@ Optional: The aliases will automatically get registered. Or you may manually add
 ```
 
 
+
 ## Gemboot Gateway (Additional Package)
 
 ### Middleware
@@ -168,6 +169,31 @@ The defaults are set in `config/gemboot_gw.php`. Publish the config to copy the 
 ```sh
 php artisan vendor:publish --tag="gemboot-gateway"
 ```
+
+
+
+## Gemboot Auth (Additional Package)
+
+### Middleware
+
+To use Gemboot Auth middleware for your routes, add the `TokenValidated`, `HasRole`, `HasPermissionTo` middleware in the `$routeMiddleware` property of  `app/Http/Kernel.php` class:
+
+```php
+protected $routeMiddleware = [
+    // ...
+    'token-validated' => \Gemboot\Middleware\TokenValidated::class,
+    'role' => \Gemboot\Middleware\HasRole::class,
+    'permission' => \Gemboot\Middleware\HasPermissionTo::class,
+];
+```
+
+### Configuration
+
+The defaults are set in `config/gemboot_auth.php`. Publish the config to copy the file to your own config:
+```sh
+php artisan vendor:publish --tag="gemboot-auth"
+```
+
 
 
 ## Testing
