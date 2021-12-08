@@ -136,6 +136,7 @@ Optional: The aliases will automatically get registered. Or you may manually add
     'GembootServerErrorException' => Gemboot\Exceptions\ServerErrorException::class,
     'GembootUnauthorizedException' => Gemboot\Exceptions\UnauthorizedException::class,
 
+    'GembootRequest' => Gemboot\Facades\GembootRequestFacade::class,
     'GembootResponse' => Gemboot\Facades\GembootResponseFacade::class,
 
     'GembootController' => Gemboot\Controllers\CoreRestController::class,
@@ -192,6 +193,39 @@ protected $routeMiddleware = [
 The defaults are set in `config/gemboot_auth.php`. Publish the config to copy the file to your own config:
 ```sh
 php artisan vendor:publish --tag="gemboot-auth"
+```
+
+### Routes
+add Gemboot AuthLibrary in your routes if you want to use it, example:
+```php
+use Illuminate\Http\Request;
+use Gemboot\Libraries\AuthLibrary;
+
+Route::middleware('api')->prefix('auth')->group(function() {
+    Route::post('login', function(Request $request) {
+        return (new AuthLibrary)->login($request->npp, $request->password, true);
+    });
+
+    Route::get('me', function() {
+        return (new AuthLibrary)->me(true);
+    });
+
+    Route::get('validate-token', function() {
+        return (new AuthLibrary)->validateToken(true);
+    });
+
+    Route::get('has-role', function(Request $request) {
+        return (new AuthLibrary)->hasRole($request->role_name, true);
+    });
+
+    Route::get('has-permission-to', function(Request $request) {
+        return (new AuthLibrary)->hasPermissionTo($request->permission_name, true);
+    });
+
+    Route::post('logout', function() {
+        return (new AuthLibrary)->logout(true);
+    });
+});
 ```
 
 
