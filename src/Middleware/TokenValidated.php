@@ -3,11 +3,13 @@
 namespace Gemboot\Middleware;
 
 use Closure;
-use Gemboot\GembootResponse;
+use Gemboot\Traits\JSONResponses;
 use Gemboot\Libraries\AuthLibrary;
 
 class TokenValidated
 {
+    use JSONResponses;
+
     /**
      * Handle an incoming request.
      *
@@ -20,7 +22,7 @@ class TokenValidated
         $auth = new AuthLibrary();
         $response = $auth->me(false, $request);
         if (! $response) {
-            return GembootResponse::responseUnauthorized();
+            return $this->responseUnauthorized();
         }
 
         $request->merge(['user_login' => $response]);

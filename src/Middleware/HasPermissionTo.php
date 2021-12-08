@@ -3,11 +3,13 @@
 namespace Gemboot\Middleware;
 
 use Closure;
-use Gemboot\GembootResponse;
+use Gemboot\Traits\JSONResponses;
 use Gemboot\Libraries\AuthLibrary;
 
 class HasPermissionTo
 {
+    use JSONResponses;
+
     /**
      * Handle an incoming request.
      *
@@ -20,7 +22,7 @@ class HasPermissionTo
         $auth = new AuthLibrary();
         $response = $auth->hasPermissionTo($permission_name, false, $request);
         if (!$response || ($response && !$response->has_permission_to)) {
-            return GembootResponse::responseForbidden($response);
+            return $this->responseUnauthorized();
         }
 
         return $next($request);
