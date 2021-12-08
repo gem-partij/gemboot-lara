@@ -1,7 +1,11 @@
 <?php
 namespace Gemboot\Libraries;
 
+use Gemboot\Traits\GembootRequest;
+
 class HttpClient {
+
+    use GembootRequest;
 
     protected $baseUrl;
     protected $token;
@@ -21,14 +25,19 @@ class HttpClient {
         return $this;
     }
 
+    public function withTokenBearer($request = null) {
+        return $this->setToken($this->getRequestToken($request));
+    }
+
     public function get($url = "", $data = [], $absolute_url = false) {
         try {
             $query = http_build_query($data);
+            $first4 = substr($url, 0, 4);
 
             $ch = curl_init();
 
             $request_url = $this->baseUrl.$url;
-            if($absolute_url) {
+            if($absolute_url || $first4 == 'http') {
                 $request_url = $url;
             }
 
@@ -71,8 +80,10 @@ class HttpClient {
 
     public function post($url = "", $data = [], $absolute_url = false) {
         try {
+            $first4 = substr($url, 0, 4);
+
             $request_url = $this->baseUrl.$url;
-            if($absolute_url) {
+            if($absolute_url || $first4 == 'http') {
                 $request_url = $url;
             }
             // $query = http_build_query($data);
