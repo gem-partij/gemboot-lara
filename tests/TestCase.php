@@ -4,6 +4,7 @@ namespace Gemboot\Tests;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Gemboot\GembootServiceProvider;
 use Gemboot\Tests\Controllers\TestUserController;
+use Gemboot\Tests\Controllers\TestAuthLibraryController;
 
 // class TestCase extends \PHPUnit\Framework\TestCase {
 class TestCase extends \Orchestra\Testbench\TestCase {
@@ -29,6 +30,9 @@ class TestCase extends \Orchestra\Testbench\TestCase {
             'database' => ':memory:',
             'prefix'   => '',
         ]);
+
+        $app['config']->set('gemboot_auth.base_url', 'http://host.docker.internal:3000/portal-pegawai');
+        $app['config']->set('gemboot_auth.base_api', 'http://host.docker.internal:3000/portal-pegawai/api/auth');
 
         // // import the CreatePostsTable class from the migration
         // include_once __DIR__ . '/../database/migrations/create_gemboot_test_users_table.php.stub';
@@ -65,6 +69,20 @@ class TestCase extends \Orchestra\Testbench\TestCase {
         $router->middleware(['api'])->prefix('test')->group(function() use ($router) {
             // $router->get('/', [TestUserController::class, 'index']);
             $router->apiResource('users', TestUserController::class);
+        });
+
+        $router->middleware(['api'])->prefix('auth')->group(function() use ($router) {
+            $router->post('login', [TestAuthLibraryController::class, 'login']);
+
+            $router->get('me', [TestAuthLibraryController::class, 'me']);
+
+            $router->get('validate-token', [TestAuthLibraryController::class, 'validateToken']);
+
+            $router->get('has-role', [TestAuthLibraryController::class, 'hasRole']);
+
+            $router->get('has-permission-to', [TestAuthLibraryController::class, 'hasPermissionTo']);
+
+            $router->post('logout', [TestAuthLibraryController::class, 'logout']);
         });
     }
 
