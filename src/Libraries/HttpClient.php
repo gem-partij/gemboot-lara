@@ -2,6 +2,8 @@
 namespace Gemboot\Libraries;
 
 use Gemboot\Traits\GembootRequest;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpFoundation\Response;
 
 class HttpClient {
 
@@ -9,6 +11,7 @@ class HttpClient {
 
     protected $baseUrl;
     protected $token;
+    protected $throwOnHttpError;
 
     public function __construct($baseUrl = null, $token = null) {
         $this->baseUrl = $baseUrl;
@@ -22,6 +25,11 @@ class HttpClient {
 
     public function setToken($token) {
         $this->token = $token;
+        return $this;
+    }
+
+    public function throwOnHttpError($throwOnHttpError = true) {
+        $this->throwOnHttpError = $throwOnHttpError;
         return $this;
     }
 
@@ -68,11 +76,17 @@ class HttpClient {
             // close curl resource to free up system resources
             curl_close($ch);
 
+            if($this->throwOnHttpError && $info['http_code'] >= 400) {
+                throw new HttpException($info['http_code'], Response::$statusTexts[$info['http_code']]);
+            }
+
             $response = json_decode($output, true);
             return json_decode(json_encode([
                 'info' => $info,
                 'data' => $response,
             ]));
+        } catch(HttpException $he) {
+            throw $he;
         } catch(\Exception $e) {
             throw $e;
         }
@@ -118,11 +132,17 @@ class HttpClient {
 
             curl_close($ch);
 
+            if($this->throwOnHttpError && $info['http_code'] >= 400) {
+                throw new HttpException($info['http_code'], Response::$statusTexts[$info['http_code']]);
+            }
+
             $response = json_decode($output, true);
             return json_decode(json_encode([
                 'info' => $info,
                 'data' => $response,
             ]));
+        } catch(HttpException $he) {
+            throw $he;
         } catch(\Exception $e) {
             throw $e;
             // trigger_error(sprintf('Curl failed with error #%d: %s', $e->getCode(), $e->getMessage()), E_USER_ERROR);
