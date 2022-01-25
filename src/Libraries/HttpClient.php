@@ -11,6 +11,7 @@ class HttpClient {
 
     protected $baseUrl;
     protected $token;
+    protected $headers = [];
     protected $throwOnHttpError;
 
     public function __construct($baseUrl = null, $token = null) {
@@ -37,6 +38,11 @@ class HttpClient {
         return $this->setToken($this->getRequestToken($request));
     }
 
+    public function withHeaders(array $headers = []) {
+        $this->headers = $headers;
+        return $this;
+    }
+
     public function get($url = "", $data = [], $absolute_url = false) {
         try {
             $query = http_build_query($data);
@@ -52,9 +58,9 @@ class HttpClient {
             // set url
             curl_setopt($ch, CURLOPT_URL, $request_url.'?'.$query);
             // set header
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array_merge([
                 'Authorization: '.$this->token,
-            ));
+            ], $this->headers));
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
             //return the transfer as a string
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -110,9 +116,9 @@ class HttpClient {
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
             curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
             // set header
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array_merge([
                 'Authorization: '.$this->token,
-            ));
+            ], $this->headers));
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
             //return the transfer as a string
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
