@@ -34,6 +34,7 @@ class GembootAuthTest extends TestCase {
         $response = $this->postJson('/auth/login', [
             'npp' => '123',
             'password' => '123',
+            'hwid' => 'gemboot',
         ]);
         // ob_get_clean();
 
@@ -56,6 +57,7 @@ class GembootAuthTest extends TestCase {
         $response = $this->postJson('/auth/login', [
             'npp' => 'tester',
             'password' => 'tester',
+            'hwid' => 'gemboot',
         ]);
         // ob_get_clean();
 
@@ -97,6 +99,7 @@ class GembootAuthTest extends TestCase {
         $response_auth = $this->postJson('/auth/login', [
             'npp' => 'tester',
             'password' => 'tester',
+            'hwid' => 'gemboot',
         ]);
 
         $auth_data = $response_auth->getData()->data;
@@ -125,6 +128,7 @@ class GembootAuthTest extends TestCase {
         $response_auth = $this->postJson('/auth/login', [
             'npp' => 'tester',
             'password' => 'tester',
+            'hwid' => 'gemboot',
         ]);
 
         $auth_data = $response_auth->getData()->data;
@@ -153,6 +157,7 @@ class GembootAuthTest extends TestCase {
         $response_auth = $this->postJson('/auth/login', [
             'npp' => 'tester',
             'password' => 'tester',
+            'hwid' => 'gemboot',
         ]);
 
         $auth_data = $response_auth->getData()->data;

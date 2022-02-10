@@ -10,7 +10,7 @@ class TestAuthLibraryController extends GembootController
 {
 
     public function login(Request $request) {
-        return (new AuthLibrary)->login($request->npp, $request->password, true);
+        return (new AuthLibrary)->login($request->npp, $request->password, true, $request);
     }
 
     public function me() {
