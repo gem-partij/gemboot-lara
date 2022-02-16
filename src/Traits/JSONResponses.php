@@ -177,6 +177,18 @@ trait JSONResponses
     }
 
     /**
+     * HTTP ERROR RESPONSE
+     *
+     * @param array $data response data
+     * @param array $data response data
+     *
+     * @return json
+     */
+    public function responseHttpError($status_code, $data= [], $message= null, $status_message= null) {
+        return $this->response($status_code, $data, $message, $status_message);
+    }
+
+    /**
      * ERROR RESPONSE (500)
      *
      * @param \Exception $exception exception
