@@ -89,28 +89,8 @@ class CoreService implements CoreServiceContract
     public function listAll($model = null, $disable_search = false)
     {
         try {
-            if (! is_null($model)) {
-                $this->model = $model;
-            }
-
-            if (! empty($this->with)) {
-                $this->model = $this->model->with($this->with);
-            }
-
-            $this->model = $this->generateModelSearch($this->model, $disable_search);
-            $this->model = $this->generateModelOrder($this->model);
-
-            if (request()->has('page_len') && request('page_len') == 'all') {
-                return $this->model->paginate(999);
-            }
-
-            if (empty($this->observer)) {
-                return $this->model->paginate(
-                    request()->has('page_len')
-                    ? request('page_len')
-                    : 30
-                );
-            } else {
+            if(! empty($this->observer)) {
+                // cache response
                 $cacheKey = $this->getCacheKey($this->getModelTableName(), $this->generateCacheKey("listAll()"), 'group');
                 $cacheTags = $this->getCacheTags($this->getModelTableName());
 
@@ -119,14 +99,13 @@ class CoreService implements CoreServiceContract
                     $cacheDriver = $cacheDriver->tags($cacheTags);
                 }
 
-                return $cacheDriver->remember($cacheKey, $this->defaultCacheLifetime, function () {
-                    return $this->model->paginate(
-                        request()->has('page_len')
-                        ? request('page_len')
-                        : 30
-                    );
+                return $cacheDriver->remember($cacheKey, $this->defaultCacheLifetime, function () use ($model, $disable_search) {
+                    return $this->getQueryListAll($model, $disable_search);
                 });
             }
+
+            // default response
+            return $this->getQueryListAll($model, $disable_search);
         } catch (\Exception $e) {
             throw $e;
         }
@@ -328,6 +307,35 @@ class CoreService implements CoreServiceContract
         }
 
         return $model;
+    }
+
+    protected function getQueryListAll($model = null, $disable_search = false) {
+        if (! is_null($model)) {
+            $this->model = $model;
+        }
+
+        if (! empty($this->with)) {
+            $this->model = $this->model->with($this->with);
+        }
+
+        $this->model = $this->generateModelSearch($this->model, $disable_search);
+        $this->model = $this->generateModelOrder($this->model);
+
+        if (request()->has('page_len') && request('page_len') == 'all') {
+            // count first
+            $count_data = $this->model->count();
+            if($count_data <= 1000) {
+                return $this->model->get();
+            }
+
+            return $this->model->paginate(999);
+        }
+
+        return $this->model->paginate(
+            request()->has('page_len')
+            ? request('page_len')
+            : 30
+        );
     }
 
 
