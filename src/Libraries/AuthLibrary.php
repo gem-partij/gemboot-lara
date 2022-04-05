@@ -1,6 +1,7 @@
 <?php
 namespace Gemboot\Libraries;
 
+use Illuminate\Http\Request;
 use Gemboot\Libraries\HttpClient;
 use Gemboot\Traits\GembootRequest;
 
@@ -34,10 +35,11 @@ class AuthLibrary {
     }
 
 
-    public function login($npp, $password, $response_json = false, $request = null) {
+    public function login($npp, $password, $response_json = false, Request $request = null) {
         $response = $this->httpClient->post("/login", [
             'npp' => $npp,
             'password' => $password,
+            'hwid' => ($request && $request->has('hwid')) ? $request->hwid : null,
         ]);
 
         if($response_json) {
@@ -52,7 +54,7 @@ class AuthLibrary {
         return false;
     }
 
-    public function me($response_json = false, $request = null) {
+    public function me($response_json = false, Request $request = null) {
         $token = $this->getRequestToken($request);
         $response = $this->httpClient->setToken($token)->get("/me");
 
@@ -68,7 +70,7 @@ class AuthLibrary {
         return false;
     }
 
-    public function validateToken($response_json = false, $request = null) {
+    public function validateToken($response_json = false, Request $request = null) {
         $token = $this->getRequestToken($request);
         $response = $this->httpClient->setToken($token)->get("/validate-token");
 
@@ -84,7 +86,7 @@ class AuthLibrary {
         return false;
     }
 
-    public function hasRole($role_name, $response_json = false, $request = null) {
+    public function hasRole($role_name, $response_json = false, Request $request = null) {
         $token = $this->getRequestToken($request);
         $response = $this->httpClient->setToken($token)->get("/has-role", [
             'role_name' => $role_name,
@@ -102,7 +104,7 @@ class AuthLibrary {
         return false;
     }
 
-    public function hasPermissionTo($permission_name, $response_json = false, $request = null) {
+    public function hasPermissionTo($permission_name, $response_json = false, Request $request = null) {
         $token = $this->getRequestToken($request);
         $response = $this->httpClient->setToken($token)->get("/has-permission-to", [
             'permission_name' => $permission_name,
@@ -120,7 +122,7 @@ class AuthLibrary {
         return false;
     }
 
-    public function logout($response_json = false, $request = null) {
+    public function logout($response_json = false, Request $request = null) {
         $token = $this->getRequestToken($request);
         $response = $this->httpClient->setToken($token)->post("/logout");
 

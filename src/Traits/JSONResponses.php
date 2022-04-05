@@ -3,6 +3,7 @@ namespace Gemboot\Traits;
 
 use Exception;
 use Illuminate\Http\Response;
+use Gemboot\Exceptions\HttpErrorException;
 use Gemboot\Exceptions\BadRequestException;
 use Gemboot\Exceptions\UnauthorizedException;
 use Gemboot\Exceptions\ForbiddenException;
@@ -177,6 +178,18 @@ trait JSONResponses
     }
 
     /**
+     * HTTP ERROR RESPONSE
+     *
+     * @param array $data response data
+     * @param array $data response data
+     *
+     * @return json
+     */
+    public function responseHttpError($status_code, $data= [], $message= null, $status_message= null) {
+        return $this->response($status_code, $data, $message, $status_message);
+    }
+
+    /**
      * ERROR RESPONSE (500)
      *
      * @param \Exception $exception exception
@@ -214,6 +227,16 @@ trait JSONResponses
         try {
             $data = $callback();
             return $this->responseSuccess($data);
+        } catch(HttpErrorException $e) {
+            $err_message = $e->getMessage();
+            return $this->responseHttpError(
+                $e->getCode(),
+                [
+                    'error' => $err_message,
+                ],
+                null,
+                $err_message
+            );
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             $err_message = "Data Not Found!";
             return $this->responseNotFound([
@@ -275,6 +298,17 @@ trait JSONResponses
             $data = $callback();
             \DB::commit();
             return $this->responseSuccess($data);
+        } catch(HttpErrorException $e) {
+            \DB::rollback();
+            $err_message = $e->getMessage();
+            return $this->responseHttpError(
+                $e->getCode(),
+                [
+                    'error' => $err_message,
+                ],
+                null,
+                $err_message
+            );
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             \DB::rollback();
             $err_message = "Data Not Found!";

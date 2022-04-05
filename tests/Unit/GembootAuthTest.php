@@ -6,6 +6,9 @@ use Illuminate\Testing\Fluent\AssertableJson;
 
 class GembootAuthTest extends TestCase {
 
+    protected $user_success = 'tester';
+    protected $pass_success = 'tester';
+
     /** ================
      * TEST LOGIN TANPA KIRIM REQUEST APAPUN
      *
@@ -55,8 +58,8 @@ class GembootAuthTest extends TestCase {
     **/
     public function test_login_success() {
         $response = $this->postJson('/auth/login', [
-            'npp' => 'tester',
-            'password' => 'tester',
+            'npp' => $this->user_success,
+            'password' => $this->pass_success,
             'hwid' => 'gemboot',
         ]);
         // ob_get_clean();
@@ -97,8 +100,8 @@ class GembootAuthTest extends TestCase {
     **/
     public function test_validate_token_success() {
         $response_auth = $this->postJson('/auth/login', [
-            'npp' => 'tester',
-            'password' => 'tester',
+            'npp' => $this->user_success,
+            'password' => $this->pass_success,
             'hwid' => 'gemboot',
         ]);
 
@@ -126,8 +129,8 @@ class GembootAuthTest extends TestCase {
     **/
     public function test_get_me_success() {
         $response_auth = $this->postJson('/auth/login', [
-            'npp' => 'tester',
-            'password' => 'tester',
+            'npp' => $this->user_success,
+            'password' => $this->pass_success,
             'hwid' => 'gemboot',
         ]);
 
@@ -155,8 +158,8 @@ class GembootAuthTest extends TestCase {
     **/
     public function test_post_logout_success() {
         $response_auth = $this->postJson('/auth/login', [
-            'npp' => 'tester',
-            'password' => 'tester',
+            'npp' => $this->user_success,
+            'password' => $this->pass_success,
             'hwid' => 'gemboot',
         ]);
 
