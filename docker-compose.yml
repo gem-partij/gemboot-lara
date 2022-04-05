@@ -10,7 +10,7 @@ services:
                 uid: 1000
             context: ./
             dockerfile: Dockerfile
-        image: gemboot-lara
+        image: gemboot-lara:3.x
         container_name: gemboot-lara-app
         restart: unless-stopped
         working_dir: /var/www
