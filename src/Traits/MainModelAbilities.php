@@ -1,7 +1,8 @@
 <?php
 namespace Gemboot\Traits;
 
-use Gemboot\Contracts\CoreModelContract;
+use Gemboot\Contracts\CoreModelInterface as CoreModelContract;
+use Illuminate\Database\Eloquent\Builder;
 
 trait MainModelAbilities
 {
@@ -22,7 +23,14 @@ trait MainModelAbilities
      * MAIN SCOPES
      * ---------
     **/
-    public function scopeSearch($query, $string, $field = '', $mode = 'or')
+    /**
+     * Scope a query to search data.
+     * (using where like query)
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+    **/
+    public function scopeSearch(Builder $query, $string, $field = '', $mode = 'or')
     {
         $arr_date_fields = ['created_at', 'updated_at', 'deleted_at'];
 
@@ -55,7 +63,7 @@ trait MainModelAbilities
             $primary = $this->getKeyName();
             $cols = $this->getTableColumns();
 
-            return $query->where(function ($q) use ($mode, $primary, $cols, $string_like, $arr_date_fields) {
+            return $query->where(function (Builder $q) use ($mode, $primary, $cols, $string_like, $arr_date_fields) {
                 if ($mode == 'or') {
                     foreach (array_diff($cols, $arr_date_fields) as $col) {
                         if ($col !== $primary) {
@@ -73,7 +81,14 @@ trait MainModelAbilities
         }
     }
 
-    public function scopeSearchExact($query, $string, $field = '', $mode = 'or')
+    /**
+     * Scope a query to search data.
+     * (using where equal query)
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+    **/
+    public function scopeSearchExact(Builder $query, $string, $field = '', $mode = 'or')
     {
         $arr_date_fields = ['created_at', 'updated_at', 'deleted_at'];
 
@@ -101,7 +116,7 @@ trait MainModelAbilities
             $primary = $this->getKeyName();
             $cols = $this->getTableColumns();
 
-            return $query->where(function ($q) use ($mode, $primary, $cols, $string, $arr_date_fields) {
+            return $query->where(function (Builder $q) use ($mode, $primary, $cols, $string, $arr_date_fields) {
                 if ($mode == 'or') {
                     foreach (array_diff($cols, $arr_date_fields) as $col) {
                         if ($col !== $primary) {
@@ -119,9 +134,17 @@ trait MainModelAbilities
         }
     }
 
-    public function scopeSearchMultiple($query, $string = [], $field = [], $mode = 'or')
+    /**
+     * Scope a query to search data.
+     * (using where like query)
+     * (and in bracket query)
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+    **/
+    public function scopeSearchMultiple(Builder $query, $string = [], $field = [], $mode = 'or')
     {
-        return $query->where(function ($q) use ($mode, $string, $field) {
+        return $query->where(function (Builder $q) use ($mode, $string, $field) {
             foreach ($string as $i => $string_item) {
                 if ($string_item != '') {
                     if (! isset($field[$i])) {
@@ -154,9 +177,17 @@ trait MainModelAbilities
         });
     }
 
-    public function scopeSearchExactMultiple($query, $string = [], $field = [], $mode = 'or')
+    /**
+     * Scope a query to search data.
+     * (using where equal query)
+     * (and in bracket query)
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+    **/
+    public function scopeSearchExactMultiple(Builder $query, $string = [], $field = [], $mode = 'or')
     {
-        return $query->where(function ($q) use ($mode, $string, $field) {
+        return $query->where(function (Builder $q) use ($mode, $string, $field) {
             foreach ($string as $i => $string_item) {
                 if ($string_item != '') {
                     if (! isset($field[$i])) {
@@ -184,7 +215,13 @@ trait MainModelAbilities
         });
     }
 
-    public function scopeOrder($query, $field = '', $asc_or_desc = 'asc')
+    /**
+     * Scope a query to sort data.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+    **/
+    public function scopeOrder(Builder $query, $field = '', $asc_or_desc = 'asc')
     {
         if (! empty($field)) {
             return $query->orderBy($this->getTable().'.'.$field, $asc_or_desc);
@@ -193,7 +230,13 @@ trait MainModelAbilities
         }
     }
 
-    public function scopePerPage($query, $limit = 30)
+    /**
+     * Scope a query to limit data.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+    **/
+    public function scopePerPage(Builder $query, $limit = 30)
     {
         return $query->limit($limit);
     }
@@ -204,7 +247,7 @@ trait MainModelAbilities
      * PROTECTED METHODS
      * ---------
     **/
-    protected function getQueryDateSearch(&$query, $search, $search_field)
+    protected function getQueryDateSearch(Builder &$query, $search, $search_field)
     {
         $strtotime = strtotime($search);
         $year = date('Y', $strtotime);
@@ -229,16 +272,16 @@ trait MainModelAbilities
         }
     }
 
-    protected function getQueryWhereHas(&$query, $relation_name, $col_name, $operator, $string_search)
+    protected function getQueryWhereHas(Builder &$query, $relation_name, $col_name, $operator, $string_search)
     {
-        return $query->whereHas($relation_name, function ($q) use ($col_name, $operator, $string_search) {
+        return $query->whereHas($relation_name, function (Builder $q) use ($col_name, $operator, $string_search) {
             $q->where($col_name, $operator, $string_search);
         });
     }
 
-    protected function getQueryOrWhereHas(&$query, $relation_name, $col_name, $operator, $string_search)
+    protected function getQueryOrWhereHas(Builder &$query, $relation_name, $col_name, $operator, $string_search)
     {
-        return $query->orWhereHas($relation_name, function ($q) use ($col_name, $operator, $string_search) {
+        return $query->orWhereHas($relation_name, function (Builder $q) use ($col_name, $operator, $string_search) {
             $q->where($col_name, $operator, $string_search);
         });
     }

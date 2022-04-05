@@ -2,6 +2,7 @@
 namespace Gemboot\Gateway\Middleware;
 
 use Closure;
+use Illuminate\Http\Request;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Client as GuzzleClient;
 use Gemboot\Traits\JSONResponses;
@@ -18,7 +19,7 @@ class CheckToken
      * @param  string|null  $guard
      * @return mixed
      */
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next)
     {
         if ($request->header('Authorization')) {
             // validate token to auth service
@@ -54,25 +55,16 @@ class CheckToken
         }
     }
 
-    protected function validateToken($request)
+    protected function validateToken(Request $request)
     {
-        // get bearer token
-        // $token = $request->bearerToken();
-
         $url_auth = app('config')->get('gemboot_gw.base_url_auth', 'https://tirta.pdamkotasmg.co.id:8443/gateway/auth/');
         $url = $url_auth.'api/auth/me';
-        // dd($url);
-        // $url = 'https://tirta.pdamkotasmg.co.id:8443/gateway/auth/api/auth/me';
-        // $url = 'http://localhost:8080/api/auth/me';
 
         $headers = $request->headers->all();
         $headers_formatted = [];
         if (isset($headers['authorization'])) {
             $headers_formatted['authorization'] = $headers['authorization'][0];
         }
-        // foreach ($headers as $key => $item) {
-        //     $headers_formatted[$key] = $item[0];
-        // }
 
         $client = new GuzzleClient([
             'verify' => false
@@ -87,15 +79,9 @@ class CheckToken
         $contents = $body->getContents();
 
         $decoded = json_decode($contents);
-        // dd([
-        //     'status' => $statusCode,
-        //     'body' => $contents,
-        //     'decoded' => $decoded,
-        // ]);
 
         if (isset($decoded->data) && $decoded->data->user) {
             session(['auth_user' => $decoded->data->user]);
-            // dd("TOKEN VALID");
             return true;
         }
 

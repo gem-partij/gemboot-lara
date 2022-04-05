@@ -1,12 +1,10 @@
 <?php
 namespace Gemboot\Contracts;
 
-// use Illuminate\Database\Eloquent\Model as Eloquent;
-
 /**
  * CoreServiceContract
  */
-interface CoreServiceContract
+interface CoreServiceInterface
 {
     /**
      * Get a listing of the resource.

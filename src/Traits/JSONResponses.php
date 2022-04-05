@@ -1,6 +1,8 @@
 <?php
 namespace Gemboot\Traits;
 
+use Exception;
+use Illuminate\Http\Response;
 use Gemboot\Exceptions\BadRequestException;
 use Gemboot\Exceptions\UnauthorizedException;
 use Gemboot\Exceptions\ForbiddenException;
@@ -19,11 +21,15 @@ trait JSONResponses
 
     public static $STATUS_SERVER_ERROR = 500;
 
+    protected function statusMessage($status_code) {
+        return isset(Response::$statusTexts[$status_code]) ? Response::$statusTexts[$status_code] : $status_code;
+    }
+
     protected function encapsulateResponse($status, $data, $message = null)
     {
         return [
             'status' => $status,
-            'message' => empty($message) ? $status : $message,
+            'message' => empty($message) ? $this->statusMessage($status) : $message,
             'data' => $data,
         ];
     }
@@ -36,9 +42,11 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function response($status, $data, $message = null)
+    protected function response($status, $data, $message = null, $status_message = null)
     {
         try {
+            ob_get_clean();
+
             $accept_encoding = request()->header('accept-encoding');
 
             $headers = [
@@ -49,7 +57,6 @@ trait JSONResponses
                 $headers['Content-Encoding'] = 'gzip';
                 ob_start('ob_gzhandler');
             } else {
-                // $headers['Transfer-Encoding'] = 'chunk';
                 ob_start();
             }
 
@@ -63,11 +70,15 @@ trait JSONResponses
                 log_access($this->logAccessTag);
             }
 
-            return response()->json(
-                $encapsulated,
-                $status
-            )->withHeaders($headers);
-        } catch (\Exception $e) {
+            $response = response()->json(
+                    $encapsulated,
+                    $status
+                )->withHeaders($headers);
+            if(! empty($status_message)) {
+                $response = $response->setStatusCode($status, $status_message);
+            }
+            return $response;
+        } catch (Exception $e) {
             if (env('APP_DEBUG')) {
                 $data = $e->getTrace();
                 $message = $e->getMessage();
@@ -95,10 +106,9 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseSuccess($data= [], $message= 'Success!')
+    public function responseSuccess($data= [], $message= null, $status_message= null)
     {
-        // $data['message'] = $message;
-        return $this->response(static::$STATUS_OK, $data, $message);
+        return $this->response(Response::HTTP_OK, $data, $message, $status_message);
     }
 
     /**
@@ -109,10 +119,9 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseBadRequest($data= [], $message= 'Bad Request!')
+    public function responseBadRequest($data= [], $message= null, $status_message= null)
     {
-        // $data['message'] = $message;
-        return $this->response(static::$STATUS_BAD_REQUEST, $data, $message);
+        return $this->response(Response::HTTP_BAD_REQUEST, $data, $message, $status_message);
     }
 
     /**
@@ -123,10 +132,9 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseUnauthorized($data= [], $message= 'Unauthorized!')
+    public function responseUnauthorized($data= [], $message= null, $status_message= null)
     {
-        // $data['message'] = $message;
-        return $this->response(static::$STATUS_UNAUTHORIZED, $data, $message);
+        return $this->response(Response::HTTP_UNAUTHORIZED, $data, $message, $status_message);
     }
 
     /**
@@ -137,10 +145,9 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseForbidden($data= [], $message= 'Forbidden!')
+    public function responseForbidden($data= [], $message= null, $status_message= null)
     {
-        // $data['message'] = $message;
-        return $this->response(static::$STATUS_FORBIDDEN, $data, $message);
+        return $this->response(Response::HTTP_FORBIDDEN, $data, $message, $status_message);
     }
 
     /**
@@ -151,10 +158,9 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseNotFound($data= [], $message= 'Not Found!')
+    public function responseNotFound($data= [], $message= null, $status_message= null)
     {
-        // $data['message'] = $message;
-        return $this->response(static::$STATUS_NOT_FOUND, $data, $message);
+        return $this->response(Response::HTTP_NOT_FOUND, $data, $message, $status_message);
     }
 
     /**
@@ -165,10 +171,9 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseError($data= [], $message= 'Server Error!')
+    public function responseError($data= [], $message= null, $status_message= null)
     {
-        // $data['message'] = $message;
-        return $this->response(static::$STATUS_SERVER_ERROR, $data, $message);
+        return $this->response(Response::HTTP_INTERNAL_SERVER_ERROR, $data, $message, $status_message);
     }
 
     /**
@@ -178,19 +183,21 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseException($exception)
+    public function responseException(Exception $exception)
     {
-        \Log::error($exception->getMessage());
+        $message = $exception->getMessage();
+
+        \Log::error($message);
         \Log::error($exception->getTraceAsString());
 
         if (env('APP_DEBUG')) {
             return $this->responseError([
-                'error' => $exception->getMessage(),
+                'error' => $message,
                 'trace' => $exception->getTrace()
-            ]);
+            ], null, null);
         } else {
             return $this->responseError([
-                'error' => $exception->getMessage(),
+                'error' => $message,
             ]);
         }
     }
@@ -202,34 +209,54 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseSuccessOrException(callable $callback)
+    public function responseSuccessOrException(callable $callback)
     {
         try {
             $data = $callback();
             return $this->responseSuccess($data);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            $err_message = "Data Not Found!";
             return $this->responseNotFound([
-                'error' => $e->getMessage()
-            ]);
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
         } catch (BadRequestException $e) {
+            $err_message = $e->getMessage();
             return $this->responseBadRequest([
-                'error' => $e->getMessage()
-            ]);
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
         } catch (UnauthorizedException $e) {
+            $err_message = $e->getMessage();
             return $this->responseUnauthorized([
-                'error' => $e->getMessage()
-            ]);
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
         } catch (ForbiddenException $e) {
+            $err_message = $e->getMessage();
             return $this->responseForbidden([
-                'error' => $e->getMessage()
-            ]);
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
         } catch (NotFoundException $e) {
+            $err_message = $e->getMessage();
             return $this->responseNotFound([
-                'error' => $e->getMessage()
-            ]);
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
         } catch (ServerErrorException $e) {
             return $this->responseException($e);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->responseException($e);
         }
     }
@@ -241,7 +268,7 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function responseSuccessOrExceptionUsingTransaction(callable $callback)
+    public function responseSuccessOrExceptionUsingTransaction(callable $callback)
     {
         \DB::beginTransaction();
         try {
@@ -250,35 +277,76 @@ trait JSONResponses
             return $this->responseSuccess($data);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             \DB::rollback();
+            $err_message = "Data Not Found!";
             return $this->responseNotFound([
-                'error' => $e->getMessage()
-            ]);
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
         } catch (BadRequestException $e) {
             \DB::rollback();
+            $err_message = $e->getMessage();
             return $this->responseBadRequest([
-                'error' => $e->getMessage()
-            ]);
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
         } catch (UnauthorizedException $e) {
             \DB::rollback();
+            $err_message = $e->getMessage();
             return $this->responseUnauthorized([
-                'error' => $e->getMessage()
-            ]);
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
         } catch (ForbiddenException $e) {
             \DB::rollback();
+            $err_message = $e->getMessage();
             return $this->responseForbidden([
-                'error' => $e->getMessage()
-            ]);
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
         } catch (NotFoundException $e) {
             \DB::rollback();
+            $err_message = $e->getMessage();
             return $this->responseNotFound([
-                'error' => $e->getMessage()
-            ]);
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
         } catch (ServerErrorException $e) {
             \DB::rollback();
             return $this->responseException($e);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             \DB::rollback();
             return $this->responseException($e);
         }
+    }
+
+
+    /**
+     * Response Bad Request, (validation error laravel)
+     *
+     * @param \Illuminate\Support\MessageBag $errors
+     *
+     * @return json
+     */
+    public function responseValidationError(\Illuminate\Support\MessageBag $errors) {
+        $err_message = null;
+        $all_errors = $errors->all();
+
+        if(count($all_errors) > 0) {
+            $err_message = $all_errors[0];
+        }
+
+        return $this->responseBadRequest([
+            'error' => $errors,
+        ], $err_message, $err_message);
     }
 }

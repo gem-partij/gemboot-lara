@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+
+    #App Service (PHP)
+    app:
+        build:
+            args:
+                user: angger
+                uid: 1000
+            context: ./
+            dockerfile: Dockerfile
+        image: gemboot-lara
+        container_name: gemboot-lara-app
+        restart: unless-stopped
+        working_dir: /var/www
+        environment:
+            TZ: "Asia/Jakarta"
+        expose:
+            - 9000
+        volumes:
+            - ./:/var/www
+        networks:
+            - default
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+
+networks:
+    default:
+        driver: bridge

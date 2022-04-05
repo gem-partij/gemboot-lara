@@ -8,19 +8,8 @@ abstract class CoreEloquentCachingObserver
 
     protected function getTags()
     {
-        return get_cache_tags($this->cacheTag);
+        return getCacheTags($this->cacheTag);
     }
-
-    /**
-     * Handle the Eloquent "retrieved" event.
-     *
-     * @return void
-     */
-    // public function retrieved($data)
-    // {
-    //     $cacheKey = get_cache_key($this->cacheTag, $data->id);
-    //     cache()->tags($this->getTags())->put($cacheKey, $data, $this->cacheSeconds);
-    // }
 
     /**
      * Handle the Eloquent "saved" event.

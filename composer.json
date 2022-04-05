@@ -10,22 +10,51 @@
             "email": "anggerpputro@gmail.com"
         }
     ],
+    "require": {
+        "php": "^7.3|^8.0",
+        "laravel/framework": "^5.5|^6|^7|^8",
+        "guzzlehttp/guzzle": "^7.0.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5",
+        "orchestra/testbench": "^6.0"
+    },
     "autoload": {
         "psr-4": {
             "Gemboot\\": "src/"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gemboot\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit"
     },
     "extra": {
         "laravel": {
             "providers": [
                 "Gemboot\\GembootServiceProvider"
             ]
+        },
+        "aliases": {
+            "GembootBadRequestException": "Gemboot\\Exceptions\\BadRequestException",
+            "GembootForbiddenException": "Gemboot\\Exceptions\\ForbiddenException",
+            "GembootNotFoundException": "Gemboot\\Exceptions\\NotFoundException",
+            "GembootServerErrorException": "Gemboot\\Exceptions\\ServerErrorException",
+            "GembootUnauthorizedException": "Gemboot\\Exceptions\\UnauthorizedException",
+
+            "GembootResponse": "Gemboot\\Facades\\GembootResponseFacade",
+
+            "GembootController": "Gemboot\\Controllers\\CoreRestController",
+            "GembootProxyController": "Gemboot\\Controllers\\CoreRestProxyController",
+            "GembootResourceController": "Gemboot\\Controllers\\CoreRestResourceController",
+
+            "GembootModel": "Gemboot\\Models\\CoreModel",
+
+            "GembootService": "Gemboot\\Services\\CoreService"
         }
-    },
-    "require": {
-        "php": ">=7",
-        "laravel/framework": "^5.5|^6|^7|^8",
-        "guzzlehttp/guzzle": "^7.0.1"
     },
     "minimum-stability": "dev",
     "prefer-stable": true
