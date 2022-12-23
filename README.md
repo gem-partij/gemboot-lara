@@ -263,7 +263,7 @@ class ExampleController extends Controller {
 }
 ```
 
-The uploadImage, uploadDocument method returns an instance of Illuminate\Http\Client\Response, which provides a variety of methods that may be used to inspect the response:
+The **uploadImage**, **uploadDocument** method returns an instance of **Illuminate\Http\Client\Response**, which provides a variety of methods that may be used to inspect the response:
 
 ```php
 $response->body() : string;
