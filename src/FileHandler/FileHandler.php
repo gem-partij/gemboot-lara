@@ -12,6 +12,8 @@ class FileHandler
 
     protected $baseUrl;
     protected $file;
+    protected $token;
+    protected $request;
 
     public function __construct($file)
     {
@@ -25,9 +27,21 @@ class FileHandler
         return $this;
     }
 
+    public function setToken($token)
+    {
+        $this->token = $token;
+        return $this;
+    }
+
+    public function setRequest($request)
+    {
+        $this->request = $request;
+        return $this;
+    }
+
     public function uploadImage($filename, $path): HttpResponse
     {
-        $token = $this->getRequestToken();
+        $token = $this->token ? $this->token : $this->getRequestToken($this->request);
 
         $img = $this->file;
         $photo = fopen($img->getRealPath(), 'r');
