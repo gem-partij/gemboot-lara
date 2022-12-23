@@ -243,6 +243,26 @@ php artisan vendor:publish --tag="gemboot-file-handler"
 ### File Handler Usage
 
 Now you can upload image or document using gemboot file handler.
+
+```php
+use Illuminate\Http\Request;
+use Gemboot\FileHandler\FileHandler;
+
+class ExampleController extends Controller {
+
+    public function uploadImage(Request $request) {
+        $image = $request->file_image;
+        $new_filename = "Gambar.jpeg";
+        $save_path = "/gambar/2020";
+
+        return (new FileHandler($image))
+                ->uploadImage($new_filename, $save_path)
+                ->object();
+    }
+
+}
+```
+
 The uploadImage, uploadDocument method returns an instance of Illuminate\Http\Client\Response, which provides a variety of methods that may be used to inspect the response:
 
 ```php
@@ -262,26 +282,6 @@ $response->headers() : array;
 ```
 
 more at: https://laravel.com/docs/9.x/http-client#making-requests
-
-```php
-use Illuminate\Http\Request;
-use Gemboot\FileHandler\FileHandler;
-
-class ExampleController extends Controller {
-
-    public function uploadImage(Request $request) {
-        $image = $request->file_image;
-        $new_filename = "Gambar.jpeg";
-        $save_path = "/gambar/2020";
-
-        return (new FileHandler($image))
-                ->uploadImage($new_filename, $save_path)
-                ->object();
-    }
-
-}
-
-```
 
 ## Testing
 
