@@ -15,7 +15,7 @@ class FileHandler
 
     public function __construct($file)
     {
-        $this->baseUrl = env('GEMBOOT_FILE_HANDLER_BASE_URL');
+        $this->baseUrl = app('config')->get('gemboot_file_handler.base_url');
         $this->setFile($file);
     }
 

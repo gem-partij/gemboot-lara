@@ -99,27 +99,27 @@ will get the same response:
 
 See the [DOCUMENTATION](https://github.com/gem-partij/gemboot-lara/tree/master/docs) for detailed installation and usage instructions.
 
-
 ## Support Policy
 
 Only the latest version will get new features.
 
 | Package Version | Laravel Version |
-|-----------------|-----------------|
+| --------------- | --------------- |
 | 0.5.x           | < 5.5           |
 | 1.x             | ^5.5, ^6, ^7    |
 | 2.x             | 8               |
 | 3.x             | 9               |
 
-
 ## Installation
 
 Require the `gem-partij/gemboot-lara` package in your `composer.json` and update your dependencies:
+
 ```sh
 composer require gem-partij/gemboot-lara
 ```
 
 Optional: The service provider will automatically get registered. Or you may manually add the service provider in your config/app.php file:
+
 ```php
 'providers' => [
     // ...
@@ -128,6 +128,7 @@ Optional: The service provider will automatically get registered. Or you may man
 ```
 
 Optional: The aliases will automatically get registered. Or you may manually add the gemboot aliases in your config/app.php file:
+
 ```php
 'aliases' => [
     // ...
@@ -150,13 +151,11 @@ Optional: The aliases will automatically get registered. Or you may manually add
 ];
 ```
 
-
-
 ## Gemboot Gateway (Additional Package)
 
 ### Middleware
 
-To use Gemboot Gateway for all your routes, add the `CheckToken` middleware in the `$middleware` property of  `app/Http/Kernel.php` class:
+To use Gemboot Gateway for all your routes, add the `CheckToken` middleware in the `$middleware` property of `app/Http/Kernel.php` class:
 
 ```php
 protected $middleware = [
@@ -168,17 +167,16 @@ protected $middleware = [
 ### Configuration
 
 The defaults are set in `config/gemboot_gw.php`. Publish the config to copy the file to your own config:
+
 ```sh
 php artisan vendor:publish --tag="gemboot-gateway"
 ```
-
-
 
 ## Gemboot Auth (Additional Package)
 
 ### Middleware
 
-To use Gemboot Auth middleware for your routes, add the `TokenValidated`, `HasRole`, `HasPermissionTo` middleware in the `$routeMiddleware` property of  `app/Http/Kernel.php` class:
+To use Gemboot Auth middleware for your routes, add the `TokenValidated`, `HasRole`, `HasPermissionTo` middleware in the `$routeMiddleware` property of `app/Http/Kernel.php` class:
 
 ```php
 protected $routeMiddleware = [
@@ -192,12 +190,15 @@ protected $routeMiddleware = [
 ### Configuration
 
 The defaults are set in `config/gemboot_auth.php`. Publish the config to copy the file to your own config:
+
 ```sh
 php artisan vendor:publish --tag="gemboot-auth"
 ```
 
 ### Routes
+
 add Gemboot AuthLibrary in your routes if you want to use it, example:
+
 ```php
 use Illuminate\Http\Request;
 use Gemboot\Libraries\AuthLibrary;
@@ -229,32 +230,36 @@ Route::middleware('api')->prefix('auth')->group(function() {
 });
 ```
 
+## Gemboot File Handler (Additional Package)
 
+### Configuration
+
+The defaults are set in `config/gemboot_file_handler.php`. Publish the config to copy the file to your own config:
+
+```sh
+php artisan vendor:publish --tag="gemboot-file-handler"
+```
 
 ## Testing
 
 Run the tests with:
 
-``` bash
+```bash
 composer test
 ```
-
 
 ## Contributing
 
 Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
-
 ## Security
 
 If you discover any security-related issues, please email anggerpputro@gmail.com instead of using the issue tracker.
 
-
 ## Credits
 
-- [Angger Priyardhan Putro](https://github.com/anggerpputro)
-- [All Contributors](../../contributors)
-
+-   [Angger Priyardhan Putro](https://github.com/anggerpputro)
+-   [All Contributors](../../contributors)
 
 ## License
 
