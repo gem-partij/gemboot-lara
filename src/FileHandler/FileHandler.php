@@ -39,6 +39,20 @@ class FileHandler
         return $this;
     }
 
+    public function ping()
+    {
+        $token = $this->token ? $this->token : $this->getRequestToken($this->request);
+
+        $http = Http::withToken($token)
+            ->get($this->baseUrl . "/api/ping");
+
+        if ($http->failed()) {
+            $http->throw();
+        }
+
+        return $http;
+    }
+
     public function uploadImage($filename, $path): HttpResponse
     {
         $token = $this->token ? $this->token : $this->getRequestToken($this->request);
@@ -66,7 +80,7 @@ class FileHandler
 
     public function uploadDocument($filename, $path): HttpResponse
     {
-        $token = $this->getRequestToken();
+        $token = $this->token ? $this->token : $this->getRequestToken($this->request);
 
         $file = $this->file;
         $document = fopen($file->getRealPath(), 'r');
