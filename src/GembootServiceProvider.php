@@ -6,6 +6,8 @@ use Illuminate\Support\ServiceProvider;
 
 use Gemboot\GembootRequest;
 use Gemboot\GembootResponse;
+use Gemboot\GembootPermission;
+use Gemboot\Libraries\AuthLibrary;
 use Gemboot\Commands\GembootTest;
 use Gemboot\Commands\MakeController;
 use Gemboot\Commands\MakeModel;
@@ -39,6 +41,18 @@ class GembootServiceProvider extends ServiceProvider
                 __DIR__ . '/../config/gemboot_file_handler.php' => config_path('gemboot_file_handler.php'),
             ], 'gemboot-file-handler');
         }
+
+        // $this->app['auth']->extend('jwt', function ($app, $name, array $config) {
+        //     $guard = new JWTGuard(
+        //         $app['tymon.jwt'],
+        //         $app['auth']->createUserProvider($config['provider']),
+        //         $app['request']
+        //     );
+
+        //     $app->refresh('request', $guard, 'setRequest');
+
+        //     return $guard;
+        // });
     }
 
     public function register()
@@ -50,6 +64,14 @@ class GembootServiceProvider extends ServiceProvider
 
         $this->app->bind('gemboot-response', function ($app) {
             return new GembootResponse();
+        });
+
+        $this->app->bind('gemboot-permission', function ($app) {
+            return new GembootPermission();
+        });
+
+        $this->app->bind('gemboot-auth', function ($app) {
+            return new AuthLibrary();
         });
     }
 }

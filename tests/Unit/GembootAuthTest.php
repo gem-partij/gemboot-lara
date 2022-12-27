@@ -197,31 +197,31 @@ class GembootAuthTest extends TestCase
      *
      * @test
      **/
-    public function test_get_has_role_forbidden()
-    {
-        $response_auth = $this->postJson('/auth/login', [
-            'npp' => 'tester',
-            'password' => 'tester',
-            'hwid' => 'gemboot',
-        ]);
+    // public function test_get_has_role_forbidden()
+    // {
+    //     $response_auth = $this->postJson('/auth/login', [
+    //         'npp' => 'tester',
+    //         'password' => 'tester',
+    //         'hwid' => 'gemboot',
+    //     ]);
 
-        $auth_data = $response_auth->getData()->data;
+    //     $auth_data = $response_auth->getData()->data;
 
-        $response = $this->withHeaders([
-            'Authorization' => $auth_data->token_type . ' ' . $auth_data->access_token,
-        ])->getJson('/auth/has-role', [
-            'role_name' => 'tester',
-        ]);
-        // ob_get_clean();
+    //     $response = $this->withHeaders([
+    //         'Authorization' => $auth_data->token_type . ' ' . $auth_data->access_token,
+    //     ])->getJson('/auth/has-role', [
+    //         'role_name' => 'tester',
+    //     ]);
+    //     // ob_get_clean();
 
-        $response
-            ->assertStatus(403)
-            ->assertJson(
-                fn (AssertableJson $json) =>
-                $json
-                    ->has('status')
-                    ->has('message')
-                    ->has('data')
-            );
-    }
+    //     $response
+    //         ->assertStatus(403)
+    //         ->assertJson(
+    //             fn (AssertableJson $json) =>
+    //             $json
+    //                 ->has('status')
+    //                 ->has('message')
+    //                 ->has('data')
+    //         );
+    // }
 }

@@ -36,7 +36,13 @@
         "laravel": {
             "providers": [
                 "Gemboot\\GembootServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "GembootAuth": "Gemboot\\Facades\\GembootAuthFacade",
+                "GembootPermission": "Gemboot\\Facades\\GembootPermissionFacade",
+                "GembootRequest": "Gemboot\\Facades\\GembootRequestFacade",
+                "GembootResponse": "Gemboot\\Facades\\GembootResponseFacade"
+            }
         },
         "aliases": {
             "GembootBadRequestException": "Gemboot\\Exceptions\\BadRequestException",
@@ -44,8 +50,6 @@
             "GembootNotFoundException": "Gemboot\\Exceptions\\NotFoundException",
             "GembootServerErrorException": "Gemboot\\Exceptions\\ServerErrorException",
             "GembootUnauthorizedException": "Gemboot\\Exceptions\\UnauthorizedException",
-
-            "GembootResponse": "Gemboot\\Facades\\GembootResponseFacade",
 
             "GembootController": "Gemboot\\Controllers\\CoreRestController",
             "GembootProxyController": "Gemboot\\Controllers\\CoreRestProxyController",
