@@ -41,7 +41,7 @@ class FileHandler
 
     public function ping()
     {
-        $token = $this->token ? $this->token : $this->getRequestToken($this->request);
+        $token = $this->token ? $this->token : $this->getRequestToken($this->request, true);
 
         $http = Http::withToken($token)
             ->get($this->baseUrl . "/api/ping");
@@ -55,7 +55,7 @@ class FileHandler
 
     public function uploadImage($filename, $path): HttpResponse
     {
-        $token = $this->token ? $this->token : $this->getRequestToken($this->request);
+        $token = $this->token ? $this->token : $this->getRequestToken($this->request, true);
 
         $img = $this->file;
         $photo = fopen($img->getRealPath(), 'r');
@@ -80,7 +80,7 @@ class FileHandler
 
     public function uploadDocument($filename, $path): HttpResponse
     {
-        $token = $this->token ? $this->token : $this->getRequestToken($this->request);
+        $token = $this->token ? $this->token : $this->getRequestToken($this->request, true);
 
         $file = $this->file;
         $document = fopen($file->getRealPath(), 'r');
