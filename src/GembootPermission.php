@@ -3,6 +3,7 @@
 namespace Gemboot;
 
 use Gemboot\Libraries\AuthLibrary;
+use Gemboot\Exceptions\ForbiddenException;
 
 class GembootPermission
 {
@@ -20,12 +21,29 @@ class GembootPermission
 
     public function hasPermissionTo($permission_name)
     {
+        $is_aslinya_array = true;
         if (!is_array($permission_name)) {
             $permission_name = [$permission_name];
+            $is_aslinya_array = false;
         }
 
         $has_permission_to_response = (new AuthLibrary)->hasPermissionTo(implode("|", $permission_name));
 
-        return $has_permission_to_response->has_permission_to;
+        return $is_aslinya_array
+            ? $has_permission_to_response->has_any_permission
+            : $has_permission_to_response->has_permission_to;
+    }
+
+    public function requirePermission($permission_name, $throw_exception = true)
+    {
+        if ($this->hasPermissionTo($permission_name)) {
+            return true;
+        }
+
+        if ($throw_exception) {
+            throw new ForbiddenException("permission required to access this endpoint");
+        }
+
+        return false;
     }
 }
