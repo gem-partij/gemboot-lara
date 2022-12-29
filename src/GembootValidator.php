@@ -3,7 +3,7 @@
 namespace Gemboot;
 
 use Illuminate\Support\Facades\Validator;
-use Gemboot\Exceptions\BadRequestException;
+use Gemboot\Exceptions\ValidationFailException;
 use Gemboot\GembootResponse;
 
 class GembootValidator
@@ -45,7 +45,7 @@ class GembootValidator
     ) {
         $this->make($data, $rules, $messages, $customAttributes);
         if ($this->fails()) {
-            throw new BadRequestException(json_encode($this->errors()));
+            throw new ValidationFailException(json_encode($this->errors()));
         }
         return true;
     }
