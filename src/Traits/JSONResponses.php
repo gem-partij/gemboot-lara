@@ -230,7 +230,7 @@ trait JSONResponses
     public function responseSuccessOrException(callable $callback, array $validation_rules = [], array $validation_messages = [])
     {
         try {
-            if (!empty($validation_rules) && !empty($validation_messages)) {
+            if (!empty($validation_rules)) {
                 // $validator = (new GembootValidator)->make(request()->all(), $validation_rules, $validation_messages);
                 // if ($validator->fails()) {
                 //     return $this->responseBadRequest(['error' => $validator->errors()]);
@@ -320,7 +320,7 @@ trait JSONResponses
     {
         \DB::beginTransaction();
         try {
-            if (!empty($validation_rules) && !empty($validation_messages)) {
+            if (!empty($validation_rules)) {
                 (new GembootValidator)->makeAndThrow(request()->all(), $validation_rules, $validation_messages);
             }
 
