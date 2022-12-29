@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Gemboot\GembootRequest;
 use Gemboot\GembootResponse;
 use Gemboot\GembootPermission;
+use Gemboot\GembootValidator;
 use Gemboot\Libraries\AuthLibrary;
 use Gemboot\Commands\GembootTest;
 use Gemboot\Commands\MakeController;
@@ -72,6 +73,10 @@ class GembootServiceProvider extends ServiceProvider
 
         $this->app->bind('gemboot-auth', function ($app) {
             return new AuthLibrary();
+        });
+
+        $this->app->bind('gemboot-validator', function ($app) {
+            return new GembootValidator();
         });
     }
 }

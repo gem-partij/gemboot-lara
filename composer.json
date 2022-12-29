@@ -41,7 +41,8 @@
                 "GembootAuth": "Gemboot\\Facades\\GembootAuthFacade",
                 "GembootPermission": "Gemboot\\Facades\\GembootPermissionFacade",
                 "GembootRequest": "Gemboot\\Facades\\GembootRequestFacade",
-                "GembootResponse": "Gemboot\\Facades\\GembootResponseFacade"
+                "GembootResponse": "Gemboot\\Facades\\GembootResponseFacade",
+                "GembootValidator": "Gemboot\\Facades\\GembootValidatorFacade"
             }
         },
         "aliases": {

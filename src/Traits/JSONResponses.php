@@ -9,8 +9,10 @@ use Gemboot\Exceptions\BadRequestException;
 use Gemboot\Exceptions\UnauthorizedException;
 use Gemboot\Exceptions\ForbiddenException;
 use Gemboot\Exceptions\NotFoundException;
+use Gemboot\Exceptions\ValidationFailException;
 
 use Gemboot\Exceptions\ServerErrorException;
+use Gemboot\GembootValidator;
 
 trait JSONResponses
 {
@@ -225,11 +227,26 @@ trait JSONResponses
      *
      * @return json
      */
-    public function responseSuccessOrException(callable $callback)
+    public function responseSuccessOrException(callable $callback, array $validation_rules = [], array $validation_messages = [])
     {
         try {
+            if (!empty($validation_rules) && !empty($validation_messages)) {
+                // $validator = (new GembootValidator)->make(request()->all(), $validation_rules, $validation_messages);
+                // if ($validator->fails()) {
+                //     return $this->responseBadRequest(['error' => $validator->errors()]);
+                // }
+                (new GembootValidator)->makeAndThrow(request()->all(), $validation_rules, $validation_messages);
+            }
+
             $data = $callback();
             return $this->responseSuccess($data);
+        } catch (ValidationFailException $e) {
+            $err_message = json_decode($e->getMessage(), true);
+            return $this->responseBadRequest(
+                [
+                    'error' => $err_message
+                ]
+            );
         } catch (HttpErrorException $e) {
             $err_message = $e->getMessage();
             return $this->responseHttpError(
@@ -299,13 +316,25 @@ trait JSONResponses
      *
      * @return json
      */
-    public function responseSuccessOrExceptionUsingTransaction(callable $callback)
+    public function responseSuccessOrExceptionUsingTransaction(callable $callback, array $validation_rules = [], array $validation_messages = [])
     {
         \DB::beginTransaction();
         try {
+            if (!empty($validation_rules) && !empty($validation_messages)) {
+                (new GembootValidator)->makeAndThrow(request()->all(), $validation_rules, $validation_messages);
+            }
+
             $data = $callback();
             \DB::commit();
             return $this->responseSuccess($data);
+        } catch (ValidationFailException $e) {
+            \DB::rollback();
+            $err_message = json_decode($e->getMessage(), true);
+            return $this->responseBadRequest(
+                [
+                    'error' => $err_message
+                ]
+            );
         } catch (HttpErrorException $e) {
             \DB::rollback();
             $err_message = $e->getMessage();
