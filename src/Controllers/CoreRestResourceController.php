@@ -11,6 +11,7 @@ use Gemboot\Exceptions\BadRequestException;
 use Gemboot\Exceptions\UnauthorizedException;
 use Gemboot\Exceptions\ForbiddenException;
 use Gemboot\Exceptions\NotFoundException;
+use Gemboot\Exceptions\ServerErrorException;
 
 use Gemboot\Controllers\CoreRestController;
 use Gemboot\Models\CoreModel;
