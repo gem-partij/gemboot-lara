@@ -14,8 +14,9 @@ class FileHandler
     protected $file;
     protected $token;
     protected $request;
+    protected $fileContent;
 
-    public function __construct($file)
+    public function __construct($file = null)
     {
         $this->baseUrl = app('config')->get('gemboot_file_handler.base_url');
         $this->setFile($file);
@@ -24,6 +25,12 @@ class FileHandler
     public function setFile($file)
     {
         $this->file = $file;
+        return $this;
+    }
+
+    public function setFileContent($fileContent)
+    {
+        $this->fileContent = $fileContent;
         return $this;
     }
 
@@ -57,14 +64,30 @@ class FileHandler
     {
         $token = $this->token ? $this->token : $this->getRequestToken($this->request, true);
 
-        $img = $this->file;
-        $photo = fopen($img->getRealPath(), 'r');
+        if (empty($this->file) && empty($this->fileContent)) {
+            throw new \Exception("File is required!");
+        }
+
+        $originalFileName = null;
+        $photoContent = null;
+        if (!empty($this->file)) {
+            $img = $this->file;
+            $originalFileName = $img->getClientOriginalName();
+            $photoContent = fopen($img->getRealPath(), 'r');
+        } elseif (!empty($this->fileContent)) {
+            $originalFileName = $filename;
+            $photoContent = $this->fileContent;
+        }
+
+        if (empty($photoContent)) {
+            throw new \Exception("Cannot read file!");
+        }
 
         $http = Http::withToken($token)
             ->attach(
                 'photo',
-                $photo,
-                $img->getClientOriginalName()
+                $photoContent,
+                $originalFileName
             )
             ->post($this->baseUrl . "/api/upload/foto", [
                 'path' => $path,
@@ -82,14 +105,30 @@ class FileHandler
     {
         $token = $this->token ? $this->token : $this->getRequestToken($this->request, true);
 
-        $file = $this->file;
-        $document = fopen($file->getRealPath(), 'r');
+        if (empty($this->file) && empty($this->fileContent)) {
+            throw new \Exception("File is required!");
+        }
+
+        $originalFileName = null;
+        $documentContent = null;
+        if (!empty($this->file)) {
+            $file = $this->file;
+            $originalFileName = $file->getClientOriginalName();
+            $documentContent = fopen($file->getRealPath(), 'r');
+        } elseif (!empty($this->fileContent)) {
+            $originalFileName = $filename;
+            $documentContent = $this->fileContent;
+        }
+
+        if (empty($documentContent)) {
+            throw new \Exception("Cannot read file!");
+        }
 
         $http = Http::withToken($token)
             ->attach(
                 'document',
-                $document,
-                $file->getClientOriginalName()
+                $documentContent,
+                $originalFileName
             )
             ->post($this->baseUrl . "/api/upload/document", [
                 'path' => $path,
