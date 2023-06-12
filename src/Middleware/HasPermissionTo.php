@@ -22,10 +22,9 @@ class HasPermissionTo
         $auth = new AuthLibrary();
         $response = $auth->hasPermissionTo($permission_name, false, $request);
         if (!$response || ($response && !$response->has_permission_to)) {
-            return $this->responseUnauthorized();
+            return $this->responseForbidden();
         }
 
         return $next($request);
     }
-
 }

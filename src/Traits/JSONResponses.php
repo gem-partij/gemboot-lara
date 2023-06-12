@@ -1,4 +1,5 @@
 <?php
+
 namespace Gemboot\Traits;
 
 use Exception;
@@ -8,8 +9,10 @@ use Gemboot\Exceptions\BadRequestException;
 use Gemboot\Exceptions\UnauthorizedException;
 use Gemboot\Exceptions\ForbiddenException;
 use Gemboot\Exceptions\NotFoundException;
+use Gemboot\Exceptions\ValidationFailException;
 
 use Gemboot\Exceptions\ServerErrorException;
+use Gemboot\GembootValidator;
 
 trait JSONResponses
 {
@@ -22,7 +25,8 @@ trait JSONResponses
 
     public static $STATUS_SERVER_ERROR = 500;
 
-    protected function statusMessage($status_code) {
+    protected function statusMessage($status_code)
+    {
         return isset(Response::$statusTexts[$status_code]) ? Response::$statusTexts[$status_code] : $status_code;
     }
 
@@ -67,15 +71,15 @@ trait JSONResponses
                 $message
             );
 
-            if (! empty($this->logAccessTag) && request()->isMethod('GET')) {
+            if (!empty($this->logAccessTag) && request()->isMethod('GET')) {
                 log_access($this->logAccessTag);
             }
 
             $response = response()->json(
-                    $encapsulated,
-                    $status
-                )->withHeaders($headers);
-            if(! empty($status_message)) {
+                $encapsulated,
+                $status
+            )->withHeaders($headers);
+            if (!empty($status_message)) {
                 $response = $response->setStatusCode($status, $status_message);
             }
             return $response;
@@ -107,7 +111,7 @@ trait JSONResponses
      *
      * @return json
      */
-    public function responseSuccess($data= [], $message= null, $status_message= null)
+    public function responseSuccess($data = [], $message = null, $status_message = null)
     {
         return $this->response(Response::HTTP_OK, $data, $message, $status_message);
     }
@@ -120,7 +124,7 @@ trait JSONResponses
      *
      * @return json
      */
-    public function responseBadRequest($data= [], $message= null, $status_message= null)
+    public function responseBadRequest($data = [], $message = null, $status_message = null)
     {
         return $this->response(Response::HTTP_BAD_REQUEST, $data, $message, $status_message);
     }
@@ -133,7 +137,7 @@ trait JSONResponses
      *
      * @return json
      */
-    public function responseUnauthorized($data= [], $message= null, $status_message= null)
+    public function responseUnauthorized($data = [], $message = null, $status_message = null)
     {
         return $this->response(Response::HTTP_UNAUTHORIZED, $data, $message, $status_message);
     }
@@ -146,7 +150,7 @@ trait JSONResponses
      *
      * @return json
      */
-    public function responseForbidden($data= [], $message= null, $status_message= null)
+    public function responseForbidden($data = [], $message = null, $status_message = null)
     {
         return $this->response(Response::HTTP_FORBIDDEN, $data, $message, $status_message);
     }
@@ -159,7 +163,7 @@ trait JSONResponses
      *
      * @return json
      */
-    public function responseNotFound($data= [], $message= null, $status_message= null)
+    public function responseNotFound($data = [], $message = null, $status_message = null)
     {
         return $this->response(Response::HTTP_NOT_FOUND, $data, $message, $status_message);
     }
@@ -172,7 +176,7 @@ trait JSONResponses
      *
      * @return json
      */
-    public function responseError($data= [], $message= null, $status_message= null)
+    public function responseError($data = [], $message = null, $status_message = null)
     {
         return $this->response(Response::HTTP_INTERNAL_SERVER_ERROR, $data, $message, $status_message);
     }
@@ -185,7 +189,8 @@ trait JSONResponses
      *
      * @return json
      */
-    public function responseHttpError($status_code, $data= [], $message= null, $status_message= null) {
+    public function responseHttpError($status_code, $data = [], $message = null, $status_message = null)
+    {
         return $this->response($status_code, $data, $message, $status_message);
     }
 
@@ -222,12 +227,27 @@ trait JSONResponses
      *
      * @return json
      */
-    public function responseSuccessOrException(callable $callback)
+    public function responseSuccessOrException(callable $callback, array $validation_rules = [], array $validation_messages = [])
     {
         try {
+            if (!empty($validation_rules)) {
+                // $validator = (new GembootValidator)->make(request()->all(), $validation_rules, $validation_messages);
+                // if ($validator->fails()) {
+                //     return $this->responseBadRequest(['error' => $validator->errors()]);
+                // }
+                (new GembootValidator)->makeAndThrow(request()->all(), $validation_rules, $validation_messages);
+            }
+
             $data = $callback();
             return $this->responseSuccess($data);
-        } catch(HttpErrorException $e) {
+        } catch (ValidationFailException $e) {
+            $err_message = json_decode($e->getMessage(), true);
+            return $this->responseBadRequest(
+                [
+                    'error' => $err_message
+                ]
+            );
+        } catch (HttpErrorException $e) {
             $err_message = $e->getMessage();
             return $this->responseHttpError(
                 $e->getCode(),
@@ -239,7 +259,8 @@ trait JSONResponses
             );
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             $err_message = "Data Not Found!";
-            return $this->responseNotFound([
+            return $this->responseNotFound(
+                [
                     'error' => $err_message
                 ],
                 null,
@@ -247,7 +268,8 @@ trait JSONResponses
             );
         } catch (BadRequestException $e) {
             $err_message = $e->getMessage();
-            return $this->responseBadRequest([
+            return $this->responseBadRequest(
+                [
                     'error' => $err_message
                 ],
                 null,
@@ -255,7 +277,8 @@ trait JSONResponses
             );
         } catch (UnauthorizedException $e) {
             $err_message = $e->getMessage();
-            return $this->responseUnauthorized([
+            return $this->responseUnauthorized(
+                [
                     'error' => $err_message
                 ],
                 null,
@@ -263,7 +286,8 @@ trait JSONResponses
             );
         } catch (ForbiddenException $e) {
             $err_message = $e->getMessage();
-            return $this->responseForbidden([
+            return $this->responseForbidden(
+                [
                     'error' => $err_message
                 ],
                 null,
@@ -271,7 +295,8 @@ trait JSONResponses
             );
         } catch (NotFoundException $e) {
             $err_message = $e->getMessage();
-            return $this->responseNotFound([
+            return $this->responseNotFound(
+                [
                     'error' => $err_message
                 ],
                 null,
@@ -291,14 +316,26 @@ trait JSONResponses
      *
      * @return json
      */
-    public function responseSuccessOrExceptionUsingTransaction(callable $callback)
+    public function responseSuccessOrExceptionUsingTransaction(callable $callback, array $validation_rules = [], array $validation_messages = [])
     {
         \DB::beginTransaction();
         try {
+            if (!empty($validation_rules)) {
+                (new GembootValidator)->makeAndThrow(request()->all(), $validation_rules, $validation_messages);
+            }
+
             $data = $callback();
             \DB::commit();
             return $this->responseSuccess($data);
-        } catch(HttpErrorException $e) {
+        } catch (ValidationFailException $e) {
+            \DB::rollback();
+            $err_message = json_decode($e->getMessage(), true);
+            return $this->responseBadRequest(
+                [
+                    'error' => $err_message
+                ]
+            );
+        } catch (HttpErrorException $e) {
             \DB::rollback();
             $err_message = $e->getMessage();
             return $this->responseHttpError(
@@ -312,7 +349,8 @@ trait JSONResponses
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             \DB::rollback();
             $err_message = "Data Not Found!";
-            return $this->responseNotFound([
+            return $this->responseNotFound(
+                [
                     'error' => $err_message
                 ],
                 null,
@@ -321,7 +359,8 @@ trait JSONResponses
         } catch (BadRequestException $e) {
             \DB::rollback();
             $err_message = $e->getMessage();
-            return $this->responseBadRequest([
+            return $this->responseBadRequest(
+                [
                     'error' => $err_message
                 ],
                 null,
@@ -330,7 +369,8 @@ trait JSONResponses
         } catch (UnauthorizedException $e) {
             \DB::rollback();
             $err_message = $e->getMessage();
-            return $this->responseUnauthorized([
+            return $this->responseUnauthorized(
+                [
                     'error' => $err_message
                 ],
                 null,
@@ -339,7 +379,8 @@ trait JSONResponses
         } catch (ForbiddenException $e) {
             \DB::rollback();
             $err_message = $e->getMessage();
-            return $this->responseForbidden([
+            return $this->responseForbidden(
+                [
                     'error' => $err_message
                 ],
                 null,
@@ -348,7 +389,8 @@ trait JSONResponses
         } catch (NotFoundException $e) {
             \DB::rollback();
             $err_message = $e->getMessage();
-            return $this->responseNotFound([
+            return $this->responseNotFound(
+                [
                     'error' => $err_message
                 ],
                 null,
@@ -371,12 +413,17 @@ trait JSONResponses
      *
      * @return json
      */
-    public function responseValidationError(\Illuminate\Support\MessageBag $errors) {
+    public function responseValidationError(\Illuminate\Support\MessageBag $errors, $throw_err = false)
+    {
         $err_message = null;
         $all_errors = $errors->all();
 
-        if(count($all_errors) > 0) {
+        if (count($all_errors) > 0) {
             $err_message = $all_errors[0];
+        }
+
+        if ($throw_err) {
+            throw new BadRequestException($err_message);
         }
 
         return $this->responseBadRequest([
