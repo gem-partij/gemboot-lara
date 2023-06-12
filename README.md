@@ -109,6 +109,7 @@ Only the latest version will get new features.
 | 1.x             | ^5.5, ^6, ^7    |
 | 2.x             | 8               |
 | 3.x             | 9               |
+| 4.x             | 10              |
 
 ## Installation
 
