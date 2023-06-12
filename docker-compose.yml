@@ -1,7 +1,6 @@
 version: "3.9"
 
 services:
-
     #App Service (PHP)
     app:
         build:
@@ -10,7 +9,7 @@ services:
                 uid: 1000
             context: ./
             dockerfile: Dockerfile
-        image: gemboot-lara:3.x
+        image: gemboot-lara:4.x
         container_name: gemboot-lara-app
         restart: unless-stopped
         working_dir: /var/www
