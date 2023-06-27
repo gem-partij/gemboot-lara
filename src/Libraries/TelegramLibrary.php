@@ -81,8 +81,11 @@ class TelegramLibrary
 
     public function send($message, $message_id = null)
     {
-        $message = $this->getMessageHeader() . "\n$message\n" . $this->getMessageFooter();
-        return $this->sendMessage($this->chat_id, $message, $message_id);
+        if ($this->chat_id && $this->token) {
+            $message = $this->getMessageHeader() . "\n$message\n" . $this->getMessageFooter();
+            return $this->sendMessage($this->chat_id, $message, $message_id);
+        }
+        return false;
     }
 
     // public function sendMessageToGroupPti($message, $message_id = null)
