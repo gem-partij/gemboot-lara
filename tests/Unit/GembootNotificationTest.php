@@ -20,7 +20,7 @@ class GembootNotificationTest extends TestCase
         // $response = Notification::notify(new Telegram($notif));
 
         $response = (new TelegramLibrary)->send("<pre>bla bla bla</pre>");
-        dd($response);
+        // dd($response);
 
         $this->assertTrue(true);
     }

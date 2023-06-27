@@ -41,6 +41,8 @@ class TestCase extends \Orchestra\Testbench\TestCase
 
         $app['config']->set('gemboot.file_handler.base_url', 'http://192.168.0.12:3000/file-handler');
 
+        $app['config']->set('gemboot.notifications.telegram.chat_id', '328200606');
+
         // // import the CreatePostsTable class from the migration
         // include_once __DIR__ . '/../database/migrations/create_gemboot_test_users_table.php.stub';
         //
