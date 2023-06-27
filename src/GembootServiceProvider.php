@@ -27,6 +27,11 @@ class GembootServiceProvider extends ServiceProvider
                 MakeService::class,
             ]);
 
+            // Export gemboot config
+            $this->publishes([
+                __DIR__ . '/../config/gemboot.php' => config_path('gemboot.php'),
+            ], 'gemboot');
+
             // Export gemboot gateway config
             $this->publishes([
                 __DIR__ . '/../config/gemboot_gw.php' => config_path('gemboot_gw.php'),
