@@ -11,6 +11,9 @@ use Gemboot\Exceptions\ForbiddenException;
 use Gemboot\Exceptions\NotFoundException;
 use Gemboot\Exceptions\ValidationFailException;
 
+use Illuminate\Support\Facades\Notification;
+use Gemboot\Notifications\Telegram;
+
 use Gemboot\Exceptions\ServerErrorException;
 use Gemboot\GembootValidator;
 
@@ -207,6 +210,13 @@ trait JSONResponses
 
         \Log::error($message);
         \Log::error($exception->getTraceAsString());
+
+        if (env('GEMBOOT_TELEGRAM_BOT_TOKEN')) {
+            $notif = (object)[
+                'content' => "*NEW ERROR CATCH:*\n$message",
+            ];
+            Notification::notify(new Telegram($notif));
+        }
 
         if (env('APP_DEBUG')) {
             return $this->responseError([

@@ -21,6 +21,16 @@
     <env name="QUEUE_CONNECTION" value="sync"/>
     <env name="SESSION_DRIVER" value="array"/>
     <env name="TELESCOPE_ENABLED" value="false"/>
+
+    <env name="GEMBOOT_AUTH_BASE_URL" value="http://192.168.0.12:3000"/>
+    <env name="GEMBOOT_AUTH_BASE_API" value="http://192.168.0.12:3000/api/auth"/>
+    <env name="GEMBOOT_FILE_HANDLER_BASE_URL" value="http://192.168.0.12:3000/file-handler"/>
+    <env name="GEMBOOT_GW_BASE_URL" value="http://192.168.0.12/"/>
+    <env name="GEMBOOT_GW_BASE_URL_AUTH" value="http://192.168.0.12/auth/"/>
+
+    <env name="TELEGRAM_BOT_TOKEN" value="5953720372:AAGG_Y0I56njl5xBsNaLQ1MO3rPrjWX-7-k"/>
+    <env name="GEMBOOT_TELEGRAM_USER_ID" value="328200606"/>
+    <env name="GEMBOOT_TELEGRAM_BOT_TOKEN" value="5953720372:AAGG_Y0I56njl5xBsNaLQ1MO3rPrjWX-7-k"/>
   </php>
   <source>
     <include>
