@@ -1,4 +1,5 @@
 <?php
+
 namespace Gemboot\Gateway\Middleware;
 
 use Closure;
@@ -57,8 +58,8 @@ class CheckToken
 
     protected function validateToken(Request $request)
     {
-        $url_auth = app('config')->get('gemboot_gw.base_url_auth', 'https://tirta.pdamkotasmg.co.id:8443/gateway/auth/');
-        $url = $url_auth.'api/auth/me';
+        $url_auth = app('config')->get('gemboot.gateway.base_url_auth', 'https://tirta.pdamkotasmg.co.id:8443/gateway/auth/');
+        $url = $url_auth . 'api/auth/me';
 
         $headers = $request->headers->all();
         $headers_formatted = [];

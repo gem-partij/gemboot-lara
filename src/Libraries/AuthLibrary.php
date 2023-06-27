@@ -28,7 +28,7 @@ class AuthLibrary
     public function setBaseUrlAuth($baseUrlAuth = null)
     {
         if (empty($baseUrlAuth)) {
-            $baseUrlAuth = app('config')->get('gemboot_auth.base_api');
+            $baseUrlAuth = app('config')->get('gemboot.auth.base_api');
         }
         $this->baseUrlAuth = $baseUrlAuth;
         return $this;
