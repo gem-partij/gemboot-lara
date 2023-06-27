@@ -10,6 +10,7 @@
     </testsuite>
   </testsuites>
   <php>
+    <env name="APP_NAME" value="Gemboot Lara"/>
     <env name="APP_KEY" value="base64:CWmJaj1tHLrJtykjD8YWuXJDsMACPQxmxLnZpNRmvug="/>
     <env name="APP_ENV" value="testing"/>
     <env name="BCRYPT_ROUNDS" value="4"/>
@@ -29,7 +30,7 @@
     <env name="GEMBOOT_GW_BASE_URL_AUTH" value="http://192.168.0.12/auth/"/>
 
     <env name="TELEGRAM_BOT_TOKEN" value="5953720372:AAGG_Y0I56njl5xBsNaLQ1MO3rPrjWX-7-k"/>
-    <env name="GEMBOOT_TELEGRAM_USER_ID" value="328200606"/>
+    <env name="GEMBOOT_TELEGRAM_CHAT_ID" value="328200606"/>
     <env name="GEMBOOT_TELEGRAM_BOT_TOKEN" value="5953720372:AAGG_Y0I56njl5xBsNaLQ1MO3rPrjWX-7-k"/>
   </php>
   <source>

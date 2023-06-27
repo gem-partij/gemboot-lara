@@ -18,7 +18,7 @@ return [
 
     'notifications' => [
         'telegram' => [
-            'telegram_user_id' => env('GEMBOOT_TELEGRAM_USER_ID', 'YOUR TELEGRAM USER ID HERE'),
+            'chat_id' => env('GEMBOOT_TELEGRAM_CHAT_ID', 'YOUR TELEGRAM CHAT ID HERE'),
             'token' => env('GEMBOOT_TELEGRAM_BOT_TOKEN', 'YOUR BOT TOKEN HERE'),
         ],
     ],

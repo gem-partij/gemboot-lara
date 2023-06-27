@@ -14,7 +14,7 @@ class Telegram extends Notification
 
     public function toTelegram($notifiable)
     {
-        $telegram_user_id = app('config')->get('gemboot.notifications.telegram.telegram_user_id');
+        $telegram_user_id = app('config')->get('gemboot.notifications.telegram.chat_id');
         $content = $notifiable->content;
 
         return TelegramMessage::create()
