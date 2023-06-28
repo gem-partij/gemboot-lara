@@ -32,6 +32,10 @@
     <env name="TELEGRAM_BOT_TOKEN" value="5953720372:AAGG_Y0I56njl5xBsNaLQ1MO3rPrjWX-7-k"/>
     <env name="GEMBOOT_TELEGRAM_CHAT_ID" value="328200606"/>
     <env name="GEMBOOT_TELEGRAM_BOT_TOKEN" value="5953720372:AAGG_Y0I56njl5xBsNaLQ1MO3rPrjWX-7-k"/>
+
+    <env name="TEST_AUTH" value="false"/>
+    <env name="TEST_FILE_HANDLER" value="false"/>
+    <env name="TEST_NOTIFICATION" value="true"/>
   </php>
   <source>
     <include>

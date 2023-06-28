@@ -217,7 +217,7 @@ trait JSONResponses
             //     'content' => "*NEW ERROR CATCH:*\n$message",
             // ];
             // Notification::notify(new Telegram($notif)); 
-            (new TelegramLibrary)->send("<pre>$message</pre>");
+            (new TelegramLibrary)->sendExceptionMessage($exception);
         }
 
         if (env('APP_DEBUG')) {

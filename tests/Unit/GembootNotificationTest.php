@@ -14,6 +14,10 @@ class GembootNotificationTest extends TestCase
 
     function test_send()
     {
+        if (!env('TEST_NOTIFICATION')) {
+            return $this->assertTrue(true);
+        }
+
         // $notif = (object)[
         //     'content' => "*NEW ERROR CATCH:*\nbla bla bla",
         // ];
@@ -22,6 +26,23 @@ class GembootNotificationTest extends TestCase
         $response = (new TelegramLibrary)->send("<pre>bla bla bla</pre>");
         // dd($response);
 
-        $this->assertTrue(true);
+        $assert = false;
+        if ($response) {
+            $assert = true;
+        }
+
+        $this->assertTrue($assert);
+    }
+
+    function test_500()
+    {
+        if (!env('TEST_NOTIFICATION')) {
+            return $this->assertTrue(true);
+        }
+
+        $response = $this->getJson('/http-status/500');
+
+        $response
+            ->assertStatus(500);
     }
 }

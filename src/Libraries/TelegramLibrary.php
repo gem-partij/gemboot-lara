@@ -81,11 +81,28 @@ class TelegramLibrary
 
     public function send($message, $message_id = null)
     {
+        // dd([
+        //     'chat_id' => $this->chat_id,
+        //     'token' => $this->token,
+        // ]);
         if ($this->chat_id && $this->token) {
             $message = $this->getMessageHeader() . "\n$message\n" . $this->getMessageFooter();
             return $this->sendMessage($this->chat_id, $message, $message_id);
         }
         return false;
+    }
+
+    public function sendExceptionMessage($exception, $message_id = null)
+    {
+        $exception_message = $exception->getMessage();
+        $exception_file = $exception->getFile();
+        $exception_line = $exception->getLine();
+
+        $message = "<pre>
+$exception_message at $exception_file:$exception_line
+</pre>";
+
+        return $this->send($message, $message_id);
     }
 
     // public function sendMessageToGroupPti($message, $message_id = null)
