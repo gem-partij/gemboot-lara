@@ -29,6 +29,10 @@ class AuthLibrary
     {
         if (empty($baseUrlAuth)) {
             $baseUrlAuth = app('config')->get('gemboot.auth.base_api');
+            // backward compatibility with gemboot version 3.x and below
+            if (empty($baseUrlAuth)) {
+                $baseUrlAuth = app('config')->get('gemboot_auth.base_api');
+            }
         }
         $this->baseUrlAuth = $baseUrlAuth;
         return $this;
