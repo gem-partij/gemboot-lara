@@ -1,4 +1,5 @@
 <?php
+
 namespace Gemboot\Traits;
 
 use Gemboot\Contracts\CoreModelInterface as CoreModelContract;
@@ -11,7 +12,7 @@ trait MainModelAbilities
      * =========================
      * PUBLIC METHODS
      * ---------
-    **/
+     **/
     public function getTableColumns()
     {
         return $this->getConnection()->getSchemaBuilder()->getColumnListing($this->getTable());
@@ -22,24 +23,27 @@ trait MainModelAbilities
      * =========================
      * MAIN SCOPES
      * ---------
-    **/
+     **/
     /**
      * Scope a query to search data.
      * (using where like query)
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
-    **/
-    public function scopeSearch(Builder $query, $string, $field = '', $mode = 'or')
+     **/
+    public function scopeSearch(Builder $query, $string, $field = '', $mode = 'or', $operator = 'LIKE')
     {
+        if (empty($operator)) {
+            $operator = 'LIKE';
+        }
         $arr_date_fields = ['created_at', 'updated_at', 'deleted_at'];
 
-        $string_like = '%'.$string.'%';
+        $string_like = '%' . $string . '%';
         if (strpos($string, '%') !== false) {
             $string_like = $string;
         }
 
-        if (! empty($field)) {
+        if (!empty($field)) {
             if (in_array($field, $arr_date_fields)) {
                 return $this->getQueryDateSearch($query, $string, $field);
             }
@@ -47,33 +51,33 @@ trait MainModelAbilities
             if ($mode == 'or') {
                 if (strpos($field, '.') !== false) {
                     $exploded = explode('.', $field);
-                    return $this->getQueryOrWhereHas($query, $exploded[0], $exploded[1], 'LIKE', $string_like);
+                    return $this->getQueryOrWhereHas($query, $exploded[0], $exploded[1], $operator, $string_like);
                 } else {
-                    return $query->orWhere($this->getTable().'.'.$field, 'LIKE', $string_like);
+                    return $query->orWhere($this->getTable() . '.' . $field, $operator, $string_like);
                 }
             } else {
                 if (strpos($field, '.') !== false) {
                     $exploded = explode('.', $field);
-                    return $this->getQueryWhereHas($query, $exploded[0], $exploded[1], 'LIKE', $string_like);
+                    return $this->getQueryWhereHas($query, $exploded[0], $exploded[1], $operator, $string_like);
                 } else {
-                    return $query->where($this->getTable().'.'.$field, 'LIKE', $string_like);
+                    return $query->where($this->getTable() . '.' . $field, $operator, $string_like);
                 }
             }
         } else {
             $primary = $this->getKeyName();
             $cols = $this->getTableColumns();
 
-            return $query->where(function (Builder $q) use ($mode, $primary, $cols, $string_like, $arr_date_fields) {
+            return $query->where(function (Builder $q) use ($mode, $primary, $cols, $string_like, $arr_date_fields, $operator) {
                 if ($mode == 'or') {
                     foreach (array_diff($cols, $arr_date_fields) as $col) {
                         if ($col !== $primary) {
-                            $q->orWhere($this->getTable().'.'.$col, 'LIKE', $string_like);
+                            $q->orWhere($this->getTable() . '.' . $col, $operator, $string_like);
                         }
                     }
                 } else {
                     foreach (array_diff($cols, $arr_date_fields) as $col) {
                         if ($col !== $primary) {
-                            $q->where($this->getTable().'.'.$col, 'LIKE', $string_like);
+                            $q->where($this->getTable() . '.' . $col, $operator, $string_like);
                         }
                     }
                 }
@@ -87,12 +91,15 @@ trait MainModelAbilities
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
-    **/
-    public function scopeSearchExact(Builder $query, $string, $field = '', $mode = 'or')
+     **/
+    public function scopeSearchExact(Builder $query, $string, $field = '', $mode = 'or', $operator = '=')
     {
+        if (empty($operator)) {
+            $operator = '=';
+        }
         $arr_date_fields = ['created_at', 'updated_at', 'deleted_at'];
 
-        if (! empty($field)) {
+        if (!empty($field)) {
             if (in_array($field, $arr_date_fields)) {
                 return $this->getQueryDateSearch($query, $string, $field);
             }
@@ -100,33 +107,33 @@ trait MainModelAbilities
             if ($mode == 'or') {
                 if (strpos($field, '.') !== false) {
                     $exploded = explode('.', $field);
-                    return $this->getQueryOrWhereHas($query, $exploded[0], $exploded[1], '=', $string);
+                    return $this->getQueryOrWhereHas($query, $exploded[0], $exploded[1], $operator, $string);
                 } else {
-                    return $query->orWhere($this->getTable().'.'.$field, '=', $string);
+                    return $query->orWhere($this->getTable() . '.' . $field, $operator, $string);
                 }
             } else {
                 if (strpos($field, '.') !== false) {
                     $exploded = explode('.', $field);
-                    return $this->getQueryWhereHas($query, $exploded[0], $exploded[1], '=', $string);
+                    return $this->getQueryWhereHas($query, $exploded[0], $exploded[1], $operator, $string);
                 } else {
-                    return $query->where($this->getTable().'.'.$field, '=', $string);
+                    return $query->where($this->getTable() . '.' . $field, $operator, $string);
                 }
             }
         } else {
             $primary = $this->getKeyName();
             $cols = $this->getTableColumns();
 
-            return $query->where(function (Builder $q) use ($mode, $primary, $cols, $string, $arr_date_fields) {
+            return $query->where(function (Builder $q) use ($mode, $primary, $cols, $string, $arr_date_fields, $operator) {
                 if ($mode == 'or') {
                     foreach (array_diff($cols, $arr_date_fields) as $col) {
                         if ($col !== $primary) {
-                            $q->orWhere($this->getTable().'.'.$col, '=', $string);
+                            $q->orWhere($this->getTable() . '.' . $col, $operator, $string);
                         }
                     }
                 } else {
                     foreach (array_diff($cols, $arr_date_fields) as $col) {
                         if ($col !== $primary) {
-                            $q->where($this->getTable().'.'.$col, '=', $string);
+                            $q->where($this->getTable() . '.' . $col, $operator, $string);
                         }
                     }
                 }
@@ -141,18 +148,21 @@ trait MainModelAbilities
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
-    **/
-    public function scopeSearchMultiple(Builder $query, $string = [], $field = [], $mode = 'or')
+     **/
+    public function scopeSearchMultiple(Builder $query, $string = [], $field = [], $mode = 'or', $operator = 'LIKE')
     {
-        return $query->where(function (Builder $q) use ($mode, $string, $field) {
+        if (empty($operator)) {
+            $operator = 'LIKE';
+        }
+        return $query->where(function (Builder $q) use ($mode, $string, $field, $operator) {
             foreach ($string as $i => $string_item) {
                 if ($string_item != '') {
-                    if (! isset($field[$i])) {
+                    if (!isset($field[$i])) {
                         throw new \Exception("Please complete your search field!");
                     }
                     $field_item = $field[$i];
 
-                    $string_like = '%'.$string_item.'%';
+                    $string_like = '%' . $string_item . '%';
                     if (strpos($string_item, '%') !== false) {
                         $string_like = $string_item;
                     }
@@ -160,16 +170,16 @@ trait MainModelAbilities
                     if ($mode == 'or') {
                         if (strpos($field_item, '.') !== false) {
                             $exploded = explode('.', $field_item);
-                            $q = $this->getQueryOrWhereHas($q, $exploded[0], $exploded[1], 'LIKE', $string_like);
+                            $q = $this->getQueryOrWhereHas($q, $exploded[0], $exploded[1], $operator, $string_like);
                         } else {
-                            $q = $q->orWhere($this->getTable().'.'.$field_item, 'LIKE', $string_like);
+                            $q = $q->orWhere($this->getTable() . '.' . $field_item, $operator, $string_like);
                         }
                     } else {
                         if (strpos($field_item, '.') !== false) {
                             $exploded = explode('.', $field_item);
-                            $q = $this->getQueryWhereHas($q, $exploded[0], $exploded[1], 'LIKE', $string_like);
+                            $q = $this->getQueryWhereHas($q, $exploded[0], $exploded[1], $operator, $string_like);
                         } else {
-                            $q = $q->where($this->getTable().'.'.$field_item, 'LIKE', $string_like);
+                            $q = $q->where($this->getTable() . '.' . $field_item, $operator, $string_like);
                         }
                     }
                 }
@@ -184,13 +194,16 @@ trait MainModelAbilities
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
-    **/
-    public function scopeSearchExactMultiple(Builder $query, $string = [], $field = [], $mode = 'or')
+     **/
+    public function scopeSearchExactMultiple(Builder $query, $string = [], $field = [], $mode = 'or', $operator = '=')
     {
-        return $query->where(function (Builder $q) use ($mode, $string, $field) {
+        if (empty($operator)) {
+            $operator = '=';
+        }
+        return $query->where(function (Builder $q) use ($mode, $string, $field, $operator) {
             foreach ($string as $i => $string_item) {
                 if ($string_item != '') {
-                    if (! isset($field[$i])) {
+                    if (!isset($field[$i])) {
                         throw new \Exception("Please complete your search field!");
                     }
                     $field_item = $field[$i];
@@ -198,16 +211,16 @@ trait MainModelAbilities
                     if ($mode == 'or') {
                         if (strpos($field_item, '.') !== false) {
                             $exploded = explode('.', $field_item);
-                            $q = $this->getQueryOrWhereHas($q, $exploded[0], $exploded[1], '=', $string);
+                            $q = $this->getQueryOrWhereHas($q, $exploded[0], $exploded[1], $operator, $string_item);
                         } else {
-                            $q = $q->orWhere($this->getTable().'.'.$field_item, '=', $string);
+                            $q = $q->orWhere($this->getTable() . '.' . $field_item, $operator, $string_item);
                         }
                     } else {
                         if (strpos($field_item, '.') !== false) {
                             $exploded = explode('.', $field_item);
-                            $q = $this->getQueryWhereHas($q, $exploded[0], $exploded[1], '=', $string);
+                            $q = $this->getQueryWhereHas($q, $exploded[0], $exploded[1], $operator, $string_item);
                         } else {
-                            $q = $q->where($this->getTable().'.'.$field_item, '=', $string);
+                            $q = $q->where($this->getTable() . '.' . $field_item, $operator, $string_item);
                         }
                     }
                 }
@@ -220,13 +233,13 @@ trait MainModelAbilities
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
-    **/
+     **/
     public function scopeOrder(Builder $query, $field = '', $asc_or_desc = 'asc')
     {
-        if (! empty($field)) {
-            return $query->orderBy($this->getTable().'.'.$field, $asc_or_desc);
+        if (!empty($field)) {
+            return $query->orderBy($this->getTable() . '.' . $field, $asc_or_desc);
         } else {
-            return $query->orderBy($this->getTable().'.'.$this->primaryKey, $asc_or_desc);
+            return $query->orderBy($this->getTable() . '.' . $this->primaryKey, $asc_or_desc);
         }
     }
 
@@ -235,7 +248,7 @@ trait MainModelAbilities
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
-    **/
+     **/
     public function scopePerPage(Builder $query, $limit = 30)
     {
         return $query->limit($limit);
@@ -246,7 +259,7 @@ trait MainModelAbilities
      * =========================
      * PROTECTED METHODS
      * ---------
-    **/
+     **/
     protected function getQueryDateSearch(Builder &$query, $search, $search_field)
     {
         $strtotime = strtotime($search);
@@ -256,16 +269,16 @@ trait MainModelAbilities
         $strlen = strlen($search);
 
         if ($strlen > 10) {
-            return $query->whereDate($this->getTable().'.'.$search_field, substr($search, 0, 10));
+            return $query->whereDate($this->getTable() . '.' . $search_field, substr($search, 0, 10));
         } else {
             switch ($strlen) {
                 case 10:
-                    return $query->whereDate($this->getTable().'.'.$search_field, $search);
+                    return $query->whereDate($this->getTable() . '.' . $search_field, $search);
                 case 7:
-                    return $query->whereYear($this->getTable().'.'.$search_field, $year)
-                            ->whereMonth($this->getTable().'.'.$search_field, $month);
+                    return $query->whereYear($this->getTable() . '.' . $search_field, $year)
+                        ->whereMonth($this->getTable() . '.' . $search_field, $month);
                 case 4:
-                    return $query->whereYear($this->getTable().'.'.$search_field, $year);
+                    return $query->whereYear($this->getTable() . '.' . $search_field, $year);
                 default:
                     return $query;
             }

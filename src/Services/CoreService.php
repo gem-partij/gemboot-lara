@@ -1,4 +1,5 @@
 <?php
+
 namespace Gemboot\Services;
 
 use Gemboot\Contracts\CoreServiceInterface as CoreServiceContract;
@@ -17,8 +18,10 @@ class CoreService implements CoreServiceContract
 
     protected $modelPrimaryKeyName = "";
     protected $modelTableName = "";
+    protected $modelDbConnection = "";
+    protected $modelDbDriver = "mysql";
 
-    protected $defaultCacheLifetime = 60*60*24;
+    protected $defaultCacheLifetime = 60 * 60 * 24;
     protected $cacheKeyPrefix = "";
     protected $cacheKeyPostfix = "";
     protected $observer = null;
@@ -31,6 +34,8 @@ class CoreService implements CoreServiceContract
 
         $this->modelPrimaryKeyName = $model->getKeyName();
         $this->modelTableName = $model->getTable();
+        $this->modelDbConnection = $model->getConnectionName();
+        $this->modelDbDriver = config("database.connections.$this->modelDbConnection.driver");
     }
 
     public function setWith($with)
@@ -73,23 +78,23 @@ class CoreService implements CoreServiceContract
     public function generateCacheKey($main_name, $prefix = null, $postfix = null)
     {
         if (empty($prefix)) {
-            $prefix = strtolower(request()->method().request()->path());
+            $prefix = strtolower(request()->method() . request()->path());
         }
 
         if (empty($postfix)) {
             $postfix = json_encode(request()->all());
         }
 
-        return $prefix."-".$main_name."-".$postfix;
+        return $prefix . "-" . $main_name . "-" . $postfix;
     }
 
     /**
      * Get a listing of the resource.
-    **/
+     **/
     public function listAll($model = null, $disable_search = false)
     {
         try {
-            if(! empty($this->observer)) {
+            if (!empty($this->observer)) {
                 // cache response
                 $cacheKey = $this->getCacheKey($this->getModelTableName(), $this->generateCacheKey("listAll()"), 'group');
                 $cacheTags = $this->getCacheTags($this->getModelTableName());
@@ -113,24 +118,25 @@ class CoreService implements CoreServiceContract
 
     /**
      * Get a count of the resource.
-    **/
-    public function countAll($model = null, $disable_search = false) {
+     **/
+    public function countAll($model = null, $disable_search = false)
+    {
         try {
-            if (! is_null($model)) {
+            if (!is_null($model)) {
                 $this->model = $model;
             }
 
             $this->model = $this->generateModelSearch($this->model, $disable_search);
 
             return $this->model->count();
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             throw $e;
         }
     }
 
     /**
      * Store a newly created resource in storage.
-    **/
+     **/
     public function store($requestData, $merge_data_with = [])
     {
         $this->beforeStoreHooks($requestData, $merge_data_with);
@@ -146,13 +152,13 @@ class CoreService implements CoreServiceContract
 
     /**
      * Get the specified resource.
-    **/
+     **/
     public function findOrFail($id, $addWith = true)
     {
         $cacheKey = $this->getCacheKey($this->getModelTableName(), $this->generateCacheKey($id));
         $cacheTags = $this->getCacheTags($this->getModelTableName());
 
-        if (! empty($this->with) && $addWith) {
+        if (!empty($this->with) && $addWith) {
             $this->model = $this->model->with($this->with);
             $cacheKey .= '-addwith';
         }
@@ -173,12 +179,12 @@ class CoreService implements CoreServiceContract
 
     /**
      * Get the specified resource.
-    **/
+     **/
     public function firstOrFail($model, $addWith = true)
     {
         $this->model = $model;
 
-        if (! empty($this->with) && $addWith) {
+        if (!empty($this->with) && $addWith) {
             $this->model = $this->model->with($this->with);
         }
 
@@ -187,7 +193,7 @@ class CoreService implements CoreServiceContract
 
     /**
      * Update the specified resource in storage.
-    **/
+     **/
     public function update($requestData, $id, $merge_data_with = [])
     {
         $this->beforeUpdateHooks($requestData, $id, $merge_data_with);
@@ -203,7 +209,7 @@ class CoreService implements CoreServiceContract
 
     /**
      * Update the specified resource in storage.
-    **/
+     **/
     public function updateOrCreate($whereData, $requestData, $merge_data_with = [])
     {
         return $this->model->updateOrCreate($whereData, array_merge($requestData, $merge_data_with));
@@ -211,7 +217,7 @@ class CoreService implements CoreServiceContract
 
     /**
      * Update the specified resource in storage use the model given.
-    **/
+     **/
     public function updateUseModel($model, $requestData, $merge_data_with = [])
     {
         $model->fill(array_merge($requestData, $merge_data_with));
@@ -222,7 +228,7 @@ class CoreService implements CoreServiceContract
 
     /**
      * Remove the specified resource from storage.
-    **/
+     **/
     public function delete($id)
     {
         $this->beforeDeleteHooks($id);
@@ -236,7 +242,8 @@ class CoreService implements CoreServiceContract
     }
 
 
-    protected function generateModelSearch($model = null, $disable_search = false) {
+    protected function generateModelSearch($model = null, $disable_search = false)
+    {
         if (is_null($model)) {
             $model = $this->model;
         }
@@ -245,11 +252,15 @@ class CoreService implements CoreServiceContract
         $search_field = null;
         $search_mode = null;
         $search_exact = false;
+        $search_operator = null;
         if (request()->has('search') && !$disable_search) {
             $search = request('search');
             $search_field = request()->has('search_field') ? request('search_field') : '';
             $search_mode = request()->has('search_mode') ? request('search_mode') : 'or';
             $search_exact = false;
+            if ($this->modelDbDriver == 'pgsql') {
+                $search_operator = 'ILIKE';
+            }
         } elseif (request()->has('search_exact') && !$disable_search) {
             $search = request('search_exact');
             $search_field = request()->has('search_field') ? request('search_field') : '';
@@ -257,26 +268,26 @@ class CoreService implements CoreServiceContract
             $search_exact = true;
         }
 
-        if (! is_null($search)) {
+        if (!is_null($search)) {
             if (!is_array($search) && !is_array($search_field)) {
                 if ($search_exact) {
-                    $model = $model->searchExact($search, $search_field, $search_mode);
+                    $model = $model->searchExact($search, $search_field, $search_mode, $search_operator);
                 } else {
-                    $model = $model->search($search, $search_field, $search_mode);
+                    $model = $model->search($search, $search_field, $search_mode, $search_operator);
                 }
             } else {
                 // support multiple search
-                if (! is_array($search)) {
+                if (!is_array($search)) {
                     $search = [$search];
                 }
-                if (! is_array($search_field)) {
+                if (!is_array($search_field)) {
                     $search_field = [$search_field];
                 }
 
                 if ($search_exact) {
-                    $model = $model->searchExactMultiple($search, $search_field, $search_mode);
+                    $model = $model->searchExactMultiple($search, $search_field, $search_mode, $search_operator);
                 } else {
-                    $model = $model->searchMultiple($search, $search_field, $search_mode);
+                    $model = $model->searchMultiple($search, $search_field, $search_mode, $search_operator);
                 }
             }
         }
@@ -284,7 +295,8 @@ class CoreService implements CoreServiceContract
         return $model;
     }
 
-    protected function generateModelOrder($model = null) {
+    protected function generateModelOrder($model = null)
+    {
         if (is_null($model)) {
             $model = $this->model;
         }
@@ -294,10 +306,10 @@ class CoreService implements CoreServiceContract
             $atoz = request()->has('atoz') ? request('atoz') : 'asc';
 
             // support multiple order by
-            if (! is_array($order)) {
+            if (!is_array($order)) {
                 $order = [$order];
             }
-            if (! is_array($atoz)) {
+            if (!is_array($atoz)) {
                 $atoz = [$atoz];
             }
             foreach ($order as $i => $order_item) {
@@ -309,12 +321,13 @@ class CoreService implements CoreServiceContract
         return $model;
     }
 
-    protected function getQueryListAll($model = null, $disable_search = false) {
-        if (! is_null($model)) {
+    protected function getQueryListAll($model = null, $disable_search = false)
+    {
+        if (!is_null($model)) {
             $this->model = $model;
         }
 
-        if (! empty($this->with)) {
+        if (!empty($this->with)) {
             $this->model = $this->model->with($this->with);
         }
 
@@ -324,7 +337,7 @@ class CoreService implements CoreServiceContract
         if (request()->has('page_len') && request('page_len') == 'all') {
             // count first
             $count_data = $this->model->count();
-            if($count_data <= 1000) {
+            if ($count_data <= 1000) {
                 return $this->model->get();
             }
 
@@ -333,8 +346,8 @@ class CoreService implements CoreServiceContract
 
         return $this->model->paginate(
             request()->has('page_len')
-            ? request('page_len')
-            : 30
+                ? request('page_len')
+                : 30
         );
     }
 
@@ -343,7 +356,7 @@ class CoreService implements CoreServiceContract
      * =========================
      * HOOKS
      * ---------
-    **/
+     **/
     protected function beforeStoreHooks(&$requestData, &$merge_data_with)
     {
     }
