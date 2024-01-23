@@ -322,6 +322,94 @@ trait JSONResponses
     }
 
     /**
+     * SUCCESS (200) OR ERROR RESPONSE (500)
+     *
+     * @param array $data response data raw
+     *
+     * @return json
+     */
+    public function responseSuccessOrExceptionRaw(callable $callback, array $validation_rules = [], array $validation_messages = [])
+    {
+        try {
+            if (!empty($validation_rules)) {
+                // $validator = (new GembootValidator)->make(request()->all(), $validation_rules, $validation_messages);
+                // if ($validator->fails()) {
+                //     return $this->responseBadRequest(['error' => $validator->errors()]);
+                // }
+                (new GembootValidator)->makeAndThrow(request()->all(), $validation_rules, $validation_messages);
+            }
+
+            return $callback();
+        } catch (ValidationFailException $e) {
+            $err_message = json_decode($e->getMessage(), true);
+            return $this->responseBadRequest(
+                [
+                    'error' => $err_message
+                ]
+            );
+        } catch (HttpErrorException $e) {
+            $err_message = $e->getMessage();
+            return $this->responseHttpError(
+                $e->getCode(),
+                [
+                    'error' => $err_message,
+                ],
+                null,
+                $err_message
+            );
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            $err_message = "Data Not Found!";
+            return $this->responseNotFound(
+                [
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (BadRequestException $e) {
+            $err_message = $e->getMessage();
+            return $this->responseBadRequest(
+                [
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (UnauthorizedException $e) {
+            $err_message = $e->getMessage();
+            return $this->responseUnauthorized(
+                [
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (ForbiddenException $e) {
+            $err_message = $e->getMessage();
+            return $this->responseForbidden(
+                [
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (NotFoundException $e) {
+            $err_message = $e->getMessage();
+            return $this->responseNotFound(
+                [
+                    'error' => $err_message
+                ],
+                null,
+                $err_message
+            );
+        } catch (ServerErrorException $e) {
+            return $this->responseException($e);
+        } catch (Exception $e) {
+            return $this->responseException($e);
+        }
+    }
+
+    /**
      * SUCCESS (200) OR ERROR RESPONSE (500), Using Tansaction
      *
      * @param array $data response data
