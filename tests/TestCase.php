@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Gemboot\GembootServiceProvider;
 use Gemboot\Tests\Controllers\TestUserController;
 use Gemboot\Tests\Controllers\TestAuthLibraryController;
+use Gemboot\Tests\Controllers\TestHttpStatusController;
 
 // class TestCase extends \PHPUnit\Framework\TestCase {
 class TestCase extends \Orchestra\Testbench\TestCase
@@ -41,7 +42,8 @@ class TestCase extends \Orchestra\Testbench\TestCase
 
         $app['config']->set('gemboot.file_handler.base_url', 'http://192.168.0.12:3000/file-handler');
 
-        $app['config']->set('gemboot.notifications.telegram.chat_id', '328200606');
+        $app['config']->set('gemboot.notifications.telegram.token', env('GEMBOOT_TELEGRAM_BOT_TOKEN'));
+        $app['config']->set('gemboot.notifications.telegram.chat_id', env('GEMBOOT_TELEGRAM_CHAT_ID'));
 
         // // import the CreatePostsTable class from the migration
         // include_once __DIR__ . '/../database/migrations/create_gemboot_test_users_table.php.stub';
@@ -79,6 +81,12 @@ class TestCase extends \Orchestra\Testbench\TestCase
             // $router->get('/', [TestUserController::class, 'index']);
             $router->apiResource('users', TestUserController::class);
         });
+
+        $router->middleware(['api'])->prefix('http-status')->group(
+            function () use ($router) {
+                $router->get('500', [TestHttpStatusController::class, 'test500Exception']);
+            }
+        );
 
         $router->middleware(['api'])->prefix('auth')->group(function () use ($router) {
             $router->post('login', [TestAuthLibraryController::class, 'login']);
