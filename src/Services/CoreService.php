@@ -314,7 +314,7 @@ class CoreService implements CoreServiceContract
             }
             foreach ($order as $i => $order_item) {
                 $atoz_item = isset($atoz[$i]) ? $atoz[$i] : 'asc';
-                $model = $model->order($order_item, $atoz_item);
+                $model = $model->orderBy($order_item, $atoz_item);
             }
         }
 
