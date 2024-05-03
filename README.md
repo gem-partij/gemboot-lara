@@ -103,13 +103,14 @@ See the [DOCUMENTATION](https://github.com/gem-partij/gemboot-lara/tree/master/d
 
 Only the latest version will get new features.
 
-| Package Version | Laravel Version |
-| --------------- | --------------- |
-| 0.5.x           | < 5.5           |
-| 1.x             | ^5.5, ^6, ^7    |
-| 2.x             | 8               |
-| 3.x             | 9               |
-| 4.x             | 10              |
+| Package Version | Laravel Version | PHP Version |
+| --------------- | --------------- | ----------- |
+| 0.5.x           | < 5.5           |             |
+| 1.x             | ^5.5, ^6, ^7    | 7.2 - 8.0   |
+| 2.x             | 8               | 7.3 - 8.1   |
+| 3.x             | 9               | 8.0 - 8.2   |
+| 4.x             | 10              | 8.1 - 8.3   |
+| 5.x             | 11              | 8.2 - 8.3   |
 
 ## Installation
 
