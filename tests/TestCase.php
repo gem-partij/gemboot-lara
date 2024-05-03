@@ -2,24 +2,38 @@
 
 namespace Gemboot\Tests;
 
+use Orchestra\Testbench\Attributes\WithEnv;
+use Orchestra\Testbench\Attributes\WithConfig;
+use Orchestra\Testbench\Attributes\WithMigration;
+use function Orchestra\Testbench\artisan;
+
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Gemboot\GembootServiceProvider;
 use Gemboot\Tests\Controllers\TestUserController;
 use Gemboot\Tests\Controllers\TestAuthLibraryController;
 use Gemboot\Tests\Controllers\TestHttpStatusController;
 
 // class TestCase extends \PHPUnit\Framework\TestCase {
+#[WithEnv('DB_CONNECTION', 'testing')]
+#[WithConfig('database.default', 'testing')]
+#[WithMigration]
 class TestCase extends \Orchestra\Testbench\TestCase
 {
 
-    use RefreshDatabase;
+    // use RefreshDatabase;
+    // use DatabaseTransactions;
 
     public function setUp(): void
     {
+        // RefreshDatabaseState::$migrated = false;
+
         parent::setUp();
 
         // $this->artisan('migrate', ['--database' => 'testbench'])->run();
         // $this->refreshDatabase();
+        // $this->artisan('migrate')->run();
     }
 
     protected function getPackageProviders($app)
@@ -29,10 +43,11 @@ class TestCase extends \Orchestra\Testbench\TestCase
         ];
     }
 
-    protected function getEnvironmentSetUp($app)
+    // protected function getEnvironmentSetUp($app)
+    protected function defineEnvironment($app)
     {
-        $app['config']->set('database.default', 'testbench');
-        $app['config']->set('database.connections.testbench', [
+        $app['config']->set('database.default', 'testing');
+        $app['config']->set('database.connections.testing', [
             'driver'   => 'sqlite',
             'database' => ':memory:',
             'prefix'   => '',
@@ -62,10 +77,10 @@ class TestCase extends \Orchestra\Testbench\TestCase
     {
         $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
 
-        $this->artisan('migrate', ['--database' => 'testbench'])->run();
+        artisan($this, 'migrate', ['--database' => 'testing']);
 
         $this->beforeApplicationDestroyed(function () {
-            $this->artisan('migrate:rollback', ['--database' => 'testbench'])->run();
+            artisan($this, 'migrate:rollback', ['--database' => 'testing']);
         });
     }
 
