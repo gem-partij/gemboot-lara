@@ -18,6 +18,9 @@ class AuthLibrary
     {
         $this->setBaseUrlAuth($baseUrlAuth);
         $this->httpClient = new HttpClient($this->baseUrlAuth);
+        $this->httpClient->withHeaders([
+            'Accept' => 'application/json',
+        ]);
     }
 
     public function getHttpClient()
