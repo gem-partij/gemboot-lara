@@ -114,6 +114,21 @@ class AuthLibrary
         return false;
     }
 
+    public function validateTokenClient(Request $request = null)
+    {
+        if (empty($request)) {
+            $request = request();
+        }
+
+        $response = $this->httpClient->withTokenBearer($request)->get("/validate-token");
+
+        if ($response->info->http_code == 200) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function hasRole($role_name, $response_json = false, Request $request = null)
     {
         if (empty($request)) {

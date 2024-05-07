@@ -17,16 +17,26 @@ class TokenValidated
      * @param  \Closure  $next
      * @return mixed
      */
-    public function handle($request, Closure $next)
+    public function handle($request, Closure $next, $validationType = null)
     {
         $auth = new AuthLibrary();
-        $response = $auth->me(false, $request);
-        if (! $response) {
-            return $this->responseUnauthorized();
-        }
 
-        $request->merge(['user_login' => (array)$response]);
-        return $next($request);
+        if ($validationType == 'client') {
+            $response = $auth->validateTokenClient($request);
+            if (!$response) {
+                return $this->responseUnauthorized();
+            }
+
+            return $next($request);
+        } else {
+            $response = $auth->me(false, $request);
+            if (!$response) {
+                return $this->responseUnauthorized();
+            }
+
+            $request->merge(['user_login' => (array)$response]);
+            return $next($request);
+        }
     }
 
     /**
@@ -37,7 +47,7 @@ class TokenValidated
      */
     protected function redirectTo($request)
     {
-        if (! $request->expectsJson()) {
+        if (!$request->expectsJson()) {
             return route('login');
         }
     }
