@@ -3,6 +3,7 @@
 namespace Gemboot\Middleware;
 
 use Closure;
+use Illuminate\Http\Response;
 use Gemboot\Traits\JSONResponses;
 use Gemboot\Libraries\AuthLibrary;
 
@@ -24,7 +25,9 @@ class TokenValidated
         if ($validationType == 'client') {
             $response = $auth->validateTokenClient($request);
             if (!$response) {
-                return $this->responseUnauthorized();
+                $status = Response::HTTP_UNAUTHORIZED;
+                $statusText = Response::$statusTexts[$status];
+                return response()->json(['status' => $statusText], $status);
             }
 
             return $next($request);
