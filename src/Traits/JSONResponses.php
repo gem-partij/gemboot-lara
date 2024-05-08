@@ -54,19 +54,21 @@ trait JSONResponses
     protected function response($status, $data, $message = null, $status_message = null)
     {
         try {
-            ob_get_clean();
-
-            $accept_encoding = request()->header('accept-encoding');
-
             $headers = [
                 'Content-type' => 'application/json; charset=utf-8',
             ];
 
-            if (substr_count($accept_encoding, "gzip")) {
-                $headers['Content-Encoding'] = 'gzip';
-                ob_start('ob_gzhandler');
-            } else {
-                ob_start();
+            if (app('config')->get('gemboot.response.compressed')) {
+                ob_get_clean();
+
+                $accept_encoding = request()->header('accept-encoding');
+
+                if (substr_count($accept_encoding, "gzip")) {
+                    $headers['Content-Encoding'] = 'gzip';
+                    ob_start('ob_gzhandler');
+                } else {
+                    ob_start();
+                }
             }
 
             $encapsulated = $this->encapsulateResponse(

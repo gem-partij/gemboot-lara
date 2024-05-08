@@ -17,10 +17,16 @@ return [
     ],
 
     'notifications' => [
+        'enable' => env('GEMBOOT_NOTIFICATIONS_ENABLE', true),
+
         'telegram' => [
             'chat_id' => env('GEMBOOT_TELEGRAM_CHAT_ID', 'YOUR TELEGRAM CHAT ID HERE'),
             'token' => env('GEMBOOT_TELEGRAM_BOT_TOKEN', 'YOUR BOT TOKEN HERE'),
         ],
+    ],
+
+    'response' => [
+        'compressed' => env('GEMBOOT_RESPONSE_COMPRESSED', true),
     ],
 
 ];
