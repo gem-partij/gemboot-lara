@@ -15,11 +15,18 @@ class FileHandler
     protected $token;
     protected $request;
     protected $fileContent;
+    protected $requestUrl;
 
     public function __construct($file = null)
     {
         $this->baseUrl = app('config')->get('gemboot.file_handler.base_url');
         $this->setFile($file);
+    }
+
+    public function setBaseUrl($baseUrl)
+    {
+        $this->baseUrl = $baseUrl;
+        return $this;
     }
 
     public function setFile($file)
@@ -43,6 +50,12 @@ class FileHandler
     public function setRequest($request)
     {
         $this->request = $request;
+        return $this;
+    }
+
+    public function setRequestUrl($requestUrl)
+    {
+        $this->requestUrl = $requestUrl;
         return $this;
     }
 
@@ -89,7 +102,7 @@ class FileHandler
                 $photoContent,
                 $originalFileName
             )
-            ->post($this->baseUrl . "/api/upload/foto", [
+            ->post($this->requestUrl ?: $this->baseUrl . "/api/upload/foto", [
                 'path' => $path,
                 'filename' => $filename,
             ]);
@@ -130,7 +143,7 @@ class FileHandler
                 $documentContent,
                 $originalFileName
             )
-            ->post($this->baseUrl . "/api/upload/document", [
+            ->post($this->requestUrl ?: $this->baseUrl . "/api/upload/document", [
                 'path' => $path,
                 'filename' => $filename,
             ]);
