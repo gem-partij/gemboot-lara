@@ -111,6 +111,7 @@ Only the latest version will get new features.
 | 3.x             | 9               | 8.0 - 8.2   |
 | 4.x             | 10              | 8.1 - 8.3   |
 | 5.x             | 11              | 8.2 - 8.3   |
+| 6.x             | 12              | 8.2 - 8.3   |
 
 ## Installation
 
