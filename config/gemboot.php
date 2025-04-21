@@ -7,6 +7,14 @@ return [
         'base_api' => env('GEMBOOT_AUTH_BASE_API', 'YOUR GEMBOOT AUTH BASE API HERE'),
     ],
 
+    'sso' => [
+        'auth_service_url' => env('GEMBOOT_AUTH_SERVICE_URL'),
+        'user_service_url' => env('GEMBOOT_USER_SERVICE_URL'),
+        'validate_token_url' => env('GEMBOOT_SSO_VALIDATE_TOKEN_URL'),
+        'get_user_url' => env('GEMBOOT_SSO_GET_USER_URL'),
+        'cache_ttl' => env('GEMBOOT_SSO_CACHE_TTL', 300),
+    ],
+
     'file_handler' => [
         'base_url' => env('GEMBOOT_FILE_HANDLER_BASE_URL', 'YOUR GEMBOOT FILE HANDLER BASE URL HERE'),
     ],
