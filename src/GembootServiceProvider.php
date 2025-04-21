@@ -3,6 +3,9 @@
 namespace Gemboot;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Auth;
+use Gemboot\SSO\Auth\SSOGuard;
+use Gemboot\SSO\Auth\SSOUserProvider;
 
 use Gemboot\GembootRequest;
 use Gemboot\GembootResponse;
@@ -59,6 +62,19 @@ class GembootServiceProvider extends ServiceProvider
 
         //     return $guard;
         // });
+
+        Auth::extend('gemboot-sso-token', function ($app, $name, array $config) {
+            $provider = Auth::createUserProvider($config['provider']);
+
+            return new SSOGuard(
+                $provider,
+                $app['request']
+            );
+        });
+
+        Auth::provider('gemboot-sso-provider', function ($app, array $config) {
+            return new SSOUserProvider();
+        });
     }
 
     public function register()

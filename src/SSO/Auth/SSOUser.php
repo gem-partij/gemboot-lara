@@ -3,8 +3,10 @@
 namespace Gemboot\SSO\Auth;
 
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Support\Arrayable;
+use JsonSerializable;
 
-class SSOUser implements Authenticatable
+class SSOUser implements Authenticatable, Arrayable, JsonSerializable
 {
     protected $attributes;
 
@@ -49,5 +51,20 @@ class SSOUser implements Authenticatable
     public function __get($key)
     {
         return $this->attributes[$key] ?? null;
+    }
+
+    public function __toString()
+    {
+        return json_encode($this->attributes);
+    }
+
+    public function toArray()
+    {
+        return $this->attributes;
+    }
+
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

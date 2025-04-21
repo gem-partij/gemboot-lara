@@ -73,6 +73,9 @@ class SSOGuard implements Guard
         $token = $this->request->bearerToken();
         if (!$token) return null;
 
+        // Ambil cookie dari request
+        $refreshToken = $this->request->cookie('refreshToken');
+
         $cacheKey = 'sso_token_' . sha1($token);
 
         $cached = Cache::get($cacheKey);
@@ -82,20 +85,27 @@ class SSOGuard implements Guard
         }
 
         try {
-            $validateTokenUrl = config('gemboot.sso.validate_token_url') ?? config('gemboot.sso.auth_service_url') . '/validate-token';
-            $getUserUrl = config('gemboot.sso.get_user_url') ?? config('gemboot.sso.user_service_url') . "/user/me";
+            // $validateTokenUrl = config('gemboot.sso.validate_token_url') ?? config('gemboot.sso.auth_service_url') . '/validate-token';
 
             // Validasi token ke auth-service (pakai HTTP atau gRPC)
-            $validate = Http::withToken($token)
-                ->get($validateTokenUrl);
+            // $validate = Http::withToken($token)
+            //     ->withCookies([
+            //         'refreshToken' => $refreshToken,
+            //     ], parse_url($validateTokenUrl, PHP_URL_HOST))
+            //     ->get($validateTokenUrl);
 
-            if (!$validate->ok()) return null;
+            // if (!$validate->ok()) return null;
 
-            $userId = $validate->json()['user_id'] ?? null;
-            if (!$userId) return null;
+            // $userId = $validate->json()['user_id'] ?? null;
+            // if (!$userId) return null;
+
+            $getUserUrl = config('gemboot.sso.get_user_url') ?? config('gemboot.sso.user_service_url') . "/user/me";
 
             // Get data user ke user-service (pakai HTTP atau gRPC)
             $userResponse = Http::withToken($token)
+                ->withCookies([
+                    'refreshToken' => $refreshToken,
+                ], parse_url($getUserUrl, PHP_URL_HOST))
                 ->get($getUserUrl, [
                     'showRoles' => 'true',
                     'showPermissions' => 'true',
@@ -108,12 +118,13 @@ class SSOGuard implements Guard
             $userData['roles'] = isset($userResponseJSON['roles']) ? $userResponseJSON['roles'] : null;
             $userData['permissions'] = isset($userResponseJSON['permissions']) ? $userResponseJSON['permissions'] : null;
 
-            Cache::put($cacheKey, $userData, now()->addSeconds(config('gemboot.sso.cache_ttl', 300)));
+            $cacheTTL = (int) config('gemboot.sso.cache_ttl', 300);
+            Cache::put($cacheKey, $userData, now()->addSeconds($cacheTTL));
 
             $this->user = new SSOUser($userData);
             return $this->user;
         } catch (\Exception $e) {
-            report($e);
+            throw $e;
             return null;
         }
     }
