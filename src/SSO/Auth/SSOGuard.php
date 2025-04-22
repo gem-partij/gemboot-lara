@@ -74,7 +74,7 @@ class SSOGuard implements Guard
         if (!$token) return null;
 
         // Ambil cookie dari request
-        $refreshToken = $this->request->cookie('refreshToken');
+        // $refreshToken = $this->request->cookie('refreshToken');
 
         $cacheKey = 'sso_token_' . sha1($token);
 
@@ -103,9 +103,9 @@ class SSOGuard implements Guard
 
             // Get data user ke user-service (pakai HTTP atau gRPC)
             $userResponse = Http::withToken($token)
-                ->withCookies([
-                    'refreshToken' => $refreshToken,
-                ], parse_url($getUserUrl, PHP_URL_HOST))
+                // ->withCookies([
+                //     'refreshToken' => $refreshToken,
+                // ], parse_url($getUserUrl, PHP_URL_HOST))
                 ->get($getUserUrl, [
                     'showRoles' => 'true',
                     'showPermissions' => 'true',
