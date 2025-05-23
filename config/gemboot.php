@@ -5,6 +5,11 @@ return [
     'auth' => [
         'base_url' => env('GEMBOOT_AUTH_BASE_URL', 'YOUR GEMBOOT AUTH BASE URL HERE'),
         'base_api' => env('GEMBOOT_AUTH_BASE_API', 'YOUR GEMBOOT AUTH BASE API HERE'),
+
+        'fallback' => [
+            'base_url' => env('GEMBOOT_AUTH_BASE_URL_FALLBACK'),
+            'base_api' => env('GEMBOOT_AUTH_BASE_API_FALLBACK'),
+        ],
     ],
 
     'sso' => [
@@ -13,6 +18,13 @@ return [
         'validate_token_url' => env('GEMBOOT_SSO_VALIDATE_TOKEN_URL'),
         'get_user_url' => env('GEMBOOT_SSO_GET_USER_URL'),
         'cache_ttl' => env('GEMBOOT_SSO_CACHE_TTL', 300),
+
+        'fallback' => [
+            'auth_service_url' => env('GEMBOOT_AUTH_SERVICE_URL_FALLBACK'),
+            'user_service_url' => env('GEMBOOT_USER_SERVICE_URL_FALLBACK'),
+            'validate_token_url' => env('GEMBOOT_SSO_VALIDATE_TOKEN_URL_FALLBACK'),
+            'get_user_url' => env('GEMBOOT_SSO_GET_USER_URL_FALLBACK'),
+        ],
     ],
 
     'file_handler' => [

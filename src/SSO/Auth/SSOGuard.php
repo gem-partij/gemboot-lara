@@ -111,9 +111,24 @@ class SSOGuard implements Guard
                     'showPermissions' => 'true',
                 ]);
 
-            if (!$userResponse->ok()) return null;
+            if (!$userResponse->ok()) {
+                // Jika gagal, coba ambil dari fallback
+                $fallbackGetUserUrl = config('gemboot.sso.fallback.get_user_url') ?? config('gemboot.sso.fallback.user_service_url') . "/user/me";
+                $userResponse = Http::withToken($token)
+                    ->get($fallbackGetUserUrl, [
+                        'showRoles' => 'true',
+                        'showPermissions' => 'true',
+                    ]);
+
+                if (!$userResponse->ok()) {
+                    return null;
+                }
+            };
 
             $userResponseJSON = $userResponse->json();
+            if (isset($userResponseJSON['data'])) {
+                $userResponseJSON = $userResponseJSON['data'];
+            }
             $userData = isset($userResponseJSON['user']) ? $userResponseJSON['user'] : $userResponseJSON;
             $userData['roles'] = isset($userResponseJSON['roles']) ? $userResponseJSON['roles'] : null;
             $userData['permissions'] = isset($userResponseJSON['permissions']) ? $userResponseJSON['permissions'] : null;
