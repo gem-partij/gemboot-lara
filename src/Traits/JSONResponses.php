@@ -51,7 +51,7 @@ trait JSONResponses
      *
      * @return json
      */
-    protected function response($status, $data, $message = null, $status_message = null)
+    protected function response($status, $data, $message = null, $status_message = null, $additional_headers = [])
     {
         try {
             $headers = [
@@ -84,7 +84,7 @@ trait JSONResponses
             $response = response()->json(
                 $encapsulated,
                 $status
-            )->withHeaders($headers);
+            )->withHeaders(array_merge($headers, $additional_headers));
             if (!empty($status_message)) {
                 $response = $response->setStatusCode($status, $status_message);
             }
@@ -184,7 +184,11 @@ trait JSONResponses
      */
     public function responseError($data = [], $message = null, $status_message = null)
     {
-        return $this->response(Response::HTTP_INTERNAL_SERVER_ERROR, $data, $message, $status_message);
+        $additional_headers = [];
+        if (app('config')->get('gemboot.response.send_header_error')) {
+            $additional_headers['x-gemboot-error-message'] = $message;
+        }
+        return $this->response(Response::HTTP_INTERNAL_SERVER_ERROR, $data, $message, $status_message, $additional_headers);
     }
 
     /**

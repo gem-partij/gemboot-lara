@@ -47,6 +47,7 @@ return [
 
     'response' => [
         'compressed' => env('GEMBOOT_RESPONSE_COMPRESSED', true),
+        'send_header_error' => env('GEMBOOT_SEND_HEADER_ERROR', true),
     ],
 
 ];
