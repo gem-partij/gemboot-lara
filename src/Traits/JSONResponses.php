@@ -185,7 +185,7 @@ trait JSONResponses
     public function responseError($data = [], $message = null, $status_message = null)
     {
         $additional_headers = [];
-        if (app('config')->get('gemboot.response.send_header_error')) {
+        if (app('config')->get('gemboot.response.send_header_error', true)) {
             $additional_headers['x-gemboot-error-message'] = $message;
         }
         return $this->response(Response::HTTP_INTERNAL_SERVER_ERROR, $data, $message, $status_message, $additional_headers);
