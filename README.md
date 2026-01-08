@@ -112,6 +112,7 @@ Only the latest version will get new features.
 | 4.x             | 10              | 8.1 - 8.3   |
 | 5.x             | 11              | 8.2 - 8.3   |
 | 6.x             | ^11, ^12        | ^8.2        |
+| 7.x             | ^11, ^12        | ^8.2        |
 
 ## Installation
 
@@ -304,8 +305,8 @@ If you discover any security-related issues, please email anggerpputro@gmail.com
 
 ## Credits
 
--   [Angger Priyardhan Putro](https://github.com/anggerpputro)
--   [All Contributors](../../contributors)
+- [Angger Priyardhan Putro](https://github.com/anggerpputro)
+- [All Contributors](../../contributors)
 
 ## License
 
