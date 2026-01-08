@@ -1,9 +1,13 @@
 <?php
+
 namespace Gemboot\Exceptions;
 
-class NotFoundException extends \Exception {
+use Throwable;
 
-    protected $message = "Not Found";
-    protected $code = 404;
-
+class NotFoundException extends HttpErrorException
+{
+    public function __construct(string $message = 'Not Found', array $data = [], Throwable $previous = null)
+    {
+        parent::__construct(404, $message, $data, $previous);
+    }
 }

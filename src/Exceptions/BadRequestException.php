@@ -1,9 +1,13 @@
 <?php
+
 namespace Gemboot\Exceptions;
 
-class BadRequestException extends \Exception {
+use Throwable;
 
-    protected $message = "Bad Request";
-    protected $code = 400;
-
+class BadRequestException extends HttpErrorException
+{
+    public function __construct(string $message = 'Bad Request', array $data = [], Throwable $previous = null)
+    {
+        parent::__construct(400, $message, $data, $previous);
+    }
 }

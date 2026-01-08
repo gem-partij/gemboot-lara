@@ -1,9 +1,13 @@
 <?php
+
 namespace Gemboot\Exceptions;
 
-class ForbiddenException extends \Exception {
+use Throwable;
 
-    protected $message = "Forbidden";
-    protected $code = 403;
-
+class ForbiddenException extends HttpErrorException
+{
+    public function __construct(string $message = 'Forbidden', array $data = [], Throwable $previous = null)
+    {
+        parent::__construct(403, $message, $data, $previous);
+    }
 }

@@ -45,7 +45,8 @@ class GembootValidator
     ) {
         $this->make($data, $rules, $messages, $customAttributes);
         if ($this->fails()) {
-            throw new ValidationFailException(json_encode($this->errors()));
+            // throw new ValidationFailException(json_encode($this->errors()));
+            throw new ValidationFailException($this->errors()->toArray());
         }
         return true;
     }

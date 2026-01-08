@@ -1,9 +1,13 @@
 <?php
+
 namespace Gemboot\Exceptions;
 
-class UnauthorizedException extends \Exception {
+use Throwable;
 
-    protected $message = "Unauthorized";
-    protected $code = 401;
-
+class UnauthorizedException extends HttpErrorException
+{
+    public function __construct(string $message = 'Unauthorized', array $data = [], Throwable $previous = null)
+    {
+        parent::__construct(401, $message, $data, $previous);
+    }
 }

@@ -3,19 +3,21 @@
 namespace Gemboot\Traits;
 
 use Exception;
+use Throwable;
 use Illuminate\Http\Response;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Gemboot\Exceptions\HttpErrorException;
 use Gemboot\Exceptions\BadRequestException;
 use Gemboot\Exceptions\UnauthorizedException;
 use Gemboot\Exceptions\ForbiddenException;
 use Gemboot\Exceptions\NotFoundException;
 use Gemboot\Exceptions\ValidationFailException;
+use Gemboot\Exceptions\ServerErrorException;
 
 // use Illuminate\Support\Facades\Notification;
 // use Gemboot\Notifications\Telegram;
 use Gemboot\Libraries\TelegramLibrary;
 
-use Gemboot\Exceptions\ServerErrorException;
 use Gemboot\GembootValidator;
 
 trait JSONResponses
@@ -258,72 +260,75 @@ trait JSONResponses
 
             $data = $callback();
             return $this->responseSuccess($data);
-        } catch (ValidationFailException $e) {
-            $err_message = json_decode($e->getMessage(), true);
-            return $this->responseBadRequest(
-                [
-                    'error' => $err_message
-                ]
-            );
-        } catch (HttpErrorException $e) {
-            $err_message = $e->getMessage();
-            return $this->responseHttpError(
-                $e->getCode(),
-                [
-                    'error' => $err_message,
-                ],
-                null,
-                $err_message
-            );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            $err_message = "Data Not Found!";
-            return $this->responseNotFound(
-                [
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (BadRequestException $e) {
-            $err_message = $e->getMessage();
-            return $this->responseBadRequest(
-                [
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (UnauthorizedException $e) {
-            $err_message = $e->getMessage();
-            return $this->responseUnauthorized(
-                [
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (ForbiddenException $e) {
-            $err_message = $e->getMessage();
-            return $this->responseForbidden(
-                [
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (NotFoundException $e) {
-            $err_message = $e->getMessage();
-            return $this->responseNotFound(
-                [
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (ServerErrorException $e) {
-            return $this->responseException($e);
-        } catch (Exception $e) {
-            return $this->responseException($e);
+            // } catch (ValidationFailException $e) {
+            //     $err_message = json_decode($e->getMessage(), true);
+            //     return $this->responseBadRequest(
+            //         [
+            //             'error' => $err_message
+            //         ]
+            //     );
+            // } catch (HttpErrorException $e) {
+            //     $err_message = $e->getMessage();
+            //     return $this->responseHttpError(
+            //         $e->getCode(),
+            //         [
+            //             'error' => $err_message,
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            //     $err_message = "Data Not Found!";
+            //     return $this->responseNotFound(
+            //         [
+            //             'error' => $err_message
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (BadRequestException $e) {
+            //     $err_message = $e->getMessage();
+            //     return $this->responseBadRequest(
+            //         [
+            //             'error' => $err_message
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (UnauthorizedException $e) {
+            //     $err_message = $e->getMessage();
+            //     return $this->responseUnauthorized(
+            //         [
+            //             'error' => $err_message
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (ForbiddenException $e) {
+            //     $err_message = $e->getMessage();
+            //     return $this->responseForbidden(
+            //         [
+            //             'error' => $err_message
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (NotFoundException $e) {
+            //     $err_message = $e->getMessage();
+            //     return $this->responseNotFound(
+            //         [
+            //             'error' => $err_message
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (ServerErrorException $e) {
+            //     return $this->responseException($e);
+            // } catch (Exception $e) {
+            //     return $this->responseException($e);
+            // }
+        } catch (Throwable $e) {
+            return $this->handleException($e);
         }
     }
 
@@ -346,72 +351,75 @@ trait JSONResponses
             }
 
             return $callback();
-        } catch (ValidationFailException $e) {
-            $err_message = json_decode($e->getMessage(), true);
-            return $this->responseBadRequest(
-                [
-                    'error' => $err_message
-                ]
-            );
-        } catch (HttpErrorException $e) {
-            $err_message = $e->getMessage();
-            return $this->responseHttpError(
-                $e->getCode(),
-                [
-                    'error' => $err_message,
-                ],
-                null,
-                $err_message
-            );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            $err_message = "Data Not Found!";
-            return $this->responseNotFound(
-                [
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (BadRequestException $e) {
-            $err_message = $e->getMessage();
-            return $this->responseBadRequest(
-                [
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (UnauthorizedException $e) {
-            $err_message = $e->getMessage();
-            return $this->responseUnauthorized(
-                [
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (ForbiddenException $e) {
-            $err_message = $e->getMessage();
-            return $this->responseForbidden(
-                [
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (NotFoundException $e) {
-            $err_message = $e->getMessage();
-            return $this->responseNotFound(
-                [
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (ServerErrorException $e) {
-            return $this->responseException($e);
-        } catch (Exception $e) {
-            return $this->responseException($e);
+            // } catch (ValidationFailException $e) {
+            //     $err_message = json_decode($e->getMessage(), true);
+            //     return $this->responseBadRequest(
+            //         [
+            //             'error' => $err_message
+            //         ]
+            //     );
+            // } catch (HttpErrorException $e) {
+            //     $err_message = $e->getMessage();
+            //     return $this->responseHttpError(
+            //         $e->getCode(),
+            //         [
+            //             'error' => $err_message,
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            //     $err_message = "Data Not Found!";
+            //     return $this->responseNotFound(
+            //         [
+            //             'error' => $err_message
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (BadRequestException $e) {
+            //     $err_message = $e->getMessage();
+            //     return $this->responseBadRequest(
+            //         [
+            //             'error' => $err_message
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (UnauthorizedException $e) {
+            //     $err_message = $e->getMessage();
+            //     return $this->responseUnauthorized(
+            //         [
+            //             'error' => $err_message
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (ForbiddenException $e) {
+            //     $err_message = $e->getMessage();
+            //     return $this->responseForbidden(
+            //         [
+            //             'error' => $err_message
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (NotFoundException $e) {
+            //     $err_message = $e->getMessage();
+            //     return $this->responseNotFound(
+            //         [
+            //             'error' => $err_message
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (ServerErrorException $e) {
+            //     return $this->responseException($e);
+            // } catch (Exception $e) {
+            //     return $this->responseException($e);
+            // }
+        } catch (Throwable $e) {
+            return $this->handleException($e);
         }
     }
 
@@ -433,81 +441,84 @@ trait JSONResponses
             $data = $callback();
             \DB::commit();
             return $this->responseSuccess($data);
-        } catch (ValidationFailException $e) {
-            \DB::rollback();
-            $err_message = json_decode($e->getMessage(), true);
-            return $this->responseBadRequest(
-                [
-                    'error' => $err_message
-                ]
-            );
-        } catch (HttpErrorException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseHttpError(
-                $e->getCode(),
-                [
-                    'error' => $err_message,
-                ],
-                null,
-                $err_message
-            );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            \DB::rollback();
-            $err_message = "Data Not Found!";
-            return $this->responseNotFound(
-                [
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (BadRequestException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseBadRequest(
-                [
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (UnauthorizedException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseUnauthorized(
-                [
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (ForbiddenException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseForbidden(
-                [
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (NotFoundException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseNotFound(
-                [
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (ServerErrorException $e) {
-            \DB::rollback();
-            return $this->responseException($e);
-        } catch (Exception $e) {
-            \DB::rollback();
-            return $this->responseException($e);
+            // } catch (ValidationFailException $e) {
+            //     \DB::rollback();
+            //     $err_message = json_decode($e->getMessage(), true);
+            //     return $this->responseBadRequest(
+            //         [
+            //             'error' => $err_message
+            //         ]
+            //     );
+            // } catch (HttpErrorException $e) {
+            //     \DB::rollback();
+            //     $err_message = $e->getMessage();
+            //     return $this->responseHttpError(
+            //         $e->getCode(),
+            //         [
+            //             'error' => $err_message,
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            //     \DB::rollback();
+            //     $err_message = "Data Not Found!";
+            //     return $this->responseNotFound(
+            //         [
+            //             'error' => $err_message
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (BadRequestException $e) {
+            //     \DB::rollback();
+            //     $err_message = $e->getMessage();
+            //     return $this->responseBadRequest(
+            //         [
+            //             'error' => $err_message
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (UnauthorizedException $e) {
+            //     \DB::rollback();
+            //     $err_message = $e->getMessage();
+            //     return $this->responseUnauthorized(
+            //         [
+            //             'error' => $err_message
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (ForbiddenException $e) {
+            //     \DB::rollback();
+            //     $err_message = $e->getMessage();
+            //     return $this->responseForbidden(
+            //         [
+            //             'error' => $err_message
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (NotFoundException $e) {
+            //     \DB::rollback();
+            //     $err_message = $e->getMessage();
+            //     return $this->responseNotFound(
+            //         [
+            //             'error' => $err_message
+            //         ],
+            //         null,
+            //         $err_message
+            //     );
+            // } catch (ServerErrorException $e) {
+            //     \DB::rollback();
+            //     return $this->responseException($e);
+            // } catch (Exception $e) {
+            //     \DB::rollback();
+            //     return $this->responseException($e);
+            // }
+        } catch (Throwable $e) {
+            return $this->handleException($e);
         }
     }
 
@@ -535,5 +546,52 @@ trait JSONResponses
         return $this->responseBadRequest([
             'error' => $errors,
         ], $err_message, $err_message);
+    }
+
+
+    /**
+     * CENTRALIZED EXCEPTION HANDLER
+     * Menangani semua jenis exception secara seragam
+     */
+    protected function handleException(Throwable $e)
+    {
+        // 1. Handle Validation Exception (Specific Case)
+        if ($e instanceof ValidationFailException) {
+            // Ambil data error array dari exception
+            $errors = $e->getData();
+            // Fallback backward compatibility jika data kosong tapi message berisi json
+            if (empty($errors)) {
+                $decoded = json_decode($e->getMessage(), true);
+                $errors = $decoded ?: ['error' => $e->getMessage()];
+            }
+
+            return $this->responseBadRequest(['error' => $errors]);
+        }
+
+        // 2. Handle Gemboot HttpErrorException (Cover 400, 401, 403, 404, 422, 500, etc)
+        if ($e instanceof HttpErrorException) {
+            $data = $e->getData();
+            $message = $e->getMessage();
+
+            // Jika tidak ada data spesifik, bungkus message sebagai error
+            if (empty($data)) {
+                $data = ['error' => $message];
+            }
+
+            return $this->responseHttpError(
+                $e->getStatusCode(), // Method dari Symfony HttpException
+                $data,
+                null,
+                $message
+            );
+        }
+
+        // 3. Handle Laravel Model Not Found
+        if ($e instanceof ModelNotFoundException) {
+            return $this->responseNotFound(['error' => 'Data Not Found!'], null, 'Data Not Found!');
+        }
+
+        // 4. Default / Unexpected Exception (500)
+        return $this->responseException($e);
     }
 }

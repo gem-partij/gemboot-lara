@@ -1,9 +1,13 @@
 <?php
+
 namespace Gemboot\Exceptions;
 
-class ServerErrorException extends \Exception {
+use Throwable;
 
-    protected $message = "Internal Server Error";
-    protected $code = 500;
-
+class ServerErrorException extends HttpErrorException
+{
+    public function __construct(string $message = 'Internal Server Error', array $data = [], Throwable $previous = null)
+    {
+        parent::__construct(500, $message, $data, $previous);
+    }
 }
