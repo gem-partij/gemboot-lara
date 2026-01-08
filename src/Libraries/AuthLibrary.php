@@ -48,6 +48,41 @@ class AuthLibrary
     }
 
 
+    /**
+     * Helper Safe Response Check
+     * Mengambil HTTP Code dengan aman dari object response
+     */
+    protected function isSuccess($response)
+    {
+        if (!$response)
+            return false;
+        if (isset($response->info->http_code)) {
+            return $response->info->http_code == 200;
+        }
+        return false;
+    }
+
+    /**
+     * Helper Get Data Safe
+     * Mengambil data payload dengan aman
+     */
+    protected function getData($response)
+    {
+        if (!$response)
+            return null;
+
+        // Response data usually contains 'data' wrapper from API standard
+        // But HttpClient puts response body into ->data
+        $body = $response->data ?? [];
+
+        if (is_array($body) && isset($body['data'])) {
+            return $body['data'];
+        }
+
+        return $body;
+    }
+
+
     public function login($npp, $password, $response_json = false, Request $request = null)
     {
         if (empty($request)) {
@@ -64,9 +99,8 @@ class AuthLibrary
             return $this->buildJsonResponse($response);
         }
 
-        if ($response->info->http_code == 200) {
-            $response_data = $response->data;
-            return $response_data->data;
+        if ($this->isSuccess($response)) {
+            return $this->getData($response);
         }
 
         return false;
@@ -85,9 +119,8 @@ class AuthLibrary
             return $this->buildJsonResponse($response);
         }
 
-        if ($response->info->http_code == 200) {
-            $response_data = $response->data;
-            return $response_data->data;
+        if ($this->isSuccess($response)) {
+            return $this->getData($response);
         }
 
         return false;
@@ -106,9 +139,8 @@ class AuthLibrary
             return $this->buildJsonResponse($response);
         }
 
-        if ($response->info->http_code == 200) {
-            $response_data = $response->data;
-            return $response_data->data;
+        if ($this->isSuccess($response)) {
+            return $this->getData($response);
         }
 
         return false;
@@ -122,7 +154,7 @@ class AuthLibrary
 
         $response = $this->httpClient->withTokenBearer($request)->get("/validate-token");
 
-        if ($response->info->http_code == 200) {
+        if ($this->isSuccess($response)) {
             return true;
         }
 
@@ -144,9 +176,8 @@ class AuthLibrary
             return $this->buildJsonResponse($response);
         }
 
-        if ($response->info->http_code == 200) {
-            $response_data = $response->data;
-            return $response_data->data;
+        if ($this->isSuccess($response)) {
+            return $this->getData($response);
         }
 
         return false;
@@ -167,9 +198,8 @@ class AuthLibrary
             return $this->buildJsonResponse($response);
         }
 
-        if ($response->info->http_code == 200) {
-            $response_data = $response->data;
-            return $response_data->data;
+        if ($this->isSuccess($response)) {
+            return $this->getData($response);
         }
 
         return false;
@@ -188,9 +218,8 @@ class AuthLibrary
             return $this->buildJsonResponse($response);
         }
 
-        if ($response->info->http_code == 200) {
-            $response_data = $response->data;
-            return $response_data->data;
+        if ($this->isSuccess($response)) {
+            return $this->getData($response);
         }
 
         return false;

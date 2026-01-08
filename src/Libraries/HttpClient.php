@@ -8,13 +8,15 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 use Gemboot\Traits\GembootRequest;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Log;
 
 class HttpClient
 {
     use GembootRequest;
 
+    /** @var Client */
     protected $client;
+
     protected $baseUrl;
     protected $token;
     protected $headers = [];
@@ -24,20 +26,23 @@ class HttpClient
     {
         $this->baseUrl = $baseUrl;
         $this->token = $token;
+        $this->initClient();
+    }
 
-        // Inisialisasi Guzzle Client
+    protected function initClient()
+    {
         $this->client = new Client([
-            'base_uri' => $baseUrl,
+            'base_uri' => $this->baseUrl,
             'timeout' => 30,
-            'verify' => false, // Optional: matikan SSL verify jika dev environment bermasalah (hati-hati di prod)
+            'verify' => false, // Mengatasi masalah SSL lokal/docker environment
+            'http_errors' => false, // Kita handle error manual agar konsisten
         ]);
     }
 
     public function setBaseUrl($baseUrl)
     {
         $this->baseUrl = $baseUrl;
-        // Re-init client jika base URL berubah
-        $this->client = new Client(['base_uri' => $baseUrl, 'timeout' => 30, 'verify' => false]);
+        $this->initClient(); // Re-init client saat base URL berubah
         return $this;
     }
 
@@ -47,9 +52,9 @@ class HttpClient
         return $this;
     }
 
-    public function throwOnHttpError($throw = true)
+    public function throwOnHttpError($throwOnHttpError = true)
     {
-        $this->throwOnHttpError = $throw;
+        $this->throwOnHttpError = $throwOnHttpError;
         return $this;
     }
 
@@ -65,67 +70,75 @@ class HttpClient
     }
 
     /**
-     * Helper untuk merge headers default + auth
-     */
-    protected function getMergedHeaders()
-    {
-        $headers = $this->headers;
-        if ($this->token) {
-            $headers['Authorization'] = $this->token;
-        }
-        return $headers;
-    }
-
-    /**
-     * Unified Request Handler
+     * Unified Request Method
+     * Mengembalikan object standar:
+     * ->info (object: http_code)
+     * ->data (mixed: response body)
      */
     protected function request($method, $url, $options = [])
     {
         try {
-            // Guzzle throws exception by default on 4xx/5xx
-            // Kita set 'http_errors' => false dulu agar bisa handle manual jika throwOnHttpError = false
+            // Merge headers
+            $headers = $this->headers;
+            if ($this->token) {
+                $headers['Authorization'] = $this->token;
+            }
+
             $defaultOptions = [
-                'headers' => $this->getMergedHeaders(),
-                'http_errors' => $this->throwOnHttpError,
+                'headers' => $headers,
             ];
 
-            $finalOptions = array_merge($defaultOptions, $options);
+            $response = $this->client->request($method, $url, array_merge($defaultOptions, $options));
 
-            $response = $this->client->request($method, $url, $finalOptions);
+            $statusCode = $response->getStatusCode();
+            $bodyContent = (string) $response->getBody();
+            $data = json_decode($bodyContent, true); // Decode as array
 
-            $body = json_decode((string) $response->getBody(), true);
+            // Error Handling jika throwOnHttpError aktif
+            if ($this->throwOnHttpError && $statusCode >= 400) {
+                throw new HttpException($statusCode, $response->getReasonPhrase());
+            }
 
+            // Return Standard Object Structure (Compatible with legacy Gemboot code)
             return (object) [
-                'info' => [
-                    'http_code' => $response->getStatusCode(),
+                'info' => (object) [
+                    'http_code' => $statusCode,
                     'content_type' => $response->getHeaderLine('Content-Type'),
                 ],
-                'data' => $body,
-                'status' => $response->getStatusCode(), // Shortcut
+                'data' => $data, // Body response (usually array from JSON)
+                'raw_body' => $bodyContent
             ];
 
         } catch (RequestException $e) {
-            // Guzzle Exception Handling
-            if ($e->hasResponse()) {
-                $response = $e->getResponse();
-                $statusCode = $response->getStatusCode();
-                $statusText = $response->getReasonPhrase();
-
-                // Jika throwOnHttpError true, lempar HttpException agar kompatibel dengan Gemboot Exception Handler
-                if ($this->throwOnHttpError) {
-                    throw new HttpException($statusCode, $statusText, $e);
-                }
-
-                // Jika tidak throw, return object error
-                return (object) [
-                    'info' => ['http_code' => $statusCode],
-                    'data' => json_decode((string) $response->getBody(), true),
-                    'error' => $e->getMessage()
-                ];
+            // Handle connection errors, DNS errors, etc.
+            if ($this->throwOnHttpError) {
+                throw $e;
             }
 
-            // Connection error / no response
-            throw new \Exception($e->getMessage(), $e->getCode(), $e);
+            Log::error("HttpClient Error: " . $e->getMessage());
+
+            // Return structure error
+            return (object) [
+                'info' => (object) [
+                    'http_code' => 0, // 0 indicates connection failure
+                ],
+                'data' => null,
+                'error' => $e->getMessage()
+            ];
+        } catch (\Exception $e) {
+            if ($this->throwOnHttpError) {
+                throw $e;
+            }
+
+            Log::error("HttpClient Exception: " . $e->getMessage());
+
+            return (object) [
+                'info' => (object) [
+                    'http_code' => 500,
+                ],
+                'data' => null,
+                'error' => $e->getMessage()
+            ];
         }
     }
 
@@ -136,10 +149,9 @@ class HttpClient
 
     public function post($url = "", $data = [])
     {
-        // Guzzle membedakan 'json' (raw body) dan 'form_params' (form-data)
-        // Asumsi default API modern pakai JSON
+        // Gunakan 'json' untuk body request JSON standard
         return $this->request('POST', $url, ['json' => $data]);
     }
 
-    // Tambahkan PUT, DELETE, PATCH jika perlu
+    // Tambahkan method lain jika perlu (put, delete, patch)
 }
