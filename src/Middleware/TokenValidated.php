@@ -37,7 +37,7 @@ class TokenValidated
                 return $this->responseUnauthorized();
             }
 
-            $request->merge(['user_login' => (array)$response]);
+            $request->merge(['user_login' => (array) $response]);
             return $next($request);
         }
     }

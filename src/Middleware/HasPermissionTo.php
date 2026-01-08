@@ -21,7 +21,7 @@ class HasPermissionTo
     {
         $auth = new AuthLibrary();
         $response = $auth->hasPermissionTo($permission_name, false, $request);
-        if (!$response || ($response && !$response->has_permission_to)) {
+        if (!$response || ($response && !$response['has_permission_to'])) {
             return $this->responseForbidden();
         }
 

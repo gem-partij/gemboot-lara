@@ -21,7 +21,7 @@ class HasRole
     {
         $auth = new AuthLibrary();
         $response = $auth->hasRole($role_name, false, $request);
-        if (!$response || ($response && !$response->has_role)) {
+        if (!$response || ($response && !$response['has_role'])) {
             return $this->responseForbidden();
         }
 
