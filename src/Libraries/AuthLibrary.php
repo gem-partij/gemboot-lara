@@ -37,6 +37,12 @@ class AuthLibrary
                 $baseUrlAuth = app('config')->get('gemboot_auth.base_api');
             }
         }
+
+        // Ensure trailing slash exists for correct Guzzle base_uri concatenation
+        if (!empty($baseUrlAuth)) {
+            $baseUrlAuth = rtrim($baseUrlAuth, '/') . '/';
+        }
+
         $this->baseUrlAuth = $baseUrlAuth;
         return $this;
     }
@@ -89,11 +95,12 @@ class AuthLibrary
             $request = request();
         }
 
-        $response = $this->httpClient->post("/login", [
+        $response = $this->httpClient->post("login", [
             'npp' => $npp,
             'password' => $password,
             'hwid' => ($request && $request->has('hwid')) ? $request->hwid : null,
         ]);
+        // dd($response);
 
         if ($response_json) {
             return $this->buildJsonResponse($response);
@@ -113,7 +120,7 @@ class AuthLibrary
         }
 
         $token = $this->getRequestToken($request);
-        $response = $this->httpClient->setToken($token)->get("/me");
+        $response = $this->httpClient->setToken($token)->get("me");
 
         if ($response_json) {
             return $this->buildJsonResponse($response);
@@ -133,7 +140,7 @@ class AuthLibrary
         }
 
         $token = $this->getRequestToken($request);
-        $response = $this->httpClient->setToken($token)->get("/validate-token");
+        $response = $this->httpClient->setToken($token)->get("validate-token");
 
         if ($response_json) {
             return $this->buildJsonResponse($response);
@@ -152,7 +159,7 @@ class AuthLibrary
             $request = request();
         }
 
-        $response = $this->httpClient->withTokenBearer($request)->get("/validate-token");
+        $response = $this->httpClient->withTokenBearer($request)->get("validate-token");
 
         if ($this->isSuccess($response)) {
             return true;
@@ -168,7 +175,7 @@ class AuthLibrary
         }
 
         $token = $this->getRequestToken($request);
-        $response = $this->httpClient->setToken($token)->get("/has-role", [
+        $response = $this->httpClient->setToken($token)->get("has-role", [
             'role_name' => $role_name,
         ]);
 
@@ -190,7 +197,7 @@ class AuthLibrary
         }
 
         $token = $this->getRequestToken($request);
-        $response = $this->httpClient->setToken($token)->get("/has-permission-to", [
+        $response = $this->httpClient->setToken($token)->get("has-permission-to", [
             'permission_name' => $permission_name,
         ]);
 
@@ -212,7 +219,7 @@ class AuthLibrary
         }
 
         $token = $this->getRequestToken($request);
-        $response = $this->httpClient->setToken($token)->post("/logout");
+        $response = $this->httpClient->setToken($token)->post("logout");
 
         if ($response_json) {
             return $this->buildJsonResponse($response);

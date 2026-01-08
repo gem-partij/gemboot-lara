@@ -94,6 +94,19 @@ class HttpClient
             $bodyContent = (string) $response->getBody();
             $data = json_decode($bodyContent, true); // Decode as array
 
+            // dd([
+            //     'base_uri' => $this->baseUrl,
+            //     'method' => $method,
+            //     'url' => $url,
+            //     'options' => $options,
+            //     'headers' => $headers,
+            //     'defaultOptions' => $defaultOptions,
+            //     'response' => $response,
+            //     'statusCode' => $statusCode,
+            //     'bodyContent' => $bodyContent,
+            //     'data' => $data,
+            // ]);
+
             // Error Handling jika throwOnHttpError aktif
             if ($this->throwOnHttpError && $statusCode >= 400) {
                 throw new HttpException($statusCode, $response->getReasonPhrase());
