@@ -209,11 +209,11 @@ trait JSONResponses
     /**
      * ERROR RESPONSE (500)
      *
-     * @param \Exception $exception exception
+     * @param \Throwable $exception exception
      *
      * @return json
      */
-    public function responseException(Exception $exception)
+    public function responseException(Throwable $exception)
     {
         $message = $exception->getMessage();
 
@@ -260,73 +260,6 @@ trait JSONResponses
 
             $data = $callback();
             return $this->responseSuccess($data);
-            // } catch (ValidationFailException $e) {
-            //     $err_message = json_decode($e->getMessage(), true);
-            //     return $this->responseBadRequest(
-            //         [
-            //             'error' => $err_message
-            //         ]
-            //     );
-            // } catch (HttpErrorException $e) {
-            //     $err_message = $e->getMessage();
-            //     return $this->responseHttpError(
-            //         $e->getCode(),
-            //         [
-            //             'error' => $err_message,
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            //     $err_message = "Data Not Found!";
-            //     return $this->responseNotFound(
-            //         [
-            //             'error' => $err_message
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (BadRequestException $e) {
-            //     $err_message = $e->getMessage();
-            //     return $this->responseBadRequest(
-            //         [
-            //             'error' => $err_message
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (UnauthorizedException $e) {
-            //     $err_message = $e->getMessage();
-            //     return $this->responseUnauthorized(
-            //         [
-            //             'error' => $err_message
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (ForbiddenException $e) {
-            //     $err_message = $e->getMessage();
-            //     return $this->responseForbidden(
-            //         [
-            //             'error' => $err_message
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (NotFoundException $e) {
-            //     $err_message = $e->getMessage();
-            //     return $this->responseNotFound(
-            //         [
-            //             'error' => $err_message
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (ServerErrorException $e) {
-            //     return $this->responseException($e);
-            // } catch (Exception $e) {
-            //     return $this->responseException($e);
-            // }
         } catch (Throwable $e) {
             return $this->handleException($e);
         }
@@ -351,73 +284,6 @@ trait JSONResponses
             }
 
             return $callback();
-            // } catch (ValidationFailException $e) {
-            //     $err_message = json_decode($e->getMessage(), true);
-            //     return $this->responseBadRequest(
-            //         [
-            //             'error' => $err_message
-            //         ]
-            //     );
-            // } catch (HttpErrorException $e) {
-            //     $err_message = $e->getMessage();
-            //     return $this->responseHttpError(
-            //         $e->getCode(),
-            //         [
-            //             'error' => $err_message,
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            //     $err_message = "Data Not Found!";
-            //     return $this->responseNotFound(
-            //         [
-            //             'error' => $err_message
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (BadRequestException $e) {
-            //     $err_message = $e->getMessage();
-            //     return $this->responseBadRequest(
-            //         [
-            //             'error' => $err_message
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (UnauthorizedException $e) {
-            //     $err_message = $e->getMessage();
-            //     return $this->responseUnauthorized(
-            //         [
-            //             'error' => $err_message
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (ForbiddenException $e) {
-            //     $err_message = $e->getMessage();
-            //     return $this->responseForbidden(
-            //         [
-            //             'error' => $err_message
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (NotFoundException $e) {
-            //     $err_message = $e->getMessage();
-            //     return $this->responseNotFound(
-            //         [
-            //             'error' => $err_message
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (ServerErrorException $e) {
-            //     return $this->responseException($e);
-            // } catch (Exception $e) {
-            //     return $this->responseException($e);
-            // }
         } catch (Throwable $e) {
             return $this->handleException($e);
         }
@@ -441,83 +307,8 @@ trait JSONResponses
             $data = $callback();
             \DB::commit();
             return $this->responseSuccess($data);
-            // } catch (ValidationFailException $e) {
-            //     \DB::rollback();
-            //     $err_message = json_decode($e->getMessage(), true);
-            //     return $this->responseBadRequest(
-            //         [
-            //             'error' => $err_message
-            //         ]
-            //     );
-            // } catch (HttpErrorException $e) {
-            //     \DB::rollback();
-            //     $err_message = $e->getMessage();
-            //     return $this->responseHttpError(
-            //         $e->getCode(),
-            //         [
-            //             'error' => $err_message,
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            //     \DB::rollback();
-            //     $err_message = "Data Not Found!";
-            //     return $this->responseNotFound(
-            //         [
-            //             'error' => $err_message
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (BadRequestException $e) {
-            //     \DB::rollback();
-            //     $err_message = $e->getMessage();
-            //     return $this->responseBadRequest(
-            //         [
-            //             'error' => $err_message
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (UnauthorizedException $e) {
-            //     \DB::rollback();
-            //     $err_message = $e->getMessage();
-            //     return $this->responseUnauthorized(
-            //         [
-            //             'error' => $err_message
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (ForbiddenException $e) {
-            //     \DB::rollback();
-            //     $err_message = $e->getMessage();
-            //     return $this->responseForbidden(
-            //         [
-            //             'error' => $err_message
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (NotFoundException $e) {
-            //     \DB::rollback();
-            //     $err_message = $e->getMessage();
-            //     return $this->responseNotFound(
-            //         [
-            //             'error' => $err_message
-            //         ],
-            //         null,
-            //         $err_message
-            //     );
-            // } catch (ServerErrorException $e) {
-            //     \DB::rollback();
-            //     return $this->responseException($e);
-            // } catch (Exception $e) {
-            //     \DB::rollback();
-            //     return $this->responseException($e);
-            // }
         } catch (Throwable $e) {
+            \DB::rollback();
             return $this->handleException($e);
         }
     }

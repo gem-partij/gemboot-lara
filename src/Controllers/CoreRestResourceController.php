@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Http\Request;
 use Cache;
 
-use Exception;
+use Throwable;
 use Gemboot\Exceptions\BadRequestException;
 use Gemboot\Exceptions\UnauthorizedException;
 use Gemboot\Exceptions\ForbiddenException;
@@ -73,7 +73,7 @@ abstract class CoreRestResourceController extends CoreRestController implements 
     {
         return $this->responseSuccessOrException(function () {
             if ($this->cache_seconds['index'] > 0) {
-                $cache_key = $this->modelTableName.'_index_'.implode('_', request()->all());
+                $cache_key = $this->modelTableName . '_index_' . implode('_', request()->all());
                 $cache_seconds = $this->cache_seconds['index'];
 
                 return Cache::remember($cache_key, $cache_seconds, function () {
@@ -125,57 +125,9 @@ abstract class CoreRestResourceController extends CoreRestController implements 
             return $this->responseSuccess([
                 'saved' => $saved_data
             ]);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (Throwable $e) {
             \DB::rollback();
-            $err_message = "Data Not Found!";
-            return $this->responseNotFound([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (BadRequestException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseBadRequest([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (UnauthorizedException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseUnauthorized([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (ForbiddenException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseForbidden([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (NotFoundException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseNotFound([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (ServerErrorException $e) {
-            \DB::rollback();
-            return $this->responseException($e);
-        } catch (Exception $e) {
-            \DB::rollback();
-            return $this->responseException($e);
+            return $this->handleException($e);
         }
     }
 
@@ -195,9 +147,9 @@ abstract class CoreRestResourceController extends CoreRestController implements 
     public function show($id)
     {
         try {
-            return $this->responseSuccessOrException(function() use ($id) {
+            return $this->responseSuccessOrException(function () use ($id) {
                 if ($this->cache_seconds['show'] > 0) {
-                    $cache_key = $this->modelTableName.'_show_'.implode('_', request()->all());
+                    $cache_key = $this->modelTableName . '_show_' . implode('_', request()->all());
                     $cache_seconds = $this->cache_seconds['show'];
 
                     return Cache::remember($cache_key, $cache_seconds, function () use ($id) {
@@ -207,46 +159,8 @@ abstract class CoreRestResourceController extends CoreRestController implements 
                     return $this->service->findOrFail($id, $this->addWithOnShow);
                 }
             });
-        } catch (ModelNotFoundException $e) {
-            return $this->responseNotFound([
-                'error' => 'ID:'.$id.' Not Found!'
-            ]);
-        } catch (BadRequestException $e) {
-            $err_message = $e->getMessage();
-            return $this->responseBadRequest([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (UnauthorizedException $e) {
-            $err_message = $e->getMessage();
-            return $this->responseUnauthorized([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (ForbiddenException $e) {
-            $err_message = $e->getMessage();
-            return $this->responseForbidden([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (NotFoundException $e) {
-            $err_message = $e->getMessage();
-            return $this->responseNotFound([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (ServerErrorException $e) {
-            return $this->responseException($e);
-        } catch (Exception $e) {
-            return $this->responseException($e);
+        } catch (Throwable $e) {
+            return $this->handleException($e);
         }
     }
 
@@ -292,57 +206,9 @@ abstract class CoreRestResourceController extends CoreRestController implements 
             return $this->responseSuccess([
                 'saved' => $saved_data
             ]);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (Throwable $e) {
             \DB::rollback();
-            $err_message = "Data Not Found!";
-            return $this->responseNotFound([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (BadRequestException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseBadRequest([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (UnauthorizedException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseUnauthorized([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (ForbiddenException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseForbidden([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (NotFoundException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseNotFound([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (ServerErrorException $e) {
-            \DB::rollback();
-            return $this->responseException($e);
-        } catch (Exception $e) {
-            \DB::rollback();
-            return $this->responseException($e);
+            return $this->handleException($e);
         }
     }
 
@@ -365,57 +231,9 @@ abstract class CoreRestResourceController extends CoreRestController implements 
             return $this->responseSuccess([
                 'deleted' => $data
             ]);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (Throwable $e) {
             \DB::rollback();
-            $err_message = "Data Not Found!";
-            return $this->responseNotFound([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (BadRequestException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseBadRequest([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (UnauthorizedException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseUnauthorized([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (ForbiddenException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseForbidden([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (NotFoundException $e) {
-            \DB::rollback();
-            $err_message = $e->getMessage();
-            return $this->responseNotFound([
-                    'error' => $err_message
-                ],
-                null,
-                $err_message
-            );
-        } catch (ServerErrorException $e) {
-            \DB::rollback();
-            return $this->responseException($e);
-        } catch (Exception $e) {
-            \DB::rollback();
-            return $this->responseException($e);
+            return $this->handleException($e);
         }
     }
 
@@ -424,7 +242,8 @@ abstract class CoreRestResourceController extends CoreRestController implements 
      * =========================
      * HOOKS
      * ---------
-    **/
+     *
+     **/
     protected function beforeStoreHooks($request)
     {
     }
