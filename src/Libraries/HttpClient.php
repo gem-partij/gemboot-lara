@@ -77,6 +77,11 @@ class HttpClient
      */
     protected function request($method, $url, $options = [])
     {
+        // LAZY INIT: Pastikan client sudah ada sebelum request
+        if (!$this->client) {
+            $this->initClient();
+        }
+
         try {
             // Merge headers
             $headers = $this->headers;
