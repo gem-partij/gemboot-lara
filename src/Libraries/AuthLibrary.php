@@ -89,7 +89,7 @@ class AuthLibrary
     }
 
 
-    public function login($npp, $password, $response_json = false, Request $request = null)
+    public function login($npp, $password, $response_json = false, ?Request $request = null)
     {
         if (empty($request)) {
             $request = request();
@@ -113,7 +113,7 @@ class AuthLibrary
         return false;
     }
 
-    public function me($response_json = false, Request $request = null)
+    public function me($response_json = false, ?Request $request = null)
     {
         if (empty($request)) {
             $request = request();
@@ -133,7 +133,7 @@ class AuthLibrary
         return false;
     }
 
-    public function validateToken($response_json = false, Request $request = null)
+    public function validateToken($response_json = false, ?Request $request = null)
     {
         if (empty($request)) {
             $request = request();
@@ -153,7 +153,7 @@ class AuthLibrary
         return false;
     }
 
-    public function validateTokenClient(Request $request = null)
+    public function validateTokenClient(?Request $request = null)
     {
         if (empty($request)) {
             $request = request();
@@ -168,7 +168,7 @@ class AuthLibrary
         return false;
     }
 
-    public function hasRole($role_name, $response_json = false, Request $request = null)
+    public function hasRole($role_name, $response_json = false, ?Request $request = null)
     {
         if (empty($request)) {
             $request = request();
@@ -190,7 +190,7 @@ class AuthLibrary
         return false;
     }
 
-    public function hasPermissionTo($permission_name, $response_json = false, Request $request = null)
+    public function hasPermissionTo($permission_name, $response_json = false, ?Request $request = null)
     {
         if (empty($request)) {
             $request = request();
@@ -212,7 +212,7 @@ class AuthLibrary
         return false;
     }
 
-    public function logout($response_json = false, Request $request = null)
+    public function logout($response_json = false, ?Request $request = null)
     {
         if (empty($request)) {
             $request = request();

@@ -25,7 +25,7 @@ class HttpErrorException extends SymfonyHttpException
         int $statusCode,
         string $message = 'Http Error',
         array $data = [],
-        Throwable $previous = null,
+        ?Throwable $previous = null,
         array $headers = [],
         int $code = 0
     ) {

@@ -4,34 +4,35 @@ namespace Gemboot\Tests\Unit;
 use Gemboot\Tests\TestCase;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Gemboot\Libraries\HttpClient;
+use PHPUnit\Framework\Attributes\Test;
 
 class LibrariesHttpClientTest extends TestCase
 {
 
     protected $baseUrlTest = "https://tools-httpstatus.pickup-services.com";
 
-    /** @test */
+    #[Test]
     public function return_ok()
     {
         $response = (new HttpClient($this->baseUrlTest))->get("/200");
         $this->assertEquals(200, $response->info->http_code);
     }
 
-    /** @test */
+    #[Test]
     public function return_4x()
     {
         $response = (new HttpClient($this->baseUrlTest))->get("/400");
         $this->assertEquals(400, $response->info->http_code);
     }
 
-    /** @test */
+    #[Test]
     public function return_5x()
     {
         $response = (new HttpClient($this->baseUrlTest))->get("/500");
         $this->assertEquals(500, $response->info->http_code);
     }
 
-    /** @test */
+    #[Test]
     public function throw_http_error()
     {
         try {

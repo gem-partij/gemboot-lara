@@ -4,10 +4,11 @@ namespace Gemboot\Tests\Feature;
 use Gemboot\Tests\TestCase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Artisan;
+use PHPUnit\Framework\Attributes\Test;
 
 class MakeControllerCommandTest extends TestCase {
 
-    /** @test */
+    #[Test]
     public function it_call_basic_make() {
         // destination path of the Foo class
         $fooController = app_path('Http/Controllers/Api/MyFooController.php');
