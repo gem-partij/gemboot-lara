@@ -103,16 +103,28 @@ See the [DOCUMENTATION](https://github.com/gem-partij/gemboot-lara/tree/master/d
 
 Only the latest version will get new features.
 
-| Package Version | Laravel Version | PHP Version |
-| --------------- | --------------- | ----------- |
-| 0.5.x           | < 5.5           |             |
-| 1.x             | ^5.5, ^6, ^7    | 7.2 - 8.0   |
-| 2.x             | 8               | 7.3 - 8.1   |
-| 3.x             | 9               | 8.0 - 8.2   |
-| 4.x             | 10              | 8.1 - 8.3   |
-| 5.x             | 11              | 8.2 - 8.3   |
-| 6.x             | ^11, ^12        | ^8.2        |
-| 7.x             | ^11, ^12        | ^8.2        |
+| Package Version  | Laravel Version  | PHP Version |
+| ---------------- | ---------------- | ----------- |
+| 0.5.x            | < 5.5            |             |
+| 1.x              | ^5.5, ^6, ^7     | 7.2 - 8.0   |
+| 2.x              | 8                | 7.3 - 8.1   |
+| 3.x              | 9                | 8.0 - 8.2   |
+| 4.x              | 10               | 8.1 - 8.3   |
+| 5.x              | 11               | 8.2 - 8.3   |
+| 6.x              | 11               | ^8.2        |
+| 7.x              | ^11, ^12         | ^8.2        |
+| 8.x *(current)*  | ^11, ^12, ^13    | ^8.3        |
+
+### Upgrading from 7.x to 8.x
+
+8.x is a compatibility release that adds Laravel 13 and PHP 8.5 support. There are no breaking changes for consumer code — only minimum requirement bumps:
+
+- PHP minimum is now **8.3** (was 8.2)
+- All internal method signatures use explicit nullable types (`?Type` instead of implicit `Type = null`) to satisfy PHP 8.4+ deprecation rules
+- `laravel-notification-channels/telegram` accepts `^7.0` (Laravel 13 ecosystem)
+- PHPUnit `^12.0` is supported in dev dependencies
+
+If your project is already on PHP 8.3+ and Laravel 11/12/13, `composer require gem-partij/gemboot-lara:^8.0` should be a drop-in upgrade.
 
 ## Installation
 
@@ -131,41 +143,61 @@ Optional: The service provider will automatically get registered. Or you may man
 ];
 ```
 
-Optional: The aliases will automatically get registered. Or you may manually add the gemboot aliases in your config/app.php file:
+Optional: The aliases will automatically get registered. Or you may manually add the gemboot aliases in your `config/app.php` file:
 
 ```php
 'aliases' => [
     // ...
-    'GembootBadRequestException' => Gemboot\Exceptions\BadRequestException::class,
-    'GembootForbiddenException' => Gemboot\Exceptions\ForbiddenException::class,
-    'GembootNotFoundException' => Gemboot\Exceptions\NotFoundException::class,
-    'GembootServerErrorException' => Gemboot\Exceptions\ServerErrorException::class,
-    'GembootUnauthorizedException' => Gemboot\Exceptions\UnauthorizedException::class,
 
-    'GembootRequest' => Gemboot\Facades\GembootRequestFacade::class,
-    'GembootResponse' => Gemboot\Facades\GembootResponseFacade::class,
+    // Exceptions
+    'GembootBadRequestException'          => Gemboot\Exceptions\BadRequestException::class,
+    'GembootConflictException'            => Gemboot\Exceptions\ConflictException::class,
+    'GembootForbiddenException'           => Gemboot\Exceptions\ForbiddenException::class,
+    'GembootHttpErrorException'           => Gemboot\Exceptions\HttpErrorException::class,
+    'GembootMethodNotAllowedException'    => Gemboot\Exceptions\MethodNotAllowedException::class,
+    'GembootNotFoundException'            => Gemboot\Exceptions\NotFoundException::class,
+    'GembootServerErrorException'         => Gemboot\Exceptions\ServerErrorException::class,
+    'GembootServiceUnavailableException'  => Gemboot\Exceptions\ServiceUnavailableException::class,
+    'GembootTooManyRequestsException'     => Gemboot\Exceptions\TooManyRequestsException::class,
+    'GembootUnauthorizedException'        => Gemboot\Exceptions\UnauthorizedException::class,
+    'GembootUnprocessableEntityException' => Gemboot\Exceptions\UnprocessableEntityException::class,
+    'GembootValidationFailException'      => Gemboot\Exceptions\ValidationFailException::class,
 
-    'GembootController' => Gemboot\Controllers\CoreRestController::class,
-    'GembootProxyController' => Gemboot\Controllers\CoreRestProxyController::class,
-    'GembootResourceController' => Gemboot\Controllers\CoreRestResourceController::class,
+    // Facades
+    'GembootAuth'                         => Gemboot\Facades\GembootAuthFacade::class,
+    'GembootPermission'                   => Gemboot\Facades\GembootPermissionFacade::class,
+    'GembootRequest'                      => Gemboot\Facades\GembootRequestFacade::class,
+    'GembootResponse'                     => Gemboot\Facades\GembootResponseFacade::class,
+    'GembootValidator'                    => Gemboot\Facades\GembootValidatorFacade::class,
 
-    'GembootModel' => Gemboot\Models\CoreModel::class,
+    // Controllers
+    'GembootController'                   => Gemboot\Controllers\CoreRestController::class,
+    'GembootProxyController'              => Gemboot\Controllers\CoreRestProxyController::class,
+    'GembootResourceController'           => Gemboot\Controllers\CoreRestResourceController::class,
 
-    'GembootService' => Gemboot\Services\CoreService::class,
+    // Model
+    'GembootModel'                        => Gemboot\Models\CoreModel::class,
+
+    // Service
+    'GembootService'                      => Gemboot\Services\CoreService::class,
 ];
 ```
 
 ## Gemboot Gateway (Additional Package)
 
-### Middleware
+> ⚠️ **Deprecated since v8.0.** The `CheckToken` gateway middleware is no longer recommended for new projects and may be removed in a future major release. Use the per-route auth middleware described under [Gemboot Auth](#gemboot-auth-additional-package) instead.
 
-To use Gemboot Gateway for all your routes, add the `CheckToken` middleware in the `$middleware` property of `app/Http/Kernel.php` class:
+### Middleware (legacy)
+
+To use Gemboot Gateway for all your routes, register the `CheckToken` middleware globally in `bootstrap/app.php`:
 
 ```php
-protected $middleware = [
-    // ...
-    \Gemboot\Gateway\Middleware\CheckToken::class,
-];
+// bootstrap/app.php
+use Illuminate\Foundation\Configuration\Middleware;
+
+->withMiddleware(function (Middleware $middleware) {
+    $middleware->append(\Gemboot\Gateway\Middleware\CheckToken::class);
+})
 ```
 
 ### Configuration
@@ -180,15 +212,27 @@ php artisan vendor:publish --tag="gemboot-gateway"
 
 ### Middleware
 
-To use Gemboot Auth middleware for your routes, add the `TokenValidated`, `HasRole`, `HasPermissionTo` middleware in the `$routeMiddleware` property of `app/Http/Kernel.php` class:
+Register the `TokenValidated`, `HasRole`, and `HasPermissionTo` middleware aliases in `bootstrap/app.php`:
 
 ```php
-protected $routeMiddleware = [
+// bootstrap/app.php
+use Illuminate\Foundation\Configuration\Middleware;
+
+->withMiddleware(function (Middleware $middleware) {
+    $middleware->alias([
+        'token-validated' => \Gemboot\Middleware\TokenValidated::class,
+        'role'            => \Gemboot\Middleware\HasRole::class,
+        'permission'      => \Gemboot\Middleware\HasPermissionTo::class,
+    ]);
+})
+```
+
+Then apply them to your routes:
+
+```php
+Route::middleware(['token-validated', 'role:admin'])->group(function () {
     // ...
-    'token-validated' => \Gemboot\Middleware\TokenValidated::class,
-    'role' => \Gemboot\Middleware\HasRole::class,
-    'permission' => \Gemboot\Middleware\HasPermissionTo::class,
-];
+});
 ```
 
 ### Configuration
@@ -285,7 +329,7 @@ $response->header($header) : string;
 $response->headers() : array;
 ```
 
-more at: https://laravel.com/docs/9.x/http-client#making-requests
+more at: https://laravel.com/docs/http-client#making-requests
 
 ## Testing
 
