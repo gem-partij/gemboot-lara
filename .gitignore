@@ -29,3 +29,6 @@ supervisord.pid
 /caddy
 frankenphp
 frankenphp-worker.php
+
+# Local TODO notes
+/TODO.md
