@@ -8,7 +8,12 @@ abstract class CoreEloquentCachingObserver
 
     protected function getTags()
     {
-        return getCacheTags($this->cacheTag);
+        // Must match GembootHelpers::getCacheTags(), which CoreService uses when
+        // storing cache entries, so that flush() hits the same entries.
+        return [
+            $this->cacheTag,
+            $this->cacheTag . '-addwith',
+        ];
     }
 
     /**
@@ -18,7 +23,11 @@ abstract class CoreEloquentCachingObserver
      */
     public function saved($data)
     {
-        cache()->tags($this->getTags())->flush();
+        // Stores without tag support (file, database) throw on tags(), which would
+        // make the consumer's save fail. CoreService does not cache on those stores.
+        if (cache()->supportsTags()) {
+            cache()->tags($this->getTags())->flush();
+        }
     }
 
     /**
@@ -28,7 +37,9 @@ abstract class CoreEloquentCachingObserver
      */
     public function deleted($data)
     {
-        cache()->tags($this->getTags())->flush();
+        if (cache()->supportsTags()) {
+            cache()->tags($this->getTags())->flush();
+        }
     }
 
     /**
@@ -38,6 +49,8 @@ abstract class CoreEloquentCachingObserver
      */
     public function restored($data)
     {
-        cache()->tags($this->getTags())->flush();
+        if (cache()->supportsTags()) {
+            cache()->tags($this->getTags())->flush();
+        }
     }
 }

@@ -1,0 +1,67 @@
+name: tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+        laravel: ['12.*', '13.*']
+        dependency-version: [prefer-stable]
+        include:
+          - laravel: '12.*'
+            testbench: '10.*'
+          - laravel: '13.*'
+            testbench: '11.*'
+          # Also check the lowest versions allowed by composer.json.
+          - php: '8.3'
+            laravel: '12.*'
+            testbench: '10.*'
+            dependency-version: prefer-lowest
+
+    name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} - ${{ matrix.dependency-version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, pdo, pdo_sqlite, sqlite3
+          coverage: none
+
+      # composer.lock pins a single Laravel version, so the matrix resolves
+      # dependencies fresh for each combination instead of installing from it.
+      - name: Install dependencies
+        run: |
+          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
+          composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction --no-progress
+
+      - name: List installed versions
+        run: composer show | grep -E '^(laravel/framework|orchestra/testbench|phpunit/phpunit|guzzlehttp/guzzle) '
+
+      # composer.json allows minimum-stability "dev". When no stable release
+      # can be installed (for example, all of them are blocked by security
+      # advisories), Composer silently falls back to a dev branch. That would
+      # test code consumers never install, so fail instead. Composer may append
+      # the commit hash to dev versions, e.g. "11.x-dev 4fc4192".
+      - name: Fail on dev versions
+        run: |
+          dev=$(composer show --format=json | jq -r '.installed[] | select(.version | test("^dev-|-dev( |$)")) | "\(.name) \(.version)"')
+          if [ -n "$dev" ]; then
+            echo "::error::Composer installed dev versions instead of stable releases:"
+            echo "$dev"
+            exit 1
+          fi
+
+      - name: Run tests
+        run: vendor/bin/phpunit

@@ -32,7 +32,7 @@ class TelegramLibrary
 
     protected function getMessageHeader()
     {
-        $message = "🔥 <strong>" . env('APP_NAME') . "</strong>\n";
+        $message = "🔥 <strong>" . config('app.name') . "</strong>\n";
         $message .= "Got New Exception!\n";
         // $message .= "<i>Server Time: " . date('Y-m-d H:i:s') . "</i>\n";
         return $message;

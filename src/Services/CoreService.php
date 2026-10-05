@@ -94,17 +94,15 @@ class CoreService implements CoreServiceContract
     public function listAll($model = null, $disable_search = false)
     {
         try {
-            if (!empty($this->observer)) {
+            // Caching requires a store with tag support (redis, memcached, array).
+            // Without tags the observer cannot flush stale entries, so stores such as
+            // file and database skip caching rather than serve stale data.
+            if (!empty($this->observer) && cache()->supportsTags()) {
                 // cache response
                 $cacheKey = $this->getCacheKey($this->getModelTableName(), $this->generateCacheKey("listAll()"), 'group');
                 $cacheTags = $this->getCacheTags($this->getModelTableName());
 
-                $cacheDriver = cache();
-                if (env('CACHE_DRIVER') != 'file') {
-                    $cacheDriver = $cacheDriver->tags($cacheTags);
-                }
-
-                return $cacheDriver->remember($cacheKey, $this->defaultCacheLifetime, function () use ($model, $disable_search) {
+                return cache()->tags($cacheTags)->remember($cacheKey, $this->defaultCacheLifetime, function () use ($model, $disable_search) {
                     return $this->getQueryListAll($model, $disable_search);
                 });
             }
@@ -163,15 +161,11 @@ class CoreService implements CoreServiceContract
             $cacheKey .= '-addwith';
         }
 
-        if (empty($this->observer)) {
+        // See listAll(): stores without tag support skip caching to avoid stale data.
+        if (empty($this->observer) || !cache()->supportsTags()) {
             return $this->model->findOrFail($id);
         } else {
-            $cacheDriver = cache();
-            if (env('CACHE_DRIVER') != 'file') {
-                $cacheDriver = $cacheDriver->tags($cacheTags);
-            }
-
-            return $cacheDriver->remember($cacheKey, $this->defaultCacheLifetime, function () use ($id) {
+            return cache()->tags($cacheTags)->remember($cacheKey, $this->defaultCacheLifetime, function () use ($id) {
                 return $this->model->findOrFail($id);
             });
         }
