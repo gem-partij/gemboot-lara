@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -47,7 +47,7 @@ jobs:
           composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction --no-progress
 
       - name: List installed versions
-        run: composer show laravel/framework orchestra/testbench phpunit/phpunit
+        run: composer show | grep -E '^(laravel/framework|orchestra/testbench|phpunit/phpunit|guzzlehttp/guzzle) '
 
       # composer.json allows minimum-stability "dev". When no stable release
       # can be installed (for example, all of them are blocked by security
