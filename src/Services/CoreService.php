@@ -100,7 +100,9 @@ class CoreService implements CoreServiceContract
                 $cacheTags = $this->getCacheTags($this->getModelTableName());
 
                 $cacheDriver = cache();
-                if (env('CACHE_DRIVER') != 'file') {
+                // Tag hanya dipakai apabila store mendukungnya (redis, memcached, array).
+                // Store file dan database melempar BadMethodCallException pada tags().
+                if ($cacheDriver->supportsTags()) {
                     $cacheDriver = $cacheDriver->tags($cacheTags);
                 }
 
@@ -167,7 +169,9 @@ class CoreService implements CoreServiceContract
             return $this->model->findOrFail($id);
         } else {
             $cacheDriver = cache();
-            if (env('CACHE_DRIVER') != 'file') {
+            // Tag hanya dipakai apabila store mendukungnya (redis, memcached, array).
+            // Store file dan database melempar BadMethodCallException pada tags().
+            if ($cacheDriver->supportsTags()) {
                 $cacheDriver = $cacheDriver->tags($cacheTags);
             }
 
