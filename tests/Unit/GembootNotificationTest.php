@@ -14,8 +14,14 @@ class GembootNotificationTest extends TestCase
 
     function test_send()
     {
+        // Test ini memanggil API Telegram yang sesungguhnya, sehingga hanya
+        // dijalankan apabila diaktifkan secara eksplisit beserta kredensialnya.
         if (!env('TEST_NOTIFICATION')) {
-            return $this->assertTrue(true);
+            $this->markTestSkipped('Set TEST_NOTIFICATION=true to run against the real Telegram API.');
+        }
+
+        if (!env('GEMBOOT_TELEGRAM_BOT_TOKEN') || !env('GEMBOOT_TELEGRAM_CHAT_ID')) {
+            $this->markTestSkipped('GEMBOOT_TELEGRAM_BOT_TOKEN and GEMBOOT_TELEGRAM_CHAT_ID are required.');
         }
 
         // $notif = (object)[
@@ -36,10 +42,8 @@ class GembootNotificationTest extends TestCase
 
     function test_500()
     {
-        if (!env('TEST_NOTIFICATION')) {
-            return $this->assertTrue(true);
-        }
-
+        // Tanpa token bot, responseException() tidak mengirim notifikasi,
+        // sehingga test ini aman dijalankan tanpa akses jaringan.
         $response = $this->getJson('/http-status/500');
 
         $response

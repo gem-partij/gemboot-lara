@@ -30,13 +30,16 @@
     <env name="GEMBOOT_GW_BASE_URL" value="http://199.169.3.14/"/>
     <env name="GEMBOOT_GW_BASE_URL_AUTH" value="http://199.169.3.14/auth/"/>
 
-    <env name="TELEGRAM_BOT_TOKEN" value="5953720372:AAGG_Y0I56njl5xBsNaLQ1MO3rPrjWX-7-k"/>
-    <env name="GEMBOOT_TELEGRAM_CHAT_ID" value="328200606"/>
-    <env name="GEMBOOT_TELEGRAM_BOT_TOKEN" value="5953720372:AAGG_Y0I56njl5xBsNaLQ1MO3rPrjWX-7-k"/>
+    <!--
+      Token bot Telegram tidak disimpan di sini. Untuk menjalankan test notifikasi
+      terhadap API Telegram yang sesungguhnya, berikan nilainya lewat environment:
+        TEST_NOTIFICATION=true GEMBOOT_TELEGRAM_BOT_TOKEN=... GEMBOOT_TELEGRAM_CHAT_ID=... vendor/bin/phpunit
+      PHPUnit tidak menimpa variabel environment yang sudah ada.
+    -->
 
     <env name="TEST_AUTH" value="false"/>
     <env name="TEST_FILE_HANDLER" value="false"/>
-    <env name="TEST_NOTIFICATION" value="true"/>
+    <env name="TEST_NOTIFICATION" value="false"/>
   </php>
   <source>
     <include>
