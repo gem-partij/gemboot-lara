@@ -92,7 +92,7 @@ trait JSONResponses
             }
             return $response;
         } catch (Exception $e) {
-            if (env('APP_DEBUG')) {
+            if (config('app.debug')) {
                 $data = $e->getTrace();
                 $message = $e->getMessage();
             } else {
@@ -220,15 +220,23 @@ trait JSONResponses
         \Log::error($message);
         \Log::error($exception->getTraceAsString());
 
-        if (env('GEMBOOT_TELEGRAM_BOT_TOKEN')) {
+        // Token dibaca melalui config() agar tetap terbaca setelah config:cache.
+        // Nilai placeholder dari config yang dipublish diperlakukan sebagai belum diisi.
+        $telegram_token = config('gemboot.notifications.telegram.token');
+        if ($telegram_token && $telegram_token !== 'YOUR BOT TOKEN HERE') {
             // $notif = (object)[
             //     'content' => "*NEW ERROR CATCH:*\n$message",
             // ];
             // Notification::notify(new Telegram($notif)); 
-            (new TelegramLibrary)->sendExceptionMessage($exception);
+            try {
+                (new TelegramLibrary)->sendExceptionMessage($exception);
+            } catch (Throwable $e) {
+                // Kegagalan notifikasi tidak boleh menggantikan response error yang asli.
+                \Log::warning('Gemboot: failed to send Telegram exception notification: ' . $e->getMessage());
+            }
         }
 
-        if (env('APP_DEBUG')) {
+        if (config('app.debug')) {
             return $this->responseError([
                 'error' => $message,
                 'trace' => $exception->getTrace()

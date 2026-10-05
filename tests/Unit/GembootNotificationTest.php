@@ -5,6 +5,7 @@ namespace Gemboot\Tests\Unit;
 use Gemboot\Tests\TestCase;
 use Illuminate\Testing\Fluent\AssertableJson;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Gemboot\Notifications\Telegram;
 use Gemboot\Libraries\TelegramLibrary;
@@ -48,5 +49,36 @@ class GembootNotificationTest extends TestCase
 
         $response
             ->assertStatus(500);
+    }
+
+    function test_500_skips_notification_when_token_is_placeholder()
+    {
+        // Config yang dipublish tanpa mengisi env masih memuat placeholder.
+        // Placeholder tidak boleh memicu pemanggilan API Telegram.
+        config()->set('gemboot.notifications.telegram.token', 'YOUR BOT TOKEN HERE');
+        config()->set('gemboot.notifications.telegram.chat_id', 'YOUR TELEGRAM CHAT ID HERE');
+        Log::spy();
+
+        $response = $this->getJson('/http-status/500');
+
+        $response->assertStatus(500);
+        Log::shouldNotHaveReceived('warning');
+    }
+
+    function test_500_reads_debug_flag_from_config()
+    {
+        // env('APP_DEBUG') bernilai null setelah config:cache, sehingga trace
+        // harus ditentukan oleh config('app.debug').
+        config()->set('app.debug', true);
+        $this->getJson('/http-status/500')
+            ->assertStatus(500)
+            ->assertJsonPath('data.error', 'TEST 500 EXCEPTION')
+            ->assertJsonStructure(['data' => ['error', 'trace']]);
+
+        config()->set('app.debug', false);
+        $this->getJson('/http-status/500')
+            ->assertStatus(500)
+            ->assertJsonPath('data.error', 'TEST 500 EXCEPTION')
+            ->assertJsonMissingPath('data.trace');
     }
 }
