@@ -12,6 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Gemboot\GembootServiceProvider;
 use Gemboot\Tests\Controllers\TestUserController;
+use Gemboot\Tests\Controllers\TestUserCachedController;
 use Gemboot\Tests\Controllers\TestAuthLibraryController;
 use Gemboot\Tests\Controllers\TestHttpStatusController;
 
@@ -96,6 +97,10 @@ class TestCase extends \Orchestra\Testbench\TestCase
         $router->middleware(['api'])->prefix('test')->group(function () use ($router) {
             // $router->get('/', [TestUserController::class, 'index']);
             $router->apiResource('users', TestUserController::class);
+        });
+
+        $router->middleware(['api'])->prefix('test-cached')->group(function () use ($router) {
+            $router->apiResource('users', TestUserCachedController::class)->only(['index', 'show']);
         });
 
         $router->middleware(['api'])->prefix('http-status')->group(

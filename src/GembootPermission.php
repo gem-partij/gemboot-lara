@@ -16,7 +16,8 @@ class GembootPermission
 
         $has_role_response = (new AuthLibrary)->hasRole(implode("|", $role_name));
 
-        return $has_role_response->has_role;
+        // AuthLibrary returns the decoded body as an array, or false when the call fails.
+        return (bool) data_get($has_role_response, 'has_role', false);
     }
 
     public function hasPermissionTo($permission_name)
@@ -29,9 +30,11 @@ class GembootPermission
 
         $has_permission_to_response = (new AuthLibrary)->hasPermissionTo(implode("|", $permission_name));
 
-        return $is_aslinya_array
-            ? $has_permission_to_response->has_any_permission
-            : $has_permission_to_response->has_permission_to;
+        return (bool) data_get(
+            $has_permission_to_response,
+            $is_aslinya_array ? 'has_any_permission' : 'has_permission_to',
+            false
+        );
     }
 
     public function requirePermission($permission_name, $throw_exception = true)

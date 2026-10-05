@@ -146,10 +146,25 @@ This creates the model, a service, and a resource controller. The controller ext
 
 | Parameter | Example | Effect |
 |---|---|---|
-| `search`, `search_field`, `search_mode` | `?search=ana&search_field=name` | `LIKE` search (`ILIKE` on PostgreSQL). Arrays search several fields. |
+| `search`, `search_field`, `search_mode` | `?search=ana&search_field=name` | `LIKE` search (`ILIKE` on PostgreSQL). Arrays search several fields. `relation.column` searches a related model. |
 | `search_exact` | `?search_exact=42&search_field=id` | Exact match instead of `LIKE` |
 | `order`, `atoz` | `?order=name&atoz=desc` | Sort. Arrays sort by several columns. |
 | `page_len` | `?page_len=50` | Page size (default 30). `all` returns up to 1000 rows without paging. |
+
+### Searching relations
+
+`?search=ana&search_field=author.name` searches the `author` relation. The part before the dot must be a real relation on the model: a public method with no required parameters, not inherited from Eloquent or Gemboot, whose return type (if declared) is a `Relation`. Anything else gets a 400.
+
+To allow only specific relations, list them on the model:
+
+```php
+class Post extends GembootModel
+{
+    protected $searchableRelations = ['author', 'tags'];
+}
+```
+
+We recommend the list, and declaring relation return types (`public function author(): BelongsTo`), for any model exposed through `index`.
 
 ## The auth service contract
 
