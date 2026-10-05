@@ -15,8 +15,8 @@ class GembootNotificationTest extends TestCase
 
     function test_send()
     {
-        // Test ini memanggil API Telegram yang sesungguhnya, sehingga hanya
-        // dijalankan apabila diaktifkan secara eksplisit beserta kredensialnya.
+        // This test calls the real Telegram API, so it only runs when enabled
+        // explicitly and credentials are provided.
         if (!env('TEST_NOTIFICATION')) {
             $this->markTestSkipped('Set TEST_NOTIFICATION=true to run against the real Telegram API.');
         }
@@ -43,8 +43,8 @@ class GembootNotificationTest extends TestCase
 
     function test_500()
     {
-        // Tanpa token bot, responseException() tidak mengirim notifikasi,
-        // sehingga test ini aman dijalankan tanpa akses jaringan.
+        // Without a bot token, responseException() sends no notification,
+        // so this test is safe to run without network access.
         $response = $this->getJson('/http-status/500');
 
         $response
@@ -53,8 +53,8 @@ class GembootNotificationTest extends TestCase
 
     function test_500_skips_notification_when_token_is_placeholder()
     {
-        // Config yang dipublish tanpa mengisi env masih memuat placeholder.
-        // Placeholder tidak boleh memicu pemanggilan API Telegram.
+        // A published config without the env var set still holds the placeholder.
+        // The placeholder must not trigger a call to the Telegram API.
         config()->set('gemboot.notifications.telegram.token', 'YOUR BOT TOKEN HERE');
         config()->set('gemboot.notifications.telegram.chat_id', 'YOUR TELEGRAM CHAT ID HERE');
         Log::spy();
@@ -67,8 +67,8 @@ class GembootNotificationTest extends TestCase
 
     function test_500_reads_debug_flag_from_config()
     {
-        // env('APP_DEBUG') bernilai null setelah config:cache, sehingga trace
-        // harus ditentukan oleh config('app.debug').
+        // env('APP_DEBUG') returns null after config:cache, so the trace
+        // must be driven by config('app.debug').
         config()->set('app.debug', true);
         $this->getJson('/http-status/500')
             ->assertStatus(500)

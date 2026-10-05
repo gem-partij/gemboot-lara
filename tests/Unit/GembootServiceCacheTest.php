@@ -20,15 +20,20 @@ class GembootServiceCacheTest extends TestCase
 
     function test_find_or_fail_works_on_store_without_tags()
     {
-        // Store file tidak mendukung tag. Sebelumnya env('CACHE_DRIVER') bernilai
-        // null pada Laravel 11+, sehingga tags() tetap dipanggil dan melempar exception.
+        // The file store has no tag support. Previously env('CACHE_DRIVER') was null
+        // on Laravel 11+, so tags() was still called and threw an exception.
         config()->set('cache.default', 'file');
         cache()->flush();
         $user = TestUser::factory()->create();
 
-        $found = $this->makeCachedService()->findOrFail($user->id);
+        $service = $this->makeCachedService();
+        $found = $service->findOrFail($user->id);
 
         $this->assertSame($user->id, $found->id);
+
+        // Without tags the observer cannot flush, so nothing may be cached.
+        $cacheKey = $service->getCacheKey('gemboot_test_user', $service->generateCacheKey($user->id));
+        $this->assertFalse(cache()->has($cacheKey));
     }
 
     function test_list_all_works_on_store_without_tags()

@@ -220,8 +220,8 @@ trait JSONResponses
         \Log::error($message);
         \Log::error($exception->getTraceAsString());
 
-        // Token dibaca melalui config() agar tetap terbaca setelah config:cache.
-        // Nilai placeholder dari config yang dipublish diperlakukan sebagai belum diisi.
+        // Read through config() so the token survives config:cache.
+        // The placeholder from the published config counts as not set.
         $telegram_token = config('gemboot.notifications.telegram.token');
         if ($telegram_token && $telegram_token !== 'YOUR BOT TOKEN HERE') {
             // $notif = (object)[
@@ -231,7 +231,7 @@ trait JSONResponses
             try {
                 (new TelegramLibrary)->sendExceptionMessage($exception);
             } catch (Throwable $e) {
-                // Kegagalan notifikasi tidak boleh menggantikan response error yang asli.
+                // A failed notification must not replace the original error response.
                 \Log::warning('Gemboot: failed to send Telegram exception notification: ' . $e->getMessage());
             }
         }
