@@ -113,18 +113,25 @@ Only the latest version will get new features.
 | 5.x              | 11               | 8.2 - 8.3   |
 | 6.x              | 11               | ^8.2        |
 | 7.x              | ^11, ^12         | ^8.2        |
-| 8.x *(current)*  | ^11, ^12, ^13    | ^8.3        |
+| 8.x *(current)*  | ^12, ^13         | ^8.3        |
 
 ### Upgrading from 7.x to 8.x
 
-8.x is a compatibility release that adds Laravel 13 and PHP 8.5 support. There are no breaking changes for consumer code — only minimum requirement bumps:
+8.x adds Laravel 13 and PHP 8.5 support. There are no breaking changes for consumer code, only minimum requirement bumps:
 
 - PHP minimum is now **8.3** (was 8.2)
+- Laravel 11 is no longer supported. Laravel 11 stopped receiving security fixes in March 2026, and recent Composer versions refuse to install its releases because of unpatched security advisories. Stay on 7.x if you cannot upgrade Laravel yet.
 - All internal method signatures use explicit nullable types (`?Type` instead of implicit `Type = null`) to satisfy PHP 8.4+ deprecation rules
+- `guzzlehttp/guzzle` minimum is now **7.15.2**. Earlier releases are affected by security advisories, including host-based check bypasses, and gemboot-lara sends auth tokens through Guzzle.
 - `laravel-notification-channels/telegram` accepts `^7.0` (Laravel 13 ecosystem)
 - PHPUnit `^12.0` is supported in dev dependencies
 
-If your project is already on PHP 8.3+ and Laravel 11/12/13, `composer require gem-partij/gemboot-lara:^8.0` should be a drop-in upgrade.
+Behavior changes worth checking:
+
+- `CoreService` caching (enabled with `setObserver()`) now requires a cache store with tag support (redis, memcached, array). On file or database stores, `listAll()` and `findOrFail()` read from the database directly, because cached entries could not be invalidated.
+- The Telegram exception notification and the debug trace in error responses are now read through `config()`, so they keep working after `php artisan config:cache`.
+
+If your project is already on PHP 8.3+ and Laravel 12/13, `composer require gem-partij/gemboot-lara:^8.0` should be a drop-in upgrade.
 
 ## Installation
 
