@@ -58,7 +58,8 @@ class CheckToken
 
     protected function validateToken(Request $request)
     {
-        $url_auth = app('config')->get('gemboot.gateway.base_url_auth', 'https://tirta.pdamkotasmg.co.id:8443/gateway/auth/');
+        // ?: rather than a get() default: with mergeConfigFrom the key exists as null.
+        $url_auth = app('config')->get('gemboot.gateway.base_url_auth') ?: 'https://tirta.pdamkotasmg.co.id:8443/gateway/auth/';
         $url = $url_auth . 'api/auth/me';
 
         $headers = $request->headers->all();

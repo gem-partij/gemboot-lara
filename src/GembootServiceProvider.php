@@ -79,6 +79,10 @@ class GembootServiceProvider extends ServiceProvider
 
     public function register()
     {
+        // Defaults for consumers who never published config/gemboot.php, and for
+        // top-level keys added after they published it.
+        $this->mergeConfigFrom(__DIR__ . '/../config/gemboot.php', 'gemboot');
+
         // Register a class in the service container
         $this->app->bind('gemboot-request', function ($app) {
             return new GembootRequest();
