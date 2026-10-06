@@ -61,6 +61,13 @@ trait JSONResponses
             ];
 
             if (app('config')->get('gemboot.response.compressed')) {
+                // Reported once per process; Laravel logs it to the deprecations channel.
+                static $compressionDeprecationReported = false;
+                if (!$compressionDeprecationReported) {
+                    $compressionDeprecationReported = true;
+                    trigger_error('gemboot.response.compressed is deprecated and will be removed in gemboot-lara 9.0. Let the web server compress responses.', E_USER_DEPRECATED);
+                }
+
                 ob_get_clean();
 
                 $accept_encoding = request()->header('accept-encoding');

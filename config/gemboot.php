@@ -3,6 +3,7 @@
 return [
 
     'auth' => [
+        // Not read by Gemboot; kept for backward compatibility, removed in 9.0.
         'base_url' => env('GEMBOOT_AUTH_BASE_URL'),
         'base_api' => env('GEMBOOT_AUTH_BASE_API'),
 
@@ -11,6 +12,7 @@ return [
         // working until its entries expire; AuthLibrary::logout() clears them.
         'cache_ttl' => env('GEMBOOT_AUTH_CACHE_TTL', 0),
 
+        // Not read by Gemboot; kept for backward compatibility, removed in 9.0.
         'fallback' => [
             'base_url' => env('GEMBOOT_AUTH_BASE_URL_FALLBACK'),
             'base_api' => env('GEMBOOT_AUTH_BASE_API_FALLBACK'),
@@ -65,8 +67,8 @@ return [
     ],
 
     'response' => [
-        // Compression through ob_gzhandler. Off by default: leave compression to the
-        // web server. It also misbehaves under Octane and FrankenPHP.
+        // Deprecated, removed in 9.0. Compression through ob_gzhandler; leave
+        // compression to the web server. It also misbehaves under Octane and FrankenPHP.
         'compressed' => env('GEMBOOT_RESPONSE_COMPRESSED', false),
         'send_header_error' => env('GEMBOOT_SEND_HEADER_ERROR', true),
     ],

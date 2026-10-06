@@ -12,7 +12,6 @@ class GembootHttpTest extends TestCase
     /** ================
      * TEST REQUEST GET ALL DATA (PAGINATION)
      *
-     * @test
      **/
     public function test_get_all_data()
     {
@@ -41,7 +40,6 @@ class GembootHttpTest extends TestCase
     /** ================
      * TEST REQUEST STORE DATA
      *
-     * @test
      **/
     public function test_store_data()
     {
@@ -68,7 +66,6 @@ class GembootHttpTest extends TestCase
     /** ================
      * TEST REQUEST SHOW DATA BY ID
      *
-     * @test
      **/
     public function test_show_data_by_id()
     {
@@ -94,7 +91,6 @@ class GembootHttpTest extends TestCase
     /** ================
      * TEST REQUEST UPDATE DATA
      *
-     * @test
      **/
     public function test_update_data()
     {
@@ -122,7 +118,6 @@ class GembootHttpTest extends TestCase
     /** ================
      * TEST REQUEST DELETE DATA
      *
-     * @test
      **/
     public function test_delete_data()
     {

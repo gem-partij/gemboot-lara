@@ -54,10 +54,10 @@ class TestCase extends \Orchestra\Testbench\TestCase
             'prefix'   => '',
         ]);
 
-        $app['config']->set('gemboot.auth.base_url', 'http://199.169.3.14:3000/portal-pegawai');
-        $app['config']->set('gemboot.auth.base_api', 'http://199.169.3.14:3000/portal-pegawai/api/auth');
+        $app['config']->set('gemboot.auth.base_url', env('GEMBOOT_AUTH_BASE_URL'));
+        $app['config']->set('gemboot.auth.base_api', env('GEMBOOT_AUTH_BASE_API'));
 
-        $app['config']->set('gemboot.file_handler.base_url', 'http://199.169.3.14:3000/file-handler');
+        $app['config']->set('gemboot.file_handler.base_url', env('GEMBOOT_FILE_HANDLER_BASE_URL'));
 
         $app['config']->set('gemboot.notifications.telegram.token', env('GEMBOOT_TELEGRAM_BOT_TOKEN'));
         $app['config']->set('gemboot.notifications.telegram.chat_id', env('GEMBOOT_TELEGRAM_CHAT_ID'));

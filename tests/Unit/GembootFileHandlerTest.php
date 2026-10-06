@@ -12,7 +12,6 @@ class GembootFileHandlerTest extends TestCase
     /** ================
      * TEST TOKEN
      *
-     * @test
      **/
     public function test_token()
     {

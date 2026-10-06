@@ -42,7 +42,7 @@ class CheckToken
                 $reasonPhrase = $response->getReasonPhrase();
 
                 $responseBodyAsString = "";
-                if (env('APP_DEBUG')) {
+                if (config('app.debug')) {
                     $responseBodyAsString = $response->getBody()->getContents();
                 }
                 return $this->response($statusCode, [

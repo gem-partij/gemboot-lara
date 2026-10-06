@@ -51,18 +51,6 @@ class GembootServiceProvider extends ServiceProvider
             ], 'gemboot-file-handler');
         }
 
-        // $this->app['auth']->extend('jwt', function ($app, $name, array $config) {
-        //     $guard = new JWTGuard(
-        //         $app['tymon.jwt'],
-        //         $app['auth']->createUserProvider($config['provider']),
-        //         $app['request']
-        //     );
-
-        //     $app->refresh('request', $guard, 'setRequest');
-
-        //     return $guard;
-        // });
-
         Auth::extend('gemboot-sso-token', function ($app, $name, array $config) {
             $provider = Auth::createUserProvider($config['provider']);
 
