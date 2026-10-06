@@ -3,7 +3,12 @@
 namespace Gemboot\Traits;
 
 use Gemboot\Contracts\CoreModelInterface as CoreModelContract;
+use Gemboot\Exceptions\BadRequestException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use ReflectionMethod;
+use ReflectionNamedType;
 
 trait MainModelAbilities
 {
@@ -285,8 +290,78 @@ trait MainModelAbilities
         }
     }
 
+    /**
+     * Reject relation names that are not real relations of this model.
+     *
+     * The relation name comes from request input (search_field "relation.column").
+     * whereHas() resolves it by calling $model->{$relation_name}(), so without this
+     * check a request could call any method, e.g. truncate() or save().
+     *
+     * A model can set a strict allowlist with: protected $searchableRelations = ['author'];
+     *
+     * @throws BadRequestException
+     */
+    protected function assertSearchableRelation($relation_name)
+    {
+        if (!is_string($relation_name) || $relation_name === '') {
+            throw new BadRequestException('Invalid search field.');
+        }
+
+        // Strict mode: only the relations the model lists explicitly.
+        if (property_exists($this, 'searchableRelations') && is_array($this->searchableRelations)) {
+            if (in_array($relation_name, $this->searchableRelations, true)) {
+                return;
+            }
+            throw new BadRequestException('Invalid search field.');
+        }
+
+        // Dynamic relations registered with Model::resolveRelationUsing().
+        if ($this->relationResolver(static::class, $relation_name)) {
+            return;
+        }
+
+        if (!method_exists($this, $relation_name) || method_exists(Model::class, $relation_name)) {
+            throw new BadRequestException('Invalid search field.');
+        }
+
+        // Methods from framework traits (e.g. SoftDeletes::restore) report the
+        // consumer's model as their declaring class, so check the traits directly.
+        foreach (class_uses_recursive(static::class) as $trait) {
+            if ((str_starts_with($trait, 'Illuminate\\') || str_starts_with($trait, 'Gemboot\\Traits\\'))
+                && method_exists($trait, $relation_name)
+            ) {
+                throw new BadRequestException('Invalid search field.');
+            }
+        }
+
+        $method = new ReflectionMethod($this, $relation_name);
+        $declaring_class = $method->getDeclaringClass()->getName();
+        if (!$method->isPublic()
+            || $method->isStatic()
+            || $method->getNumberOfRequiredParameters() > 0
+            || str_starts_with($declaring_class, 'Illuminate\\')
+            || str_starts_with($declaring_class, 'Gemboot\\Models\\')
+        ) {
+            throw new BadRequestException('Invalid search field.');
+        }
+
+        // A declared return type must be a relation. Untyped methods are allowed
+        // for backward compatibility; use $searchableRelations to rule them out.
+        $return_type = $method->getReturnType();
+        if ($return_type !== null) {
+            if (!($return_type instanceof ReflectionNamedType)
+                || $return_type->isBuiltin()
+                || !is_a($return_type->getName(), Relation::class, true)
+            ) {
+                throw new BadRequestException('Invalid search field.');
+            }
+        }
+    }
+
     protected function getQueryWhereHas(Builder &$query, $relation_name, $col_name, $operator, $string_search)
     {
+        $this->assertSearchableRelation($relation_name);
+
         return $query->whereHas($relation_name, function (Builder $q) use ($col_name, $operator, $string_search) {
             $q->where($col_name, $operator, $string_search);
         });
@@ -294,6 +369,8 @@ trait MainModelAbilities
 
     protected function getQueryOrWhereHas(Builder &$query, $relation_name, $col_name, $operator, $string_search)
     {
+        $this->assertSearchableRelation($relation_name);
+
         return $query->orWhereHas($relation_name, function (Builder $q) use ($col_name, $operator, $string_search) {
             $q->where($col_name, $operator, $string_search);
         });

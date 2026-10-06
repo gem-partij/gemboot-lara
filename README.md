@@ -155,6 +155,21 @@ Optional: The aliases will automatically get registered. Or you may manually add
 ];
 ```
 
+## Searching relations
+
+`?search=ana&search_field=author.name` searches the `author` relation. Since 7.0.7, the part before the dot must be a real relation on the model: a public method with no required parameters, not inherited from Eloquent or Gemboot, whose return type (if declared) is a `Relation`. Anything else gets a 400.
+
+To allow only specific relations, list them on the model:
+
+```php
+class Post extends GembootModel
+{
+    protected $searchableRelations = ['author', 'tags'];
+}
+```
+
+We recommend the list, and declaring relation return types (`public function author(): BelongsTo`), for any model exposed through `index`.
+
 ## Gemboot Gateway (Additional Package)
 
 ### Middleware
