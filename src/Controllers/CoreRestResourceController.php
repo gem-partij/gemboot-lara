@@ -4,6 +4,7 @@ namespace Gemboot\Controllers;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Http\Request;
+use Gemboot\Middleware\TokenValidated;
 use Cache;
 
 use Throwable;
@@ -30,7 +31,8 @@ abstract class CoreRestResourceController extends CoreRestController implements 
 
     public function __construct(?Eloquent $model = null, ?CoreService $service = null)
     {
-        if (is_null($service)) {
+        // CoreService needs a model; without one the parent leaves the service unset.
+        if (is_null($service) && !is_null($model)) {
             $service = new CoreService($model, $this->with, $this->orderBy);
         }
 
@@ -75,8 +77,7 @@ abstract class CoreRestResourceController extends CoreRestController implements 
             if ($this->cache_seconds['index'] > 0) {
                 // Key from the sorted query string only. implode() over request()->all()
                 // dropped parameter names and failed on nested arrays such as user_login.
-                $query = request()->query();
-                ksort($query);
+                $query = $this->queryForCacheKey();
                 $cache_key = $this->modelTableName . '_index_' . sha1(json_encode($query));
                 $cache_seconds = $this->cache_seconds['index'];
 
@@ -106,6 +107,8 @@ abstract class CoreRestResourceController extends CoreRestController implements 
             $validator = $this->validateStoreRequest($request);
 
             if ($validator->fails()) {
+                // Close the transaction opened above before returning.
+                \DB::rollback();
                 return $this->responseBadRequest([
                     'errors' => $validator->errors(),
                 ]);
@@ -115,7 +118,7 @@ abstract class CoreRestResourceController extends CoreRestController implements 
 
             // jika before store tidak return apa-apa
             if (is_null($before_store_resp)) {
-                $saved_data = $this->service->store($request->all(), $this->merge_store_data_with);
+                $saved_data = $this->service->store($this->requestDataToSave($request), $this->merge_store_data_with);
             } else {
                 $saved_data = $before_store_resp;
             }
@@ -154,8 +157,7 @@ abstract class CoreRestResourceController extends CoreRestController implements 
             return $this->responseSuccessOrException(function () use ($id) {
                 if ($this->cache_seconds['show'] > 0) {
                     // The key must include $id, otherwise every record shares one entry.
-                    $query = request()->query();
-                    ksort($query);
+                    $query = $this->queryForCacheKey();
                     $cache_key = $this->modelTableName . '_show_' . sha1(json_encode([$id, $query]));
                     $cache_seconds = $this->cache_seconds['show'];
 
@@ -190,6 +192,8 @@ abstract class CoreRestResourceController extends CoreRestController implements 
             $validator = $this->validateUpdateRequest($request, $id);
 
             if ($validator->fails()) {
+                // Close the transaction opened above before returning.
+                \DB::rollback();
                 return $this->responseBadRequest([
                     'errors' => $validator->errors(),
                 ]);
@@ -199,7 +203,7 @@ abstract class CoreRestResourceController extends CoreRestController implements 
 
             // jika before store tidak return apa-apa
             if (is_null($before_update_resp)) {
-                $saved_data = $this->service->update($request->all(), $id, $this->merge_update_data_with);
+                $saved_data = $this->service->update($this->requestDataToSave($request), $id, $this->merge_update_data_with);
             } else {
                 $saved_data = $before_update_resp;
             }
@@ -273,5 +277,29 @@ abstract class CoreRestResourceController extends CoreRestController implements 
 
     protected function afterUpdateCommitHooks($savedData, $request)
     {
+    }
+
+    /**
+     * Request input for store()/update(), without the user that TokenValidated
+     * merged in as "user_login" (it is not a column of the model).
+     */
+    private function requestDataToSave(Request $request): array
+    {
+        return $request->attributes->get(TokenValidated::USER_LOGIN_MERGED)
+            ? $request->except('user_login')
+            : $request->all();
+    }
+
+    /**
+     * Sorted query string for cache keys. It keeps the "user_login" merged by
+     * TokenValidated, so entries stay per user: a controller or service may scope
+     * its query to the current user, and a shared key would leak data between users.
+     */
+    private function queryForCacheKey(): array
+    {
+        $query = request()->query();
+        ksort($query);
+
+        return $query;
     }
 }

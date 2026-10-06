@@ -5,7 +5,10 @@ trait GembootHelpers
 {
     public function getCacheKey($tag, $id, $single_or_group = 'single')
     {
-        $single_or_group = ($single_or_group == 'group') ? config('c_cache_observer.cache_group_prefix') : config('c_cache_observer.cache_single_prefix');
+        // c_cache_observer.* is not part of Gemboot's config; honor it if the app has it.
+        $single_or_group = ($single_or_group == 'group')
+            ? config('c_cache_observer.cache_group_prefix', 'group')
+            : config('c_cache_observer.cache_single_prefix', 'single');
         $cacheKey = $tag.'-'.$single_or_group.'-'.$id;
         return $cacheKey;
     }

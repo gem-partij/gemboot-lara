@@ -11,7 +11,8 @@ abstract class CoreRestProxyController extends CoreRestController
 
     public function __construct(?Eloquent $model = null, ?CoreService $service = null)
     {
-        if (is_null($service)) {
+        // CoreService needs a model; without one the parent leaves the service unset.
+        if (is_null($service) && !is_null($model)) {
             $service = new CoreService($model, $this->with, $this->orderBy);
         }
 

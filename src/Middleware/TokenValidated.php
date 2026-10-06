@@ -12,6 +12,14 @@ class TokenValidated
     use JSONResponses;
 
     /**
+     * Request attribute set when the current user was merged into the input as
+     * "user_login", so Gemboot can keep it out of the data store() and update() save.
+     *
+     * @internal
+     */
+    public const USER_LOGIN_MERGED = 'gemboot.user_login_merged';
+
+    /**
      * Handle an incoming request.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -44,6 +52,7 @@ class TokenValidated
             }
 
             $request->merge(['user_login' => (array) $response]);
+            $request->attributes->set(self::USER_LOGIN_MERGED, true);
             return $next($request);
         }
     }

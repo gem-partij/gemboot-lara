@@ -86,6 +86,9 @@ class CoreService implements CoreServiceContract
             // Hash of the sorted query string only. The full request input put request
             // bodies (passwords on update) into key names, gave unbounded key counts,
             // and produced keys over Memcached's 250-character limit.
+            // On GET requests the user merged in by TokenValidated is part of the
+            // query, so entries stay per user. Keep it that way: services often scope
+            // queries to the current user, and a shared key would leak data between users.
             $query = request()->query();
             ksort($query);
             $postfix = sha1(json_encode($query));
@@ -108,6 +111,14 @@ class CoreService implements CoreServiceContract
                 $cacheKey = $this->getCacheKey($this->getModelTableName(), $this->generateCacheKey("listAll()"), 'group');
                 $cacheTags = $this->getCacheTags($this->getModelTableName());
 
+                // A query passed in (e.g. scoped to the current user) must be part of
+                // the key, otherwise every caller shares the first caller's result.
+                // Builders, relations, and models all answer toSql() and getBindings()
+                // through __call(), so method_exists() would not find them.
+                if (is_object($model)) {
+                    $cacheKey .= '-' . sha1($model->toSql() . '|' . json_encode($model->getBindings()));
+                }
+
                 return cache()->tags($cacheTags)->remember($cacheKey, $this->defaultCacheLifetime, function () use ($model, $disable_search) {
                     return $this->getQueryListAll($model, $disable_search);
                 });
@@ -126,13 +137,10 @@ class CoreService implements CoreServiceContract
     public function countAll($model = null, $disable_search = false)
     {
         try {
-            if (!is_null($model)) {
-                $this->model = $model;
-            }
+            $query = is_null($model) ? $this->freshModelQuery() : $model;
+            $query = $this->generateModelSearch($query, $disable_search);
 
-            $this->model = $this->generateModelSearch($this->model, $disable_search);
-
-            return $this->model->count();
+            return $query->count();
         } catch (\Exception $e) {
             throw $e;
         }
@@ -145,7 +153,12 @@ class CoreService implements CoreServiceContract
     {
         $this->beforeStoreHooks($requestData, $merge_data_with);
 
-        $data = $this->model;
+        // Save a copy: filling and saving $this->model itself made a second store()
+        // update the row created by the first. A clone keeps attributes preset on
+        // the model given to the constructor.
+        $data = ($this->model instanceof Eloquent && !$this->model->exists)
+            ? clone $this->model
+            : $this->model->newInstance();
         $data->fill(array_merge($requestData, $merge_data_with));
         $data->save();
 
@@ -162,17 +175,18 @@ class CoreService implements CoreServiceContract
         $cacheKey = $this->getCacheKey($this->getModelTableName(), $this->generateCacheKey($id));
         $cacheTags = $this->getCacheTags($this->getModelTableName());
 
+        $query = $this->freshModelQuery();
         if (!empty($this->with) && $addWith) {
-            $this->model = $this->model->with($this->with);
+            $query = $query->with($this->with);
             $cacheKey .= '-addwith';
         }
 
         // See listAll(): stores without tag support skip caching to avoid stale data.
         if (empty($this->observer) || !cache()->supportsTags()) {
-            return $this->model->findOrFail($id);
+            return $query->findOrFail($id);
         } else {
-            return cache()->tags($cacheTags)->remember($cacheKey, $this->defaultCacheLifetime, function () use ($id) {
-                return $this->model->findOrFail($id);
+            return cache()->tags($cacheTags)->remember($cacheKey, $this->defaultCacheLifetime, function () use ($query, $id) {
+                return $query->findOrFail($id);
             });
         }
     }
@@ -182,13 +196,13 @@ class CoreService implements CoreServiceContract
      **/
     public function firstOrFail($model, $addWith = true)
     {
-        $this->model = $model;
+        $query = $model;
 
         if (!empty($this->with) && $addWith) {
-            $this->model = $this->model->with($this->with);
+            $query = $query->with($this->with);
         }
 
-        return $this->model->firstOrFail();
+        return $query->firstOrFail();
     }
 
     /**
@@ -245,7 +259,7 @@ class CoreService implements CoreServiceContract
     protected function generateModelSearch($model = null, $disable_search = false)
     {
         if (is_null($model)) {
-            $model = $this->model;
+            $model = $this->freshModelQuery();
         }
 
         $search = null;
@@ -298,7 +312,7 @@ class CoreService implements CoreServiceContract
     protected function generateModelOrder($model = null)
     {
         if (is_null($model)) {
-            $model = $this->model;
+            $model = $this->freshModelQuery();
         }
 
         if (request()->has('order')) {
@@ -336,6 +350,16 @@ class CoreService implements CoreServiceContract
     }
 
     /**
+     * A new query for this call. Methods used to store their query in $this->model,
+     * so filters and eager loads leaked into later calls on the same service
+     * instance (and, under Octane, into other requests).
+     */
+    protected function freshModelQuery()
+    {
+        return $this->model instanceof Eloquent ? $this->model->newQuery() : clone $this->model;
+    }
+
+    /**
      * Page size from ?page_len, limited by gemboot.pagination.max_page_len.
      */
     protected function getPageLength(): int
@@ -353,28 +377,26 @@ class CoreService implements CoreServiceContract
 
     protected function getQueryListAll($model = null, $disable_search = false)
     {
-        if (!is_null($model)) {
-            $this->model = $model;
-        }
+        $query = is_null($model) ? $this->freshModelQuery() : $model;
 
         if (!empty($this->with)) {
-            $this->model = $this->model->with($this->with);
+            $query = $query->with($this->with);
         }
 
-        $this->model = $this->generateModelSearch($this->model, $disable_search);
-        $this->model = $this->generateModelOrder($this->model);
+        $query = $this->generateModelSearch($query, $disable_search);
+        $query = $this->generateModelOrder($query);
 
         if (request()->has('page_len') && request('page_len') == 'all') {
             // count first
-            $count_data = $this->model->count();
+            $count_data = $query->count();
             if ($count_data <= 1000) {
-                return $this->model->get();
+                return $query->get();
             }
 
-            return $this->model->paginate(999);
+            return $query->paginate(999);
         }
 
-        return $this->model->paginate($this->getPageLength());
+        return $query->paginate($this->getPageLength());
     }
 
 
