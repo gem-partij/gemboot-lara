@@ -73,7 +73,11 @@ abstract class CoreRestResourceController extends CoreRestController implements 
     {
         return $this->responseSuccessOrException(function () {
             if ($this->cache_seconds['index'] > 0) {
-                $cache_key = $this->modelTableName . '_index_' . implode('_', request()->all());
+                // Key from the sorted query string only. implode() over request()->all()
+                // dropped parameter names and failed on nested arrays such as user_login.
+                $query = request()->query();
+                ksort($query);
+                $cache_key = $this->modelTableName . '_index_' . sha1(json_encode($query));
                 $cache_seconds = $this->cache_seconds['index'];
 
                 return Cache::remember($cache_key, $cache_seconds, function () {
@@ -149,7 +153,10 @@ abstract class CoreRestResourceController extends CoreRestController implements 
         try {
             return $this->responseSuccessOrException(function () use ($id) {
                 if ($this->cache_seconds['show'] > 0) {
-                    $cache_key = $this->modelTableName . '_show_' . implode('_', request()->all());
+                    // The key must include $id, otherwise every record shares one entry.
+                    $query = request()->query();
+                    ksort($query);
+                    $cache_key = $this->modelTableName . '_show_' . sha1(json_encode([$id, $query]));
                     $cache_seconds = $this->cache_seconds['show'];
 
                     return Cache::remember($cache_key, $cache_seconds, function () use ($id) {

@@ -4,6 +4,7 @@ namespace Gemboot\SSO\Auth;
 
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -101,35 +102,47 @@ class SSOGuard implements Guard
 
             $getUserUrl = config('gemboot.sso.get_user_url') ?? config('gemboot.sso.user_service_url') . "/user/me";
 
-            // Get data user ke user-service (pakai HTTP atau gRPC)
-            $userResponse = Http::withToken($token)
-                // ->withCookies([
-                //     'refreshToken' => $refreshToken,
-                // ], parse_url($getUserUrl, PHP_URL_HOST))
-                ->get($getUserUrl, [
-                    'showRoles' => 'true',
-                    'showPermissions' => 'true',
-                ]);
+            // The fallback is used only when it is configured. Without this check
+            // the URL became "/user/me" and an invalid token ended in a 500.
+            $fallbackGetUserUrl = config('gemboot.sso.fallback.get_user_url');
+            if (empty($fallbackGetUserUrl) && !empty(config('gemboot.sso.fallback.user_service_url'))) {
+                $fallbackGetUserUrl = config('gemboot.sso.fallback.user_service_url') . "/user/me";
+            }
 
-            if (!$userResponse->ok()) {
-                // Jika gagal, coba ambil dari fallback
-                $fallbackGetUserUrl = config('gemboot.sso.fallback.get_user_url') ?? config('gemboot.sso.fallback.user_service_url') . "/user/me";
-                $userResponse = Http::withToken($token)
-                    ->get($fallbackGetUserUrl, [
-                        'showRoles' => 'true',
-                        'showPermissions' => 'true',
-                    ]);
+            // Get data user ke user-service (pakai HTTP atau gRPC)
+            try {
+                $userResponse = $this->requestUser($getUserUrl, $token);
+            } catch (ConnectionException $e) {
+                // Primary unreachable: try the fallback instead of failing right away.
+                if (empty($fallbackGetUserUrl)) {
+                    throw $e;
+                }
+                $userResponse = null;
+            }
+
+            if (!$userResponse || !$userResponse->ok()) {
+                if (empty($fallbackGetUserUrl)) {
+                    return null;
+                }
+
+                $userResponse = $this->requestUser($fallbackGetUserUrl, $token);
 
                 if (!$userResponse->ok()) {
                     return null;
                 }
-            };
+            }
 
             $userResponseJSON = $userResponse->json();
-            if (isset($userResponseJSON['data'])) {
+            if (is_array($userResponseJSON) && array_key_exists('data', $userResponseJSON)) {
                 $userResponseJSON = $userResponseJSON['data'];
             }
             $userData = isset($userResponseJSON['user']) ? $userResponseJSON['user'] : $userResponseJSON;
+
+            // A 200 reply without a user object (an HTML page, {"data": null}, ...)
+            // must not authenticate the request or be cached.
+            if (!is_array($userData) || empty($userData)) {
+                return null;
+            }
             $userData['roles'] = isset($userResponseJSON['roles']) ? $userResponseJSON['roles'] : null;
             $userData['permissions'] = isset($userResponseJSON['permissions']) ? $userResponseJSON['permissions'] : null;
 
@@ -142,6 +155,18 @@ class SSOGuard implements Guard
             throw $e;
             return null;
         }
+    }
+
+    /**
+     * Fetch the current user from the user service with the given token.
+     */
+    private function requestUser(string $url, string $token)
+    {
+        return Http::withToken($token)
+            ->get($url, [
+                'showRoles' => 'true',
+                'showPermissions' => 'true',
+            ]);
     }
 
     /**
