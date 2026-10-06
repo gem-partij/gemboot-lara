@@ -31,14 +31,6 @@ class GembootControllerCacheTest extends TestCase
         TestUser::factory()->create(['name' => 'Beta']);
 
         $this->assertCount(1, $this->getJson('/test-cached/users?search=Alpha&search_field=name')->json('data.data'));
-
-        // Routes keep their controller (and its service) between requests in one
-        // app, and CoreService keeps the last query in $this->model. Start fresh,
-        // as a new PHP-FPM request would, so only the cache key is under test.
-        foreach (app('router')->getRoutes() as $route) {
-            $route->flushController();
-        }
-
         $this->assertCount(2, $this->getJson('/test-cached/users?foo=Alpha&bar=name')->json('data.data'));
     }
 
