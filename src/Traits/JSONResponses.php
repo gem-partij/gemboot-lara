@@ -217,8 +217,9 @@ trait JSONResponses
     {
         $message = $exception->getMessage();
 
-        \Log::error($message);
-        \Log::error($exception->getTraceAsString());
+        // Goes through the app's exception handler: logged as before, and also
+        // passed to error trackers (Sentry, Nightwatch, ...) the app has set up.
+        report($exception);
 
         // Read through config() so the token survives config:cache.
         // The placeholder from the published config counts as not set.
@@ -242,8 +243,10 @@ trait JSONResponses
                 'trace' => $exception->getTrace()
             ], null, null);
         } else {
+            // Unexpected exceptions can carry internals (a QueryException holds the
+            // SQL, host, and database name), so clients only get a generic message.
             return $this->responseError([
-                'error' => $message,
+                'error' => 'Internal Server Error',
             ]);
         }
     }

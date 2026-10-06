@@ -58,4 +58,22 @@ class GembootServiceCacheTest extends TestCase
         $cacheKey = $service->getCacheKey('gemboot_test_user', $service->generateCacheKey($user->id));
         $this->assertTrue(cache()->tags($service->getCacheTags('gemboot_test_user'))->has($cacheKey));
     }
+
+    function test_cache_key_ignores_request_body_and_query_order()
+    {
+        // The key was built from json_encode(request()->all()), so request bodies
+        // (passwords on update) ended up in cache key names.
+        $service = new TestUserService;
+
+        $this->app->instance('request', \Illuminate\Http\Request::create('/test/users/1?b=2&a=1', 'PUT'));
+        $withoutBody = $service->generateCacheKey('main');
+
+        $this->app->instance('request', \Illuminate\Http\Request::create('/test/users/1?a=1&b=2', 'PUT', ['password' => 'secret-value']));
+        $withBody = $service->generateCacheKey('main');
+
+        // Same query (in any order), different body: same key, and no body in it.
+        $this->assertSame($withoutBody, $withBody);
+        $this->assertStringNotContainsString('secret-value', $withBody);
+        $this->assertLessThan(250, strlen($withBody));
+    }
 }

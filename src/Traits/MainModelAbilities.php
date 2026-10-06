@@ -58,6 +58,7 @@ trait MainModelAbilities
                     $exploded = explode('.', $field);
                     return $this->getQueryOrWhereHas($query, $exploded[0], $exploded[1], $operator, $string_like);
                 } else {
+                    $this->assertSearchableColumn($field);
                     return $query->orWhere($this->getTable() . '.' . $field, $operator, $string_like);
                 }
             } else {
@@ -65,12 +66,14 @@ trait MainModelAbilities
                     $exploded = explode('.', $field);
                     return $this->getQueryWhereHas($query, $exploded[0], $exploded[1], $operator, $string_like);
                 } else {
+                    $this->assertSearchableColumn($field);
                     return $query->where($this->getTable() . '.' . $field, $operator, $string_like);
                 }
             }
         } else {
             $primary = $this->getKeyName();
-            $cols = $this->getTableColumns();
+            // Hidden columns (password, tokens, ...) are never searched.
+            $cols = array_diff($this->getTableColumns(), $this->getHidden());
 
             return $query->where(function (Builder $q) use ($mode, $primary, $cols, $string_like, $arr_date_fields, $operator) {
                 if ($mode == 'or') {
@@ -114,6 +117,7 @@ trait MainModelAbilities
                     $exploded = explode('.', $field);
                     return $this->getQueryOrWhereHas($query, $exploded[0], $exploded[1], $operator, $string);
                 } else {
+                    $this->assertSearchableColumn($field);
                     return $query->orWhere($this->getTable() . '.' . $field, $operator, $string);
                 }
             } else {
@@ -121,12 +125,14 @@ trait MainModelAbilities
                     $exploded = explode('.', $field);
                     return $this->getQueryWhereHas($query, $exploded[0], $exploded[1], $operator, $string);
                 } else {
+                    $this->assertSearchableColumn($field);
                     return $query->where($this->getTable() . '.' . $field, $operator, $string);
                 }
             }
         } else {
             $primary = $this->getKeyName();
-            $cols = $this->getTableColumns();
+            // Hidden columns (password, tokens, ...) are never searched.
+            $cols = array_diff($this->getTableColumns(), $this->getHidden());
 
             return $query->where(function (Builder $q) use ($mode, $primary, $cols, $string, $arr_date_fields, $operator) {
                 if ($mode == 'or') {
@@ -177,6 +183,7 @@ trait MainModelAbilities
                             $exploded = explode('.', $field_item);
                             $q = $this->getQueryOrWhereHas($q, $exploded[0], $exploded[1], $operator, $string_like);
                         } else {
+                            $this->assertSearchableColumn($field_item);
                             $q = $q->orWhere($this->getTable() . '.' . $field_item, $operator, $string_like);
                         }
                     } else {
@@ -184,6 +191,7 @@ trait MainModelAbilities
                             $exploded = explode('.', $field_item);
                             $q = $this->getQueryWhereHas($q, $exploded[0], $exploded[1], $operator, $string_like);
                         } else {
+                            $this->assertSearchableColumn($field_item);
                             $q = $q->where($this->getTable() . '.' . $field_item, $operator, $string_like);
                         }
                     }
@@ -218,6 +226,7 @@ trait MainModelAbilities
                             $exploded = explode('.', $field_item);
                             $q = $this->getQueryOrWhereHas($q, $exploded[0], $exploded[1], $operator, $string_item);
                         } else {
+                            $this->assertSearchableColumn($field_item);
                             $q = $q->orWhere($this->getTable() . '.' . $field_item, $operator, $string_item);
                         }
                     } else {
@@ -225,6 +234,7 @@ trait MainModelAbilities
                             $exploded = explode('.', $field_item);
                             $q = $this->getQueryWhereHas($q, $exploded[0], $exploded[1], $operator, $string_item);
                         } else {
+                            $this->assertSearchableColumn($field_item);
                             $q = $q->where($this->getTable() . '.' . $field_item, $operator, $string_item);
                         }
                     }
@@ -287,6 +297,21 @@ trait MainModelAbilities
                 default:
                     return $query;
             }
+        }
+    }
+
+    /**
+     * Reject searches on hidden columns.
+     *
+     * A LIKE search on a hidden column (password hash, remember_token, ...) lets a
+     * client guess its value one character at a time from which rows come back.
+     *
+     * @throws BadRequestException
+     */
+    protected function assertSearchableColumn($column)
+    {
+        if (in_array($column, $this->getHidden(), true)) {
+            throw new BadRequestException('Invalid search field.');
         }
     }
 
@@ -363,6 +388,9 @@ trait MainModelAbilities
         $this->assertSearchableRelation($relation_name);
 
         return $query->whereHas($relation_name, function (Builder $q) use ($col_name, $operator, $string_search) {
+            if (in_array($col_name, $q->getModel()->getHidden(), true)) {
+                throw new BadRequestException('Invalid search field.');
+            }
             $q->where($col_name, $operator, $string_search);
         });
     }
@@ -372,6 +400,9 @@ trait MainModelAbilities
         $this->assertSearchableRelation($relation_name);
 
         return $query->orWhereHas($relation_name, function (Builder $q) use ($col_name, $operator, $string_search) {
+            if (in_array($col_name, $q->getModel()->getHidden(), true)) {
+                throw new BadRequestException('Invalid search field.');
+            }
             $q->where($col_name, $operator, $string_search);
         });
     }
