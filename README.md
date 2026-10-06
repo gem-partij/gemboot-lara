@@ -199,7 +199,13 @@ Instead of the middleware, you can use Laravel's own `auth` system through the `
 ],
 ```
 
-Then `auth:api` on a route and `auth()->user()` work as usual. Set `GEMBOOT_USER_SERVICE_URL` (the guard calls `{url}/user/me`) or `GEMBOOT_SSO_GET_USER_URL` for the full URL. Both have `_FALLBACK` variants that are tried when the first call fails.
+Then `auth:api` on a route and `auth()->user()` work as usual. Set `GEMBOOT_USER_SERVICE_URL` (the guard calls `{url}/user/me`) or `GEMBOOT_SSO_GET_USER_URL` for the full URL. Both have `_FALLBACK` variants. The fallback is tried when the first service can't be reached or doesn't accept the token, so a rejected token is also sent to the fallback host. (9.0 will try the fallback only during outages.)
+
+The user is cached per token, so a token revoked at the auth service keeps working until `GEMBOOT_SSO_CACHE_TTL` runs out. Clear it on logout:
+
+```php
+Auth::guard('api')->forgetCachedUser();
+```
 
 ## Configuration
 
@@ -218,7 +224,7 @@ All settings live in **one file, `config/gemboot.php`**. Every value comes from 
 | `file_handler.base_url` | `GEMBOOT_FILE_HANDLER_BASE_URL` | File upload service used by `FileHandler` |
 | `notifications.telegram.token`, `.chat_id` | `GEMBOOT_TELEGRAM_BOT_TOKEN`, `GEMBOOT_TELEGRAM_CHAT_ID` | Telegram alert on every unhandled 500. Off when the token is empty. |
 | `response.send_header_error` | `GEMBOOT_SEND_HEADER_ERROR` | Adds an `x-gemboot-error-message` header to error responses (default on) |
-| `response.compressed` | `GEMBOOT_RESPONSE_COMPRESSED` | gzip through `ob_gzhandler` (default off; leave compression to the web server) |
+| `response.compressed` | `GEMBOOT_RESPONSE_COMPRESSED` | **Deprecated, removed in 9.0.** gzip through `ob_gzhandler` (default off; leave compression to the web server) |
 
 You don't have to publish the file: Gemboot merges its defaults, and a published file only needs the keys you change. A file published before a new top-level key was added still gets that key's default.
 
@@ -239,6 +245,20 @@ $service = (new UserService)->setObserver(new UserCachingObserver);
 ```
 
 This needs a cache store with tag support: redis, memcached, or array. On file or database stores, Gemboot skips caching and reads from the database, because it could not clear stale entries there.
+
+**Cached results are per logged-in user.** Services and controllers often scope queries to the current user (for example `where('user_id', auth()->id())`), so a shared cache entry could show one user another user's data. The cache key includes `auth()->id()` whenever someone is logged in through a Laravel guard. If a service's results are the same for everyone, share them across users by returning `null`:
+
+```php
+class CountryService extends GembootService
+{
+    protected function cacheScope()
+    {
+        return null; // same list for every user
+    }
+}
+```
+
+`GembootResourceController` has the same `cacheScope()` method for its own `index`/`show` cache (`$cache_seconds`). That cache is also cleared by the caching observer on stores with tag support.
 
 ## Facades and aliases
 
@@ -307,6 +327,15 @@ Only the latest major version gets new features.
 | 6.x | 11 | ^8.2 |
 | 7.x | ^11, ^12 | ^8.2 |
 | **8.x (current)** | **^12, ^13** | **^8.3** |
+
+### Upgrading from 8.1 to 8.2
+
+No public signatures or config keys are removed. Check these changes:
+
+- **Cached results are now per logged-in user** (see [Caching](#caching)). This fixes data leaking between users when a service scopes queries to `auth()->id()`, but it also means fewer cache hits. Override `cacheScope()` to return `null` where results really are the same for everyone.
+- **The controller's `$cache_seconds` cache is cleared by the caching observer** on stores with tag support. Before, it kept serving old data until `cache_seconds` ran out.
+- **New:** `SSOGuard::forgetCachedUser()` clears the cached SSO user, for logout.
+- **Deprecated:** `response.compressed` (`GEMBOOT_RESPONSE_COMPRESSED`). Enabling it now logs a deprecation; it will be removed in 9.0.
 
 ### Upgrading from 8.0 to 8.1
 
@@ -383,7 +412,7 @@ composer test                              # all tests
 vendor/bin/phpunit --filter GembootHttpTest
 ```
 
-Tests that call real external services are opt-in. For example, the Telegram test runs only with `TEST_NOTIFICATION=true` plus `GEMBOOT_TELEGRAM_BOT_TOKEN` and `GEMBOOT_TELEGRAM_CHAT_ID` set in the environment. A `docker-compose.yml` with a PHP 8.4 container is included.
+Tests that call real external services are opt-in. For example, the Telegram test runs only with `TEST_NOTIFICATION=true` plus `GEMBOOT_TELEGRAM_BOT_TOKEN` and `GEMBOOT_TELEGRAM_CHAT_ID` set in the environment, and `TEST_AUTH=true` needs `GEMBOOT_AUTH_BASE_API` pointing at a real auth service. The repository only contains placeholder hosts. A `docker-compose.yml` with a PHP 8.4 container is included.
 
 CI runs PHP 8.3, 8.4, and 8.5 against Laravel 12 and 13, plus a lowest-versions job. It fails if Composer installs a dev branch instead of a stable release.
 
