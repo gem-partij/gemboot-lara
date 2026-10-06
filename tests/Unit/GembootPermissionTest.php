@@ -5,43 +5,11 @@ namespace Gemboot\Tests\Unit;
 use Gemboot\Exceptions\ForbiddenException;
 use Gemboot\GembootPermission;
 use Gemboot\Tests\TestCase;
+use Gemboot\Tests\Support\UsesFakeAuthServer;
 
 class GembootPermissionTest extends TestCase
 {
-    protected static $fakeAuthServer;
-    protected static $fakeAuthUrl;
-
-    public static function setUpBeforeClass(): void
-    {
-        parent::setUpBeforeClass();
-
-        // Pick a free port, then start the fake auth service on it.
-        $socket = stream_socket_server('tcp://127.0.0.1:0');
-        $port = (int) substr(strrchr(stream_socket_get_name($socket, false), ':'), 1);
-        fclose($socket);
-
-        $command = [PHP_BINARY, '-S', "127.0.0.1:{$port}", __DIR__ . '/../Support/fake-auth-server.php'];
-        static::$fakeAuthServer = proc_open($command, [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes);
-        static::$fakeAuthUrl = "http://127.0.0.1:{$port}/";
-
-        for ($i = 0; $i < 50; $i++) {
-            if ($connection = @fsockopen('127.0.0.1', $port)) {
-                fclose($connection);
-                return;
-            }
-            usleep(100000);
-        }
-    }
-
-    public static function tearDownAfterClass(): void
-    {
-        if (static::$fakeAuthServer) {
-            proc_terminate(static::$fakeAuthServer);
-            proc_close(static::$fakeAuthServer);
-        }
-
-        parent::tearDownAfterClass();
-    }
+    use UsesFakeAuthServer;
 
     public function setUp(): void
     {

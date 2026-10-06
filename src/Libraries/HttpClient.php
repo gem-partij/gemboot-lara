@@ -6,6 +6,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Exception\TransferException;
 use Gemboot\Traits\GembootRequest;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\Support\Facades\Log;
@@ -31,10 +32,13 @@ class HttpClient
 
     protected function initClient()
     {
+        // Defaults apply when a published config/gemboot.php predates these keys.
         $this->client = new Client([
             'base_uri' => $this->baseUrl,
-            'timeout' => 30,
-            'verify' => false, // Mengatasi masalah SSL lokal/docker environment
+            'timeout' => (float) config('gemboot.http.timeout', 30),
+            'connect_timeout' => (float) config('gemboot.http.connect_timeout', 10),
+            // true, false, or a path to a CA bundle. Turn off only for local development.
+            'verify' => config('gemboot.http.verify', true),
             'http_errors' => false, // Kita handle error manual agar konsisten
         ]);
     }
@@ -127,8 +131,9 @@ class HttpClient
                 'raw_body' => $bodyContent
             ];
 
-        } catch (RequestException $e) {
-            // Handle connection errors, DNS errors, etc.
+        } catch (TransferException $e) {
+            // Handle connection errors, DNS errors, timeouts, etc. ConnectException is a
+            // TransferException but not a RequestException, so it is caught here too.
             if ($this->throwOnHttpError) {
                 throw $e;
             }
