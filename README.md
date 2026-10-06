@@ -149,7 +149,9 @@ This creates the model, a service, and a resource controller. The controller ext
 | `search`, `search_field`, `search_mode` | `?search=ana&search_field=name` | `LIKE` search (`ILIKE` on PostgreSQL). Arrays search several fields. `relation.column` searches a related model. |
 | `search_exact` | `?search_exact=42&search_field=id` | Exact match instead of `LIKE` |
 | `order`, `atoz` | `?order=name&atoz=desc` | Sort. Arrays sort by several columns. |
-| `page_len` | `?page_len=50` | Page size (default 30). `all` returns up to 1000 rows without paging. |
+| `page_len` | `?page_len=50` | Page size (default 30, at most `gemboot.pagination.max_page_len`, default 1000). `all` returns up to 1000 rows without paging. |
+
+Columns in the model's `$hidden` (passwords, tokens) can't be searched or sorted; naming one in `search_field` or `order` returns 400. A search without `search_field` skips them. An `atoz` other than `asc` or `desc` also returns 400.
 
 ### Searching relations
 
@@ -179,7 +181,9 @@ Gemboot does not issue tokens. It forwards the client's bearer token to your aut
 | `GET has-permission-to?permission_name=…` | `HasPermissionTo`, `GembootPermission::hasPermissionTo()` | HTTP 200 with `has_permission_to` (and `has_any_permission` when several names are joined with `\|`) |
 | `POST logout` | `AuthLibrary::logout()` | HTTP 200 |
 
-Any status other than 200 counts as "no", and the middleware answers 401 or 403.
+Any status other than 200 counts as "no", and the middleware answers 401 or 403. When the auth service can't be reached or answers 5xx, the middleware answers **503** instead, so clients don't log users out during an outage.
+
+The answers of `me`, `validate-token`, `has-role`, and `has-permission-to` can be cached per token with `GEMBOOT_AUTH_CACHE_TTL` (seconds, off by default). That saves one HTTP call per middleware per request. The trade-off: a token revoked at the auth service keeps working until its cache entries expire. `AuthLibrary::logout()` clears them for that token. Outages are never cached.
 
 ### Alternative: the SSO guard
 
@@ -204,14 +208,21 @@ All settings live in **one file, `config/gemboot.php`**. Every value comes from 
 | Key | Env variable | Purpose |
 |---|---|---|
 | `auth.base_api` | `GEMBOOT_AUTH_BASE_API` | Base URL of the auth service endpoints above |
+| `auth.cache_ttl` | `GEMBOOT_AUTH_CACHE_TTL` | Seconds to cache auth service answers per token (default 0, off) |
+| `http.verify` | `GEMBOOT_HTTP_VERIFY` | TLS certificate check for auth service calls: `true` (default), `false`, or a CA bundle path |
+| `http.timeout`, `http.connect_timeout` | `GEMBOOT_HTTP_TIMEOUT`, `GEMBOOT_HTTP_CONNECT_TIMEOUT` | Seconds (defaults 30 and 10) |
+| `pagination.max_page_len` | `GEMBOOT_MAX_PAGE_LEN` | Upper limit for `?page_len` (default 1000, `null` for no limit) |
 | `sso.user_service_url`, `sso.get_user_url` | `GEMBOOT_USER_SERVICE_URL`, `GEMBOOT_SSO_GET_USER_URL` | Used by the SSO guard |
 | `sso.fallback.*` | same names with `_FALLBACK` | Second user service for the SSO guard |
 | `sso.cache_ttl` | `GEMBOOT_SSO_CACHE_TTL` | Seconds to cache an SSO user (default 300) |
 | `file_handler.base_url` | `GEMBOOT_FILE_HANDLER_BASE_URL` | File upload service used by `FileHandler` |
 | `notifications.telegram.token`, `.chat_id` | `GEMBOOT_TELEGRAM_BOT_TOKEN`, `GEMBOOT_TELEGRAM_CHAT_ID` | Telegram alert on every unhandled 500. Off when the token is empty. |
 | `response.send_header_error` | `GEMBOOT_SEND_HEADER_ERROR` | Adds an `x-gemboot-error-message` header to error responses (default on) |
+| `response.compressed` | `GEMBOOT_RESPONSE_COMPRESSED` | gzip through `ob_gzhandler` (default off; leave compression to the web server) |
 
-The publish tags `gemboot-auth`, `gemboot-gateway`, and `gemboot-file-handler` exist for backward compatibility. They publish the same `config/gemboot.php`. The separate files in this repository's `config/` folder (`gemboot_auth.php`, `gemboot_sso.php`, and so on) are left over from older versions and are not published.
+You don't have to publish the file: Gemboot merges its defaults, and a published file only needs the keys you change. A file published before a new top-level key was added still gets that key's default.
+
+The publish tags `gemboot-auth`, `gemboot-gateway`, and `gemboot-file-handler` exist for backward compatibility. They publish the same `config/gemboot.php`.
 
 ### Caching
 
@@ -296,6 +307,18 @@ Only the latest major version gets new features.
 | 6.x | 11 | ^8.2 |
 | 7.x | ^11, ^12 | ^8.2 |
 | **8.x (current)** | **^12, ^13** | **^8.3** |
+
+### Upgrading from 8.0 to 8.1
+
+No public signatures or config keys are removed, and the response envelope is unchanged. Check these behavior changes:
+
+- **TLS certificates are now verified** for auth service calls (`GEMBOOT_HTTP_VERIFY`, default `true`). Before 8.1 verification was always off. If your auth service uses a self-signed certificate, point `GEMBOOT_HTTP_VERIFY` at its CA bundle, or set it to `false` for local development only.
+- **Unexpected 500 errors show a generic message** (`"Internal Server Error"`) when `APP_DEBUG` is off, and are passed to `report()`. Gemboot's own exceptions (404, 403, ...) keep their messages.
+- **The auth middleware answers 503** instead of 401/403 when the auth service is unreachable or answers 5xx.
+- **`page_len` is limited to 1000** by default (`GEMBOOT_MAX_PAGE_LEN`).
+- **Hidden columns can't be searched or sorted**, and an invalid `atoz` returns 400 instead of 500.
+- **Class aliases are registered automatically.** The exception, controller, model, and service aliases (`GembootResourceController`, `GembootNotFoundException`, ...) were never registered before, despite the docs. If you added them to `config/app.php` yourself, you can remove them.
+- **Config defaults are merged**, so publishing `config/gemboot.php` is optional. `response.compressed` now defaults to off.
 
 ### Upgrading from 7.x to 8.x
 

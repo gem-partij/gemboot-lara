@@ -44,30 +44,28 @@
                 "GembootPermission": "Gemboot\\Facades\\GembootPermissionFacade",
                 "GembootRequest": "Gemboot\\Facades\\GembootRequestFacade",
                 "GembootResponse": "Gemboot\\Facades\\GembootResponseFacade",
-                "GembootValidator": "Gemboot\\Facades\\GembootValidatorFacade"
+                "GembootValidator": "Gemboot\\Facades\\GembootValidatorFacade",
+                "GembootBadRequestException": "Gemboot\\Exceptions\\BadRequestException",
+                "GembootForbiddenException": "Gemboot\\Exceptions\\ForbiddenException",
+                "GembootNotFoundException": "Gemboot\\Exceptions\\NotFoundException",
+                "GembootServerErrorException": "Gemboot\\Exceptions\\ServerErrorException",
+                "GembootUnauthorizedException": "Gemboot\\Exceptions\\UnauthorizedException",
+                "GembootHttpErrorException": "Gemboot\\Exceptions\\HttpErrorException",
+                "GembootMethodNotAllowedException": "Gemboot\\Exceptions\\MethodNotAllowedException",
+                "GembootConflictException": "Gemboot\\Exceptions\\ConflictException",
+                "GembootUnprocessableEntityException": "Gemboot\\Exceptions\\UnprocessableEntityException",
+                "GembootTooManyRequestsException": "Gemboot\\Exceptions\\TooManyRequestsException",
+                "GembootServiceUnavailableException": "Gemboot\\Exceptions\\ServiceUnavailableException",
+                "GembootValidationFailException": "Gemboot\\Exceptions\\ValidationFailException",
+
+                "GembootController": "Gemboot\\Controllers\\CoreRestController",
+                "GembootProxyController": "Gemboot\\Controllers\\CoreRestProxyController",
+                "GembootResourceController": "Gemboot\\Controllers\\CoreRestResourceController",
+
+                "GembootModel": "Gemboot\\Models\\CoreModel",
+
+                "GembootService": "Gemboot\\Services\\CoreService"
             }
-        },
-        "aliases": {
-            "GembootBadRequestException": "Gemboot\\Exceptions\\BadRequestException",
-            "GembootForbiddenException": "Gemboot\\Exceptions\\ForbiddenException",
-            "GembootNotFoundException": "Gemboot\\Exceptions\\NotFoundException",
-            "GembootServerErrorException": "Gemboot\\Exceptions\\ServerErrorException",
-            "GembootUnauthorizedException": "Gemboot\\Exceptions\\UnauthorizedException",
-            "GembootHttpErrorException": "Gemboot\\Exceptions\\HttpErrorException",
-            "GembootMethodNotAllowedException": "Gemboot\\Exceptions\\MethodNotAllowedException",
-            "GembootConflictException": "Gemboot\\Exceptions\\ConflictException",
-            "GembootUnprocessableEntityException": "Gemboot\\Exceptions\\UnprocessableEntityException",
-            "GembootTooManyRequestsException": "Gemboot\\Exceptions\\TooManyRequestsException",
-            "GembootServiceUnavailableException": "Gemboot\\Exceptions\\ServiceUnavailableException",
-            "GembootValidationFailException": "Gemboot\\Exceptions\\ValidationFailException",
-            
-            "GembootController": "Gemboot\\Controllers\\CoreRestController",
-            "GembootProxyController": "Gemboot\\Controllers\\CoreRestProxyController",
-            "GembootResourceController": "Gemboot\\Controllers\\CoreRestResourceController",
-
-            "GembootModel": "Gemboot\\Models\\CoreModel",
-
-            "GembootService": "Gemboot\\Services\\CoreService"
         }
     },
     "minimum-stability": "dev",

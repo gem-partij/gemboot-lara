@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 use Gemboot\Models\CoreModel;
 use Gemboot\Traits\GembootHelpers;
 use Gemboot\Observers\CoreEloquentCachingObserver;
+use Gemboot\Exceptions\BadRequestException;
 
 class CoreService implements CoreServiceContract
 {
@@ -82,7 +83,12 @@ class CoreService implements CoreServiceContract
         }
 
         if (empty($postfix)) {
-            $postfix = json_encode(request()->all());
+            // Hash of the sorted query string only. The full request input put request
+            // bodies (passwords on update) into key names, gave unbounded key counts,
+            // and produced keys over Memcached's 250-character limit.
+            $query = request()->query();
+            ksort($query);
+            $postfix = sha1(json_encode($query));
         }
 
         return $prefix . "-" . $main_name . "-" . $postfix;
@@ -306,13 +312,43 @@ class CoreService implements CoreServiceContract
             if (!is_array($atoz)) {
                 $atoz = [$atoz];
             }
+            $hidden = $model instanceof Eloquent
+                ? $model->getHidden()
+                : (method_exists($model, 'getModel') ? $model->getModel()->getHidden() : []);
+
             foreach ($order as $i => $order_item) {
                 $atoz_item = isset($atoz[$i]) ? $atoz[$i] : 'asc';
+
+                // Sorting by a hidden column leaks its ordering; an invalid direction
+                // used to surface as a 500 from orderBy().
+                if (!is_string($order_item) || in_array($order_item, $hidden, true)) {
+                    throw new BadRequestException('Invalid order field.');
+                }
+                if (!is_string($atoz_item) || !in_array(strtolower($atoz_item), ['asc', 'desc'], true)) {
+                    throw new BadRequestException('Invalid sort direction.');
+                }
+
                 $model = $model->orderBy($order_item, $atoz_item);
             }
         }
 
         return $model;
+    }
+
+    /**
+     * Page size from ?page_len, limited by gemboot.pagination.max_page_len.
+     */
+    protected function getPageLength(): int
+    {
+        $page_len = request('page_len');
+        $page_len = is_numeric($page_len) && (int) $page_len > 0 ? (int) $page_len : 30;
+
+        $max = config('gemboot.pagination.max_page_len', 1000);
+        if (!is_null($max) && $max !== '' && (int) $max > 0) {
+            $page_len = min($page_len, (int) $max);
+        }
+
+        return $page_len;
     }
 
     protected function getQueryListAll($model = null, $disable_search = false)
@@ -338,11 +374,7 @@ class CoreService implements CoreServiceContract
             return $this->model->paginate(999);
         }
 
-        return $this->model->paginate(
-            request()->has('page_len')
-                ? request('page_len')
-                : 30
-        );
+        return $this->model->paginate($this->getPageLength());
     }
 
 

@@ -75,10 +75,12 @@ class GembootNotificationTest extends TestCase
             ->assertJsonPath('data.error', 'TEST 500 EXCEPTION')
             ->assertJsonStructure(['data' => ['error', 'trace']]);
 
+        // Without debug, unexpected exceptions only get a generic message: their
+        // text can carry internals such as SQL, host, and database name.
         config()->set('app.debug', false);
         $this->getJson('/http-status/500')
             ->assertStatus(500)
-            ->assertJsonPath('data.error', 'TEST 500 EXCEPTION')
+            ->assertJsonPath('data.error', 'Internal Server Error')
             ->assertJsonMissingPath('data.trace');
     }
 }

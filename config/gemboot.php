@@ -3,8 +3,13 @@
 return [
 
     'auth' => [
-        'base_url' => env('GEMBOOT_AUTH_BASE_URL', 'YOUR GEMBOOT AUTH BASE URL HERE'),
-        'base_api' => env('GEMBOOT_AUTH_BASE_API', 'YOUR GEMBOOT AUTH BASE API HERE'),
+        'base_url' => env('GEMBOOT_AUTH_BASE_URL'),
+        'base_api' => env('GEMBOOT_AUTH_BASE_API'),
+
+        // Seconds to cache auth service answers per token (me, validate-token,
+        // has-role, has-permission-to). 0 disables the cache. A revoked token keeps
+        // working until its entries expire; AuthLibrary::logout() clears them.
+        'cache_ttl' => env('GEMBOOT_AUTH_CACHE_TTL', 0),
 
         'fallback' => [
             'base_url' => env('GEMBOOT_AUTH_BASE_URL_FALLBACK'),
@@ -28,25 +33,41 @@ return [
     ],
 
     'file_handler' => [
-        'base_url' => env('GEMBOOT_FILE_HANDLER_BASE_URL', 'YOUR GEMBOOT FILE HANDLER BASE URL HERE'),
+        'base_url' => env('GEMBOOT_FILE_HANDLER_BASE_URL'),
     ],
 
     'gateway' => [
-        'base_url' => env('GEMBOOT_GW_BASE_URL', 'YOUR GEMBOOT GW BASE URL HERE'),
-        'base_url_auth' => env('GEMBOOT_GW_BASE_URL_AUTH', 'YOUR GEMBOOT GW BASE URL AUTH HERE'),
+        'base_url' => env('GEMBOOT_GW_BASE_URL'),
+        'base_url_auth' => env('GEMBOOT_GW_BASE_URL_AUTH'),
     ],
 
     'notifications' => [
         'enable' => env('GEMBOOT_NOTIFICATIONS_ENABLE', true),
 
         'telegram' => [
-            'chat_id' => env('GEMBOOT_TELEGRAM_CHAT_ID', 'YOUR TELEGRAM CHAT ID HERE'),
-            'token' => env('GEMBOOT_TELEGRAM_BOT_TOKEN', 'YOUR BOT TOKEN HERE'),
+            'chat_id' => env('GEMBOOT_TELEGRAM_CHAT_ID'),
+            'token' => env('GEMBOOT_TELEGRAM_BOT_TOKEN'),
         ],
     ],
 
+    // Outgoing HTTP calls to the auth service (AuthLibrary).
+    'http' => [
+        // true, false, or a path to a CA bundle. Set false only for local development
+        // against a self-signed certificate.
+        'verify' => env('GEMBOOT_HTTP_VERIFY', true),
+        'timeout' => env('GEMBOOT_HTTP_TIMEOUT', 30),
+        'connect_timeout' => env('GEMBOOT_HTTP_CONNECT_TIMEOUT', 10),
+    ],
+
+    'pagination' => [
+        // Upper limit for ?page_len. null removes the limit.
+        'max_page_len' => env('GEMBOOT_MAX_PAGE_LEN', 1000),
+    ],
+
     'response' => [
-        'compressed' => env('GEMBOOT_RESPONSE_COMPRESSED', true),
+        // Compression through ob_gzhandler. Off by default: leave compression to the
+        // web server. It also misbehaves under Octane and FrankenPHP.
+        'compressed' => env('GEMBOOT_RESPONSE_COMPRESSED', false),
         'send_header_error' => env('GEMBOOT_SEND_HEADER_ERROR', true),
     ],
 

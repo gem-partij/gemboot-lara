@@ -25,7 +25,9 @@ class TokenValidated
         if ($validationType == 'client') {
             $response = $auth->validateTokenClient($request);
             if (!$response) {
-                $status = Response::HTTP_UNAUTHORIZED;
+                $status = $auth->isAuthServiceUnavailable()
+                    ? Response::HTTP_SERVICE_UNAVAILABLE
+                    : Response::HTTP_UNAUTHORIZED;
                 $statusText = Response::$statusTexts[$status];
                 return response()->json(['status' => $statusText], $status);
             }
@@ -34,6 +36,10 @@ class TokenValidated
         } else {
             $response = $auth->me(false, $request);
             if (!$response) {
+            if ($auth->isAuthServiceUnavailable()) {
+                // The auth service did not answer: not the user's fault, so no 401/403.
+                return $this->responseHttpError(Response::HTTP_SERVICE_UNAVAILABLE, ['error' => 'Auth service unavailable'], null, 'Auth service unavailable');
+            }
                 return $this->responseUnauthorized();
             }
 

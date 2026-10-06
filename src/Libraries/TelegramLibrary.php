@@ -22,17 +22,22 @@ class TelegramLibrary
         $this->token = app('config')->get('gemboot.notifications.telegram.token');
         $this->chat_id = app('config')->get('gemboot.notifications.telegram.chat_id');
         // $this->chat_id = 328200606;
-        $this->bot = new Api($this->token);
     }
 
     protected function bot()
     {
+        // Created on first use: new Api() throws when the token is empty, and
+        // send() already returns false in that case without needing the bot.
+        if (!$this->bot) {
+            $this->bot = new Api($this->token);
+        }
+
         return $this->bot;
     }
 
     protected function getMessageHeader()
     {
-        $message = "🔥 <strong>" . config('app.name') . "</strong>\n";
+        $message = "🔥 <strong>" . htmlspecialchars((string) config('app.name')) . "</strong>\n";
         $message .= "Got New Exception!\n";
         // $message .= "<i>Server Time: " . date('Y-m-d H:i:s') . "</i>\n";
         return $message;
@@ -56,9 +61,8 @@ class TelegramLibrary
 
     protected function sendMessage($chat_id, $message, $message_id = null)
     {
-        $this->sendChatAction($chat_id);
-        sleep(1);
-
+        // No "typing" chat action and sleep(1) here: they cost an extra HTTP call
+        // and a second on every error response, only for a cosmetic indicator.
         $params = [
             'chat_id' => $chat_id,
             'parse_mode' => 'HTML',
@@ -94,8 +98,9 @@ class TelegramLibrary
 
     public function sendExceptionMessage($exception, $message_id = null)
     {
-        $exception_message = $exception->getMessage();
-        $exception_file = $exception->getFile();
+        // The message is sent with parse_mode HTML, so escape exception text.
+        $exception_message = htmlspecialchars($exception->getMessage());
+        $exception_file = htmlspecialchars($exception->getFile());
         $exception_line = $exception->getLine();
 
         $message = "<pre>
