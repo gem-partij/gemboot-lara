@@ -10,7 +10,7 @@ use {{ namespacedModel }};
 class {{ class }} extends GembootService
 {
 
-    public function __construct({{ model }} $model = null, $with = [], $orderBy = [])
+    public function __construct(?{{ model }} $model = null, $with = [], $orderBy = [])
     {
         if (empty($model)) {
             $model = new {{ model }}();

@@ -6,7 +6,7 @@ use Gemboot\Tests\Models\TestUser;
 
 class TestUserService extends GembootService {
 
-    public function __construct(TestUser $model = null, $with = [], $orderBy = [])
+    public function __construct(?TestUser $model = null, $with = [], $orderBy = [])
     {
         if (empty($model)) {
             $model = new TestUser();

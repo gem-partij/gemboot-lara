@@ -79,7 +79,8 @@ trait JSONResponses
                 $message
             );
 
-            if (!empty($this->logAccessTag) && request()->isMethod('GET')) {
+            // log_access() is not part of Gemboot; call it only if the app defines it.
+            if (!empty($this->logAccessTag) && request()->isMethod('GET') && function_exists('log_access')) {
                 log_access($this->logAccessTag);
             }
 

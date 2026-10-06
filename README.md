@@ -132,7 +132,7 @@ Route::middleware(['token-validated', 'permission:user.read'])->group(function (
 });
 ```
 
-`TokenValidated` calls the auth service's `me` endpoint and merges the result into the request as `user_login`, so `$request->user_login` holds the current user.
+`TokenValidated` calls the auth service's `me` endpoint and merges the result into the request as `user_login`, so `$request->user_login` holds the current user. Gemboot keeps that merged value out of the data `store()` and `update()` save. Cache keys keep it, so cached entries stay per user.
 
 ### 4. Generate the SMVC classes
 
