@@ -74,9 +74,6 @@ class SSOGuard implements Guard
         $token = $this->request->bearerToken();
         if (!$token) return null;
 
-        // Ambil cookie dari request
-        // $refreshToken = $this->request->cookie('refreshToken');
-
         $cacheKey = 'sso_token_' . sha1($token);
 
         $cached = Cache::get($cacheKey);
@@ -85,76 +82,74 @@ class SSOGuard implements Guard
             return $this->user;
         }
 
+        $getUserUrl = config('gemboot.sso.get_user_url') ?? config('gemboot.sso.user_service_url') . "/user/me";
+
+        // The fallback is used only when it is configured. Without this check
+        // the URL became "/user/me" and an invalid token ended in a 500.
+        $fallbackGetUserUrl = config('gemboot.sso.fallback.get_user_url');
+        if (empty($fallbackGetUserUrl) && !empty(config('gemboot.sso.fallback.user_service_url'))) {
+            $fallbackGetUserUrl = config('gemboot.sso.fallback.user_service_url') . "/user/me";
+        }
+
+        // Get data user ke user-service (pakai HTTP atau gRPC)
         try {
-            // $validateTokenUrl = config('gemboot.sso.validate_token_url') ?? config('gemboot.sso.auth_service_url') . '/validate-token';
-
-            // Validasi token ke auth-service (pakai HTTP atau gRPC)
-            // $validate = Http::withToken($token)
-            //     ->withCookies([
-            //         'refreshToken' => $refreshToken,
-            //     ], parse_url($validateTokenUrl, PHP_URL_HOST))
-            //     ->get($validateTokenUrl);
-
-            // if (!$validate->ok()) return null;
-
-            // $userId = $validate->json()['user_id'] ?? null;
-            // if (!$userId) return null;
-
-            $getUserUrl = config('gemboot.sso.get_user_url') ?? config('gemboot.sso.user_service_url') . "/user/me";
-
-            // The fallback is used only when it is configured. Without this check
-            // the URL became "/user/me" and an invalid token ended in a 500.
-            $fallbackGetUserUrl = config('gemboot.sso.fallback.get_user_url');
-            if (empty($fallbackGetUserUrl) && !empty(config('gemboot.sso.fallback.user_service_url'))) {
-                $fallbackGetUserUrl = config('gemboot.sso.fallback.user_service_url') . "/user/me";
+            $userResponse = $this->requestUser($getUserUrl, $token);
+        } catch (ConnectionException $e) {
+            // Primary unreachable: try the fallback instead of failing right away.
+            if (empty($fallbackGetUserUrl)) {
+                throw $e;
             }
+            $userResponse = null;
+        }
 
-            // Get data user ke user-service (pakai HTTP atau gRPC)
-            try {
-                $userResponse = $this->requestUser($getUserUrl, $token);
-            } catch (ConnectionException $e) {
-                // Primary unreachable: try the fallback instead of failing right away.
-                if (empty($fallbackGetUserUrl)) {
-                    throw $e;
-                }
-                $userResponse = null;
-            }
-
-            if (!$userResponse || !$userResponse->ok()) {
-                if (empty($fallbackGetUserUrl)) {
-                    return null;
-                }
-
-                $userResponse = $this->requestUser($fallbackGetUserUrl, $token);
-
-                if (!$userResponse->ok()) {
-                    return null;
-                }
-            }
-
-            $userResponseJSON = $userResponse->json();
-            if (is_array($userResponseJSON) && array_key_exists('data', $userResponseJSON)) {
-                $userResponseJSON = $userResponseJSON['data'];
-            }
-            $userData = isset($userResponseJSON['user']) ? $userResponseJSON['user'] : $userResponseJSON;
-
-            // A 200 reply without a user object (an HTML page, {"data": null}, ...)
-            // must not authenticate the request or be cached.
-            if (!is_array($userData) || empty($userData)) {
+        if (!$userResponse || !$userResponse->ok()) {
+            if (empty($fallbackGetUserUrl)) {
                 return null;
             }
-            $userData['roles'] = isset($userResponseJSON['roles']) ? $userResponseJSON['roles'] : null;
-            $userData['permissions'] = isset($userResponseJSON['permissions']) ? $userResponseJSON['permissions'] : null;
 
-            $cacheTTL = (int) config('gemboot.sso.cache_ttl', 300);
-            Cache::put($cacheKey, $userData, now()->addSeconds($cacheTTL));
+            $userResponse = $this->requestUser($fallbackGetUserUrl, $token);
 
-            $this->user = new SSOUser($userData);
-            return $this->user;
-        } catch (\Exception $e) {
-            throw $e;
+            if (!$userResponse->ok()) {
+                return null;
+            }
+        }
+
+        $userResponseJSON = $userResponse->json();
+        if (is_array($userResponseJSON) && array_key_exists('data', $userResponseJSON)) {
+            $userResponseJSON = $userResponseJSON['data'];
+        }
+        $userData = isset($userResponseJSON['user']) ? $userResponseJSON['user'] : $userResponseJSON;
+
+        // A 200 reply without a user object (an HTML page, {"data": null}, ...)
+        // must not authenticate the request or be cached.
+        if (!is_array($userData) || empty($userData)) {
             return null;
         }
+        $userData['roles'] = isset($userResponseJSON['roles']) ? $userResponseJSON['roles'] : null;
+        $userData['permissions'] = isset($userResponseJSON['permissions']) ? $userResponseJSON['permissions'] : null;
+
+        $cacheTTL = (int) config('gemboot.sso.cache_ttl', 300);
+        Cache::put($cacheKey, $userData, now()->addSeconds($cacheTTL));
+
+        $this->user = new SSOUser($userData);
+        return $this->user;
+    }
+
+    /**
+     * Remove the cached user of the current request's token.
+     *
+     * The user is cached for gemboot.sso.cache_ttl seconds, so a token revoked at
+     * the auth service keeps working until then. Call this on logout, e.g.
+     * Auth::guard('api')->forgetCachedUser().
+     */
+    public function forgetCachedUser(): void
+    {
+        $token = $this->request->bearerToken();
+        if ($token) {
+            Cache::forget('sso_token_' . sha1($token));
+        }
+
+        $this->user = null;
     }
 
     /**
