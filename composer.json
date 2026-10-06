@@ -1,7 +1,7 @@
 {
     "name": "gem-partij/gemboot-lara",
-    "description": "Gemboot Lara - Laravel package for supporting SMVC development method",
-    "keywords": ["laravel", "framework", "gemboot", "php"],
+    "description": "Laravel package for API services behind a central auth service: token, role, and permission middleware, one consistent JSON response format, and SMVC CRUD scaffolding.",
+    "keywords": ["laravel", "php", "gemboot", "api", "rest-api", "authentication", "authorization", "middleware", "sso", "microservices", "crud", "api-response"],
     "type": "library",
     "license": "MIT",
     "authors": [
