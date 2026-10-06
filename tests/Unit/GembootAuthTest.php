@@ -14,7 +14,6 @@ class GembootAuthTest extends TestCase
     /** ================
      * TEST LOGIN TANPA KIRIM REQUEST APAPUN
      *
-     * @test
      **/
     public function test_login_without_request()
     {
@@ -39,7 +38,6 @@ class GembootAuthTest extends TestCase
     /** ================
      * TEST LOGIN SALAH USER
      *
-     * @test
      **/
     public function test_login_wrong_cred()
     {
@@ -68,7 +66,6 @@ class GembootAuthTest extends TestCase
     /** ================
      * TEST LOGIN SUCCESS
      *
-     * @test
      **/
     public function test_login_success()
     {
@@ -97,7 +94,6 @@ class GembootAuthTest extends TestCase
     /** ================
      * TEST VALIDATE TOKEN INVALID
      *
-     * @test
      **/
     public function test_validate_token_invalid()
     {
@@ -121,7 +117,6 @@ class GembootAuthTest extends TestCase
     /** ================
      * TEST VALIDATE TOKEN SUCCESS
      *
-     * @test
      **/
     public function test_validate_token_success()
     {
@@ -156,7 +151,6 @@ class GembootAuthTest extends TestCase
     /** ================
      * TEST GET ME
      *
-     * @test
      **/
     public function test_get_me_success()
     {
@@ -191,7 +185,6 @@ class GembootAuthTest extends TestCase
     /** ================
      * TEST POST LOGOUT
      *
-     * @test
      **/
     public function test_post_logout_success()
     {
@@ -226,7 +219,6 @@ class GembootAuthTest extends TestCase
     /** ================
      * TEST GET HAS ROLE (FORBIDDEN)
      *
-     * @test
      **/
     // public function test_get_has_role_forbidden()
     // {

@@ -24,11 +24,16 @@
     <env name="SESSION_DRIVER" value="array"/>
     <env name="TELESCOPE_ENABLED" value="false"/>
 
-    <env name="GEMBOOT_AUTH_BASE_URL" value="http://199.169.3.14:3000"/>
-    <env name="GEMBOOT_AUTH_BASE_API" value="http://199.169.3.14:3000/api/auth"/>
-    <env name="GEMBOOT_FILE_HANDLER_BASE_URL" value="http://199.169.3.14:3000/file-handler"/>
-    <env name="GEMBOOT_GW_BASE_URL" value="http://199.169.3.14/"/>
-    <env name="GEMBOOT_GW_BASE_URL_AUTH" value="http://199.169.3.14/auth/"/>
+    <!--
+      Placeholder hosts. The opt-in tests (TEST_AUTH, TEST_FILE_HANDLER) call real
+      services; pass their URLs through the environment when enabling them, e.g.
+        TEST_AUTH=true GEMBOOT_AUTH_BASE_API=https://auth.internal/api/auth vendor/bin/phpunit
+    -->
+    <env name="GEMBOOT_AUTH_BASE_URL" value="http://auth.example.test"/>
+    <env name="GEMBOOT_AUTH_BASE_API" value="http://auth.example.test/api/auth"/>
+    <env name="GEMBOOT_FILE_HANDLER_BASE_URL" value="http://files.example.test/file-handler"/>
+    <env name="GEMBOOT_GW_BASE_URL" value="http://gateway.example.test/"/>
+    <env name="GEMBOOT_GW_BASE_URL_AUTH" value="http://gateway.example.test/auth/"/>
 
     <!--
       The Telegram bot token is not stored here. To run the notification test
