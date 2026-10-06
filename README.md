@@ -35,7 +35,7 @@ Without Gemboot, every controller repeats the same `try/catch` and JSON building
 public function index()
 {
     try {
-        return response()->json(['status' => 200, 'message' => 'Success!', 'data' => User::all()], 200);
+        return response()->json(['status' => 200, 'message' => 'OK', 'data' => User::all()], 200);
     } catch (\Throwable $e) {
         \Log::error($e->getMessage());
         return response()->json(['status' => 500, 'message' => 'Internal Server Error', 'data' => ['error' => $e->getMessage()]], 500);
@@ -60,13 +60,29 @@ Both return the same JSON:
 
 ```jsonc
 // Success
-{ "status": 200, "message": "Success!", "data": [ /* users */ ] }
+{ "status": 200, "message": "OK", "data": [ /* users */ ] }
 
 // Error: throw new GembootNotFoundException() inside the callback
 { "status": 404, "message": "Not Found", "data": { "error": "Not Found" } }
 ```
 
 Any exception thrown inside the callback becomes an error response. Gemboot exceptions map to their status code, and Eloquent's `ModelNotFoundException` becomes a 404. Anything else becomes a 500, is logged, and can send a Telegram alert (see [Configuration](#configuration)).
+
+## Documentation
+
+Step-by-step guides with examples live in [`docs/`](docs/README.md):
+
+| Guide | Covers |
+|---|---|
+| [Installation](docs/INSTALLATION.md) | Install, point Gemboot at your auth service, check it works |
+| [Responses](docs/RESPONSES.md) | The response format, helpers, and exceptions as error responses |
+| [Authentication](docs/AUTH.md) | Middleware, roles and permissions, the SSO guard, the auth service contract |
+| [Models](docs/MODEL.md), [Services](docs/SERVICE.md), [Controllers](docs/CONTROLLER.md) | Building a CRUD API, search, hooks, validation |
+| [Routes and query parameters](docs/ROUTES.md) | Search, sorting, and paging from the client side |
+| [Caching](docs/CACHING.md) | Cached lists and records, cleared on changes, per user |
+| [Commands](docs/COMMANDS.md), [Configuration](docs/CONFIGURATION.md), [File handler](docs/FILE_HANDLER.md) | Reference |
+
+The rest of this README is an overview.
 
 ## How a request flows
 
@@ -389,7 +405,7 @@ src/
 config/gemboot.php              the only published config file
 stubs/                          templates used by the artisan generators
 tests/                          PHPUnit + orchestra/testbench
-docs/                           longer guides (some still in Indonesian)
+docs/                           step-by-step guides (start at docs/README.md)
 ```
 
 ### Rules that keep consumers safe

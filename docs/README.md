@@ -1,25 +1,24 @@
-# Gemboot Lara Documentation
+# Gemboot Lara documentation
 
+These guides explain how to build a Laravel API service with Gemboot, step by step. Each guide starts with a working example and then explains the details.
 
-## Console Commands
-Available Console Commands: [COMMANDS DOC](https://github.com/gem-partij/gemboot-lara/tree/master/docs/COMMANDS.md)
+If you are new, read them in this order:
 
+| # | Guide | You will learn |
+|---|---|---|
+| 1 | [Installation](INSTALLATION.md) | Install the package, point it at your auth service, and check that it works |
+| 2 | [Responses](RESPONSES.md) | The `{ status, message, data }` format, the response helpers, and how exceptions become error responses |
+| 3 | [Authentication](AUTH.md) | Protect routes with the auth middleware or the SSO guard, and what your auth service must provide |
+| 4 | [Models](MODEL.md) | Turn an Eloquent model into a Gemboot model and search it |
+| 5 | [Services](SERVICE.md) | Put your queries and saving logic in a service class |
+| 6 | [Controllers](CONTROLLER.md) | Get a full CRUD API from `GembootResourceController` and customize it |
+| 7 | [Routes and query parameters](ROUTES.md) | Register routes and use search, sorting, and paging from the client side |
+| 8 | [Caching](CACHING.md) | Cache lists and records safely, per user |
 
-## Controller
-About gemboot controller: [CONTROLLER DOC](https://github.com/gem-partij/gemboot-lara/tree/master/docs/CONTROLLER.md)
+Reference pages, for when you need one specific fact:
 
+- [Artisan commands](COMMANDS.md): the `gemboot:make-*` generators and all their options
+- [Configuration](CONFIGURATION.md): every key in `config/gemboot.php` and its environment variable
+- [File handler](FILE_HANDLER.md): uploading files to a separate file service
 
-## Installation
-How to install: [INSTALLATION DOC](https://github.com/gem-partij/gemboot-lara/tree/master/docs/INSTALLATION.md)
-
-
-## Model
-About gemboot model: [MODEL DOC](https://github.com/gem-partij/gemboot-lara/tree/master/docs/MODEL.md)
-
-
-## Routes
-About gemboot routes: [ROUTES DOC](https://github.com/gem-partij/gemboot-lara/tree/master/docs/ROUTES.md)
-
-
-## Service
-About gemboot service: [SERVICE DOC](https://github.com/gem-partij/gemboot-lara/tree/master/docs/SERVICE.md)
+For what changed between versions, see the [upgrade notes in the main README](../README.md#support-policy) and the [GitHub releases](https://github.com/gem-partij/gemboot-lara/releases).

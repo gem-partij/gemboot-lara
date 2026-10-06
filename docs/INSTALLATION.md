@@ -1,38 +1,107 @@
-# Gemboot Installation
+# Installation
 
-## Installation
+After this guide, Gemboot is installed, knows where your auth service is, and protects your first route.
 
-Require the `gem-partij/gemboot-lara` package in your `composer.json` and update your dependencies:
+## Requirements
+
+- PHP 8.3 or newer
+- Laravel 12 or 13
+- A central auth service that issues tokens and answers the endpoints described in [Authentication](AUTH.md#what-your-auth-service-must-provide)
+
+For Laravel 11, use Gemboot 7.x (`composer require gem-partij/gemboot-lara:^7.0`).
+
+## 1. Install the package
+
 ```sh
 composer require gem-partij/gemboot-lara
 ```
 
-Optional: The service provider will automatically get registered. Or you may manually add the service provider in your config/app.php file:
-```php
-'providers' => [
-    // ...
-    \Gemboot\GembootServiceProvider::class,
-];
+Laravel finds the package automatically. You don't need to add a service provider or aliases to `config/app.php`: the facades (`GembootResponse`, `GembootAuth`, ...) and class aliases (`GembootResourceController`, `GembootNotFoundException`, ...) are registered for you.
+
+## 2. Tell Gemboot where your auth service is
+
+Add the auth service URL to `.env`:
+
+```dotenv
+GEMBOOT_AUTH_BASE_API=https://auth.example.com/api/auth
 ```
 
-Optional: The aliases will automatically get registered. Or you may manually add the gemboot aliases in your config/app.php file:
-```php
-'aliases' => [
-    // ...
-    'GembootBadRequestException' => Gemboot\Exceptions\BadRequestException::class,
-    'GembootForbiddenException' => Gemboot\Exceptions\ForbiddenException::class,
-    'GembootNotFoundException' => Gemboot\Exceptions\NotFoundException::class,
-    'GembootServerErrorException' => Gemboot\Exceptions\ServerErrorException::class,
-    'GembootUnauthorizedException' => Gemboot\Exceptions\UnauthorizedException::class,
+Gemboot calls endpoints such as `me` and `has-role` relative to this URL, so with the value above it calls `https://auth.example.com/api/auth/me`.
 
-    'GembootResponse' => Gemboot\Facades\GembootResponseFacade::class,
+That is the only required setting. Every other setting has a default. You can see all of them in [Configuration](CONFIGURATION.md).
 
-    'GembootController' => Gemboot\Controllers\CoreRestController::class,
-    'GembootProxyController' => Gemboot\Controllers\CoreRestProxyController::class,
-    'GembootResourceController' => Gemboot\Controllers\CoreRestResourceController::class,
+### Optional: publish the config file
 
-    'GembootModel' => Gemboot\Models\CoreModel::class,
-
-    'GembootService' => Gemboot\Services\CoreService::class,
-];
+```sh
+php artisan vendor:publish --tag=gemboot
 ```
+
+This copies the defaults to `config/gemboot.php`. Publish it only if you want to change values in the file itself; otherwise `.env` is enough.
+
+### If your auth service uses a self-signed certificate
+
+Gemboot checks TLS certificates on every call to the auth service. For a certificate from your own certificate authority, point Gemboot at that authority's certificate:
+
+```dotenv
+GEMBOOT_HTTP_VERIFY=/etc/ssl/certs/company-ca.pem
+```
+
+Only on a local development machine, you can turn the check off with `GEMBOOT_HTTP_VERIFY=false`. Never do that in production: without the check, anyone on the network path can read your users' tokens.
+
+## 3. Register the middleware
+
+Gemboot's route protection comes as three middleware. Give them short names in `bootstrap/app.php`:
+
+```php
+use Illuminate\Foundation\Configuration\Middleware;
+
+->withMiddleware(function (Middleware $middleware) {
+    $middleware->alias([
+        'token-validated' => \Gemboot\Middleware\TokenValidated::class,
+        'role'            => \Gemboot\Middleware\HasRole::class,
+        'permission'      => \Gemboot\Middleware\HasPermissionTo::class,
+    ]);
+})
+```
+
+## 4. Protect a route and check that it works
+
+Add a test route to `routes/api.php`:
+
+```php
+use GembootResponse;
+use Illuminate\Http\Request;
+
+Route::middleware('token-validated')->get('/whoami', function (Request $request) {
+    return GembootResponse::responseSuccess($request->user_login);
+});
+```
+
+Call it without a token:
+
+```sh
+curl -i http://localhost:8000/api/whoami
+```
+
+```json
+{ "status": 401, "message": "Unauthorized", "data": [] }
+```
+
+Call it with a token from your auth service:
+
+```sh
+curl -i http://localhost:8000/api/whoami -H "Authorization: Bearer <your token>"
+```
+
+```json
+{ "status": 200, "message": "OK", "data": { "id": 7, "name": "Ana" } }
+```
+
+The `data` part is whatever your auth service returns for `me`.
+
+If you get **503** instead, Gemboot could not reach the auth service. Check `GEMBOOT_AUTH_BASE_API`, the network, and the certificate settings above. The details are in your Laravel log.
+
+## Next
+
+- [Responses](RESPONSES.md): how every Gemboot response is shaped
+- [Authentication](AUTH.md): roles, permissions, and the SSO guard
