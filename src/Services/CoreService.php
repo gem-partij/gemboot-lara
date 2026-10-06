@@ -102,33 +102,30 @@ class CoreService implements CoreServiceContract
      **/
     public function listAll($model = null, $disable_search = false)
     {
-        try {
-            // Caching requires a store with tag support (redis, memcached, array).
-            // Without tags the observer cannot flush stale entries, so stores such as
-            // file and database skip caching rather than serve stale data.
-            if (!empty($this->observer) && cache()->supportsTags()) {
-                // cache response
-                $cacheKey = $this->getCacheKey($this->getModelTableName(), $this->generateCacheKey("listAll()"), 'group');
-                $cacheTags = $this->getCacheTags($this->getModelTableName());
+        // Caching requires a store with tag support (redis, memcached, array).
+        // Without tags the observer cannot flush stale entries, so stores such as
+        // file and database skip caching rather than serve stale data.
+        if (!empty($this->observer) && cache()->supportsTags()) {
+            // cache response
+            $cacheKey = $this->getCacheKey($this->getModelTableName(), $this->generateCacheKey("listAll()"), 'group')
+                . $this->cacheScopeSuffix();
+            $cacheTags = $this->getCacheTags($this->getModelTableName());
 
-                // A query passed in (e.g. scoped to the current user) must be part of
-                // the key, otherwise every caller shares the first caller's result.
-                // Builders, relations, and models all answer toSql() and getBindings()
-                // through __call(), so method_exists() would not find them.
-                if (is_object($model)) {
-                    $cacheKey .= '-' . sha1($model->toSql() . '|' . json_encode($model->getBindings()));
-                }
-
-                return cache()->tags($cacheTags)->remember($cacheKey, $this->defaultCacheLifetime, function () use ($model, $disable_search) {
-                    return $this->getQueryListAll($model, $disable_search);
-                });
+            // A query passed in (e.g. scoped to the current user) must be part of
+            // the key, otherwise every caller shares the first caller's result.
+            // Builders, relations, and models all answer toSql() and getBindings()
+            // through __call(), so method_exists() would not find them.
+            if (is_object($model)) {
+                $cacheKey .= '-' . sha1($model->toSql() . '|' . json_encode($model->getBindings()));
             }
 
-            // default response
-            return $this->getQueryListAll($model, $disable_search);
-        } catch (\Exception $e) {
-            throw $e;
+            return cache()->tags($cacheTags)->remember($cacheKey, $this->defaultCacheLifetime, function () use ($model, $disable_search) {
+                return $this->getQueryListAll($model, $disable_search);
+            });
         }
+
+        // default response
+        return $this->getQueryListAll($model, $disable_search);
     }
 
     /**
@@ -136,14 +133,10 @@ class CoreService implements CoreServiceContract
      **/
     public function countAll($model = null, $disable_search = false)
     {
-        try {
-            $query = is_null($model) ? $this->freshModelQuery() : $model;
-            $query = $this->generateModelSearch($query, $disable_search);
+        $query = is_null($model) ? $this->freshModelQuery() : $model;
+        $query = $this->generateModelSearch($query, $disable_search);
 
-            return $query->count();
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        return $query->count();
     }
 
     /**
@@ -172,7 +165,8 @@ class CoreService implements CoreServiceContract
      **/
     public function findOrFail($id, $addWith = true)
     {
-        $cacheKey = $this->getCacheKey($this->getModelTableName(), $this->generateCacheKey($id));
+        $cacheKey = $this->getCacheKey($this->getModelTableName(), $this->generateCacheKey($id))
+            . $this->cacheScopeSuffix();
         $cacheTags = $this->getCacheTags($this->getModelTableName());
 
         $query = $this->freshModelQuery();
@@ -347,6 +341,24 @@ class CoreService implements CoreServiceContract
         }
 
         return $model;
+    }
+
+    /**
+     * Who a cached result belongs to. Results are cached per logged-in user by
+     * default, because services often scope queries to the current user (for
+     * example where('user_id', auth()->id()) in an overridden getQueryListAll()).
+     * Return null to share cached results between all users.
+     */
+    protected function cacheScope()
+    {
+        return auth()->id();
+    }
+
+    private function cacheScopeSuffix(): string
+    {
+        $scope = $this->cacheScope();
+
+        return is_null($scope) ? '' : '-u' . sha1((string) $scope);
     }
 
     /**

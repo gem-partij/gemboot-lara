@@ -78,10 +78,10 @@ abstract class CoreRestResourceController extends CoreRestController implements 
                 // Key from the sorted query string only. implode() over request()->all()
                 // dropped parameter names and failed on nested arrays such as user_login.
                 $query = $this->queryForCacheKey();
-                $cache_key = $this->modelTableName . '_index_' . sha1(json_encode($query));
+                $cache_key = $this->modelTableName . '_index_' . sha1(json_encode([$query, $this->cacheScope()]));
                 $cache_seconds = $this->cache_seconds['index'];
 
-                return Cache::remember($cache_key, $cache_seconds, function () {
+                return $this->controllerCache()->remember($cache_key, $cache_seconds, function () {
                     return $this->service->listAll();
                 });
             } else {
@@ -158,10 +158,10 @@ abstract class CoreRestResourceController extends CoreRestController implements 
                 if ($this->cache_seconds['show'] > 0) {
                     // The key must include $id, otherwise every record shares one entry.
                     $query = $this->queryForCacheKey();
-                    $cache_key = $this->modelTableName . '_show_' . sha1(json_encode([$id, $query]));
+                    $cache_key = $this->modelTableName . '_show_' . sha1(json_encode([$id, $query, $this->cacheScope()]));
                     $cache_seconds = $this->cache_seconds['show'];
 
-                    return Cache::remember($cache_key, $cache_seconds, function () use ($id) {
+                    return $this->controllerCache()->remember($cache_key, $cache_seconds, function () use ($id) {
                         return $this->service->findOrFail($id, $this->addWithOnShow);
                     });
                 } else {
@@ -288,6 +288,28 @@ abstract class CoreRestResourceController extends CoreRestController implements 
         return $request->attributes->get(TokenValidated::USER_LOGIN_MERGED)
             ? $request->except('user_login')
             : $request->all();
+    }
+
+    /**
+     * Who a cached index/show result belongs to. Per logged-in user by default,
+     * since a controller or its service may scope queries to the current user.
+     * Return null to share cached results between all users.
+     */
+    protected function cacheScope()
+    {
+        return auth()->id();
+    }
+
+    /**
+     * Cache for index/show. On stores with tag support the entries carry the same
+     * tags as CoreService, so CoreEloquentCachingObserver clears them on save and
+     * delete. Other stores keep a plain cache that expires after cache_seconds.
+     */
+    private function controllerCache()
+    {
+        return Cache::supportsTags()
+            ? Cache::tags([$this->modelTableName, $this->modelTableName . '-addwith'])
+            : Cache::store();
     }
 
     /**
