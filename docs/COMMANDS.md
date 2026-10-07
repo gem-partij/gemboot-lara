@@ -33,7 +33,7 @@ php artisan gemboot:make-model Product [options]
 | `--resource`, `-r` | makes the controller a resource controller |
 | `--force` | overwrites existing files |
 
-The controller from `--controller` uses `ProductService`, so combine it with `--service` (or simply use `--all`). Otherwise the controller refers to a service that doesn't exist yet.
+With `--service` (or `--all`), the controller is connected to `ProductService`. Without it, the controller only gets the model, and Gemboot uses a plain `GembootService` behind the scenes.
 
 ## `gemboot:make-service`
 
