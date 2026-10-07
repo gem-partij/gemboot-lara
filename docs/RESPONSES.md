@@ -138,6 +138,27 @@ All Gemboot exceptions, with their status codes:
 
 The aliases above are registered automatically. In code that prefers full class names, they live in `Gemboot\Exceptions\` (for example `Gemboot\Exceptions\NotFoundException`).
 
+## Security headers
+
+Every Gemboot JSON response, including errors, carries two headers:
+
+```text
+Cache-Control: no-store
+X-Content-Type-Options: nosniff
+```
+
+- `Cache-Control: no-store` tells proxies and browsers not to keep a copy. API responses usually contain personal data.
+- `X-Content-Type-Options: nosniff` tells browsers to treat the body as JSON and never guess another type.
+
+To turn them off, set `GEMBOOT_SECURITY_HEADERS=false`. To change them, for example to let a public endpoint be cached, publish the config and edit `response.security_headers`:
+
+```php
+'security_headers' => [
+    'Cache-Control' => 'public, max-age=60',
+    'X-Content-Type-Options' => 'nosniff',
+],
+```
+
 ## Unexpected errors
 
 Any other exception, such as a database error or a bug, becomes a 500:

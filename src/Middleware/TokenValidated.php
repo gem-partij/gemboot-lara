@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Response;
 use Gemboot\Traits\JSONResponses;
 use Gemboot\Libraries\AuthLibrary;
+use Gemboot\Support\SecurityHeaders;
 
 class TokenValidated
 {
@@ -37,7 +38,8 @@ class TokenValidated
                     ? Response::HTTP_SERVICE_UNAVAILABLE
                     : Response::HTTP_UNAUTHORIZED;
                 $statusText = Response::$statusTexts[$status];
-                return response()->json(['status' => $statusText], $status);
+                return response()->json(['status' => $statusText], $status)
+                    ->withHeaders(SecurityHeaders::get());
             }
 
             return $next($request);

@@ -2,6 +2,8 @@
 
 namespace Gemboot\Traits;
 
+use Gemboot\Support\SecurityHeaders;
+
 trait GembootRequest
 {
     public function getRequestToken($request = null, $without_bearer = false)
@@ -34,9 +36,10 @@ trait GembootRequest
                 'status' => 503,
                 'message' => 'Service Unavailable',
                 'data' => ['error' => 'Auth service unavailable'],
-            ], 503);
+            ], 503)->withHeaders(SecurityHeaders::get());
         }
 
-        return response()->json($httpClientResponse->data, $status);
+        return response()->json($httpClientResponse->data, $status)
+            ->withHeaders(SecurityHeaders::get());
     }
 }
