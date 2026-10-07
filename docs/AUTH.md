@@ -212,5 +212,6 @@ For routes called by other services rather than users, `token-validated:client` 
 
 ## Next
 
+- [Testing your API](TESTING.md): test protected routes with a fake auth service
 - [Models](MODEL.md), [Services](SERVICE.md), and [Controllers](CONTROLLER.md): build the API itself
 - [Configuration](CONFIGURATION.md): all auth-related settings, including TLS and timeouts
