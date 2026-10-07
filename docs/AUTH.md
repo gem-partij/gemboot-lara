@@ -118,7 +118,7 @@ Route::prefix('auth')->group(function () {
 });
 ```
 
-With `true` as the last argument, the method returns the auth service's answer as a JSON response, with the same status code. Without it, you get the data as an array, or `false` if the auth service said no:
+With `true` as the last argument, the method returns the auth service's answer as a JSON response, with the same status code. If the auth service can't be reached, you get a `503` in the Gemboot format instead. Without it, you get the data as an array, or `false` if the auth service said no:
 
 ```php
 $auth = new AuthLibrary();
