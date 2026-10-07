@@ -338,6 +338,16 @@ class CoreService implements CoreServiceContract
 
                 $model = $model->orderBy($order_item, $atoz_item);
             }
+        } elseif (!empty($this->orderBy)) {
+            // Default sort when the client sends no ?order=. Accepts
+            // ['created_at' => 'desc', 'name' => 'asc'] or ['name', 'price'] (ascending).
+            foreach ((array) $this->orderBy as $column => $direction) {
+                if (is_int($column)) {
+                    $column = $direction;
+                    $direction = 'asc';
+                }
+                $model = $model->orderBy($column, $direction);
+            }
         }
 
         return $model;

@@ -73,8 +73,11 @@ public function index()
 | `updateUseModel($model, $data, $mergeWith = [])` | Updates a model you already loaded. |
 | `delete($id)` | Deletes the record and returns it. |
 | `setWith(['category'])` | Relations to eager load in `listAll()` and `findOrFail()`. |
+| `setOrderBy(['created_at' => 'desc'])` | Default sort for `listAll()`, used when the request has no `?order=`. `['name']` sorts ascending. |
 
 `store()` and `update()` only set the fields listed in the model's `$fillable`.
+
+The constructor takes the same two settings: `new ProductService(null, ['category'], ['created_at' => 'desc'])`. When a controller creates or receives the service, the controller's `$with` and `$orderBy` properties are used instead.
 
 ### Your own query
 

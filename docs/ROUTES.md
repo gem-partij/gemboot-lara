@@ -66,6 +66,8 @@ finds products whose name contains "kopi" **and** whose category name contains "
 
 Several columns: `?order[]=category_id&order[]=price&atoz[]=asc&atoz[]=desc`.
 
+Without `?order=`, the list uses the controller's or service's default sort (`$orderBy`), if one is set. Otherwise the database decides the order.
+
 ### Paging
 
 | Parameter | Example | Effect |

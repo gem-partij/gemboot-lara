@@ -125,6 +125,14 @@ Override these to add behavior around saving:
 
 Data logic that isn't about HTTP belongs in the [service hooks](SERVICE.md#adding-logic-before-and-after-saving-hooks).
 
+### Default sort order
+
+```php
+protected $orderBy = ['created_at' => 'desc'];
+```
+
+`index` then returns the newest records first, unless the client sends its own `?order=`. List several columns in order of priority. A plain list such as `['name', 'price']` sorts ascending.
+
 ### Eager loading relations
 
 ```php
