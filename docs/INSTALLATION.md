@@ -101,6 +101,30 @@ The `data` part is whatever your auth service returns for `me`.
 
 If you get **503** instead, Gemboot could not reach the auth service. Check `GEMBOOT_AUTH_BASE_API`, the network, and the certificate settings above. The details are in your Laravel log.
 
+## 5. Let Gemboot check your setup
+
+```sh
+php artisan gemboot:doctor
+```
+
+It checks the settings above, calls your auth service once, and lists anything that's wrong, each with a fix:
+
+```text
+Gemboot setup check
+
+  ✓ Auth service URL: https://auth.example.com/api/auth
+  ✓ TLS certificates are checked.
+  ✓ The auth service answers (HTTP 401 for a request without a token).
+  ✓ Auth middleware aliases are registered.
+  ✓ Class aliases are registered.
+  i Cache store 'file' has no tag support. CoreService caching (setObserver) is skipped, ...
+  ✓ Security headers are added to responses.
+
+Everything looks good.
+```
+
+Run it again whenever something behaves strangely, such as every request answering 401. See [Commands](COMMANDS.md#gembootdoctor) for the details.
+
 ## Next
 
 - [Responses](RESPONSES.md): how every Gemboot response is shaped

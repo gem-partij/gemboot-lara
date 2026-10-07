@@ -47,6 +47,7 @@ See [The SSO guard](AUTH.md#the-sso-guard).
 
 | Key | Env variable | Default | Purpose |
 |---|---|---|---|
+| `response.security_headers` | `GEMBOOT_SECURITY_HEADERS` | `Cache-Control: no-store`, `X-Content-Type-Options: nosniff` | Headers on every Gemboot JSON response. The env variable turns them on or off; publish the config to change the list ([details](RESPONSES.md#security-headers)). |
 | `response.send_header_error` | `GEMBOOT_SEND_HEADER_ERROR` | `true` | Adds an `x-gemboot-error-message` header to `responseError()` responses |
 | `response.compressed` | `GEMBOOT_RESPONSE_COMPRESSED` | `false` | **Deprecated, removed in 9.0.** gzip inside PHP; let your web server compress instead |
 
@@ -64,6 +65,10 @@ See [The SSO guard](AUTH.md#the-sso-guard).
 |---|---|---|---|
 | `file_handler.base_url` | `GEMBOOT_FILE_HANDLER_BASE_URL` | none | File service used by [`FileHandler`](FILE_HANDLER.md) |
 | `gateway.base_url`, `gateway.base_url_auth` | `GEMBOOT_GW_BASE_URL`, `GEMBOOT_GW_BASE_URL_AUTH` | none | Only for the deprecated `CheckToken` middleware |
+
+## Checking the configuration
+
+`php artisan gemboot:doctor` checks these settings and explains problems ([Commands](COMMANDS.md#gembootdoctor)).
 
 ## After `php artisan config:cache`
 

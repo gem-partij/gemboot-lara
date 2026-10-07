@@ -17,6 +17,7 @@ use Gemboot\Exceptions\ServerErrorException;
 // use Illuminate\Support\Facades\Notification;
 // use Gemboot\Notifications\Telegram;
 use Gemboot\Libraries\TelegramLibrary;
+use Gemboot\Support\SecurityHeaders;
 
 use Gemboot\GembootValidator;
 
@@ -56,9 +57,9 @@ trait JSONResponses
     protected function response($status, $data, $message = null, $status_message = null, $additional_headers = [])
     {
         try {
-            $headers = [
+            $headers = array_merge(SecurityHeaders::get(), [
                 'Content-type' => 'application/json; charset=utf-8',
-            ];
+            ]);
 
             if (app('config')->get('gemboot.response.compressed')) {
                 // Reported once per process; Laravel logs it to the deprecations channel.
@@ -115,7 +116,7 @@ trait JSONResponses
                     $message
                 ),
                 self::$STATUS_SERVER_ERROR
-            );
+            )->withHeaders(SecurityHeaders::get());
         }
     }
 

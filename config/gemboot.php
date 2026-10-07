@@ -67,6 +67,14 @@ return [
     ],
 
     'response' => [
+        // Headers added to every Gemboot JSON response. Set
+        // GEMBOOT_SECURITY_HEADERS=false to turn them off, or publish this file
+        // and change the list (e.g. to allow caching of public endpoints).
+        'security_headers' => env('GEMBOOT_SECURITY_HEADERS', true) ? [
+            'Cache-Control' => 'no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ] : [],
+
         // Deprecated, removed in 9.0. Compression through ob_gzhandler; leave
         // compression to the web server. It also misbehaves under Octane and FrankenPHP.
         'compressed' => env('GEMBOOT_RESPONSE_COMPRESSED', false),

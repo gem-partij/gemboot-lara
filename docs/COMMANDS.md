@@ -71,6 +71,32 @@ What you get depends on the options:
 
 See [Controllers](CONTROLLER.md) for what each base class does.
 
+## `gemboot:doctor`
+
+```sh
+php artisan gemboot:doctor [--skip-network]
+```
+
+Checks your Gemboot setup and explains how to fix each problem. Most setup mistakes don't cause errors, they just make every request answer 401 or quietly turn caching off, so this is the first thing to run when something seems wrong.
+
+It checks:
+
+- `GEMBOOT_AUTH_BASE_API` is set, is a real URL, and uses `https://`
+- TLS certificate checks are on, and a configured CA bundle file exists
+- the auth service answers (one request to `me` without a token; skip it with `--skip-network`)
+- the SSO guard, if you use it, has a user service URL
+- the middleware aliases and class aliases are registered
+- your cache store supports tags (needed for service caching)
+- deprecated or risky settings, such as `GEMBOOT_RESPONSE_COMPRESSED`
+
+Each line starts with `✓` (fine), `i` (information), `!` (warning), or `✗` (problem). Warnings and problems come with a `Fix:` line.
+
+The command exits with code `1` when it finds a problem, so you can run it in a deploy script or CI pipeline:
+
+```sh
+php artisan gemboot:doctor --skip-network || exit 1
+```
+
 ## Built-in help
 
 Every command describes its options:
