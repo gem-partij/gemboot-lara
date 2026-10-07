@@ -16,6 +16,9 @@ class SSOGuard implements Guard
     protected $provider;
     protected $user;
 
+    /** True when $user was resolved from the request's token (not set with setUser()). */
+    protected $userFromToken = false;
+
     public function __construct(UserProvider $provider, Request $request)
     {
         $this->provider = $provider;
@@ -60,6 +63,7 @@ class SSOGuard implements Guard
     public function setUser(Authenticatable $user)
     {
         $this->user = $user;
+        $this->userFromToken = false;
         return $this;
     }
 
@@ -79,6 +83,7 @@ class SSOGuard implements Guard
         $cached = Cache::get($cacheKey);
         if ($cached) {
             $this->user = new SSOUser($cached);
+            $this->userFromToken = true;
             return $this->user;
         }
 
@@ -132,7 +137,25 @@ class SSOGuard implements Guard
         Cache::put($cacheKey, $userData, now()->addSeconds($cacheTTL));
 
         $this->user = new SSOUser($userData);
+        $this->userFromToken = true;
         return $this->user;
+    }
+
+    /**
+     * Use a new request. A user resolved from the previous request's token is
+     * resolved again from the new one; a user set with setUser() (e.g. actingAs()
+     * in tests) stays.
+     */
+    public function setRequest(Request $request)
+    {
+        $this->request = $request;
+
+        if ($this->userFromToken) {
+            $this->user = null;
+            $this->userFromToken = false;
+        }
+
+        return $this;
     }
 
     /**

@@ -14,6 +14,7 @@ If you are new, read them in this order:
 | 6 | [Controllers](CONTROLLER.md) | Get a full CRUD API from `GembootResourceController` and customize it |
 | 7 | [Routes and query parameters](ROUTES.md) | Register routes and use search, sorting, and paging from the client side |
 | 8 | [Caching](CACHING.md) | Cache lists and records safely, per user |
+| 9 | [Testing your API](TESTING.md) | Test protected routes without a running auth service, with `GembootAuth::fake()` |
 
 Reference pages, for when you need one specific fact:
 

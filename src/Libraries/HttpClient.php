@@ -3,6 +3,8 @@
 namespace Gemboot\Libraries;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\HandlerStack;
+use Gemboot\Testing\FakeAuthService;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
@@ -33,14 +35,21 @@ class HttpClient
     protected function initClient()
     {
         // Defaults apply when a published config/gemboot.php predates these keys.
-        $this->client = new Client([
+        $config = [
             'base_uri' => $this->baseUrl,
             'timeout' => (float) config('gemboot.http.timeout', 30),
             'connect_timeout' => (float) config('gemboot.http.connect_timeout', 10),
             // true, false, or a path to a CA bundle. Turn off only for local development.
             'verify' => config('gemboot.http.verify', true),
             'http_errors' => false, // Kita handle error manual agar konsisten
-        ]);
+        ];
+
+        // In tests, GembootAuth::fake() answers instead of the real auth service.
+        if (app()->bound(FakeAuthService::class)) {
+            $config['handler'] = HandlerStack::create(app(FakeAuthService::class)->handler());
+        }
+
+        $this->client = new Client($config);
     }
 
     public function setBaseUrl($baseUrl)
