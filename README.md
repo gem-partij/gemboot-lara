@@ -124,6 +124,14 @@ This creates `config/gemboot.php`. Then set at least this in `.env`:
 GEMBOOT_AUTH_BASE_API=https://auth.example.com/api/auth
 ```
 
+Then check the setup:
+
+```sh
+php artisan gemboot:doctor
+```
+
+It lists anything that's wrong (missing URL, unreachable auth service, TLS off, ...), each with a fix.
+
 ### 3. Protect routes
 
 Register the middleware aliases in `bootstrap/app.php`:
@@ -239,6 +247,7 @@ All settings live in **one file, `config/gemboot.php`**. Every value comes from 
 | `sso.cache_ttl` | `GEMBOOT_SSO_CACHE_TTL` | Seconds to cache an SSO user (default 300) |
 | `file_handler.base_url` | `GEMBOOT_FILE_HANDLER_BASE_URL` | File upload service used by `FileHandler` |
 | `notifications.telegram.token`, `.chat_id` | `GEMBOOT_TELEGRAM_BOT_TOKEN`, `GEMBOOT_TELEGRAM_CHAT_ID` | Telegram alert on every unhandled 500. Off when the token is empty. |
+| `response.security_headers` | `GEMBOOT_SECURITY_HEADERS` | `Cache-Control: no-store` and `X-Content-Type-Options: nosniff` on every response (default on) |
 | `response.send_header_error` | `GEMBOOT_SEND_HEADER_ERROR` | Adds an `x-gemboot-error-message` header to error responses (default on) |
 | `response.compressed` | `GEMBOOT_RESPONSE_COMPRESSED` | **Deprecated, removed in 9.0.** gzip through `ob_gzhandler` (default off; leave compression to the web server) |
 
@@ -343,6 +352,11 @@ Only the latest major version gets new features.
 | 6.x | 11 | ^8.2 |
 | 7.x | ^11, ^12 | ^8.2 |
 | **8.x (current)** | **^12, ^13** | **^8.3** |
+
+### Upgrading from 8.2 to 8.3
+
+- **New: `php artisan gemboot:doctor`** checks your setup and explains how to fix problems.
+- **Every Gemboot response now carries `Cache-Control: no-store` and `X-Content-Type-Options: nosniff`.** If a client or proxy relied on caching Gemboot responses, change `response.security_headers` or set `GEMBOOT_SECURITY_HEADERS=false`.
 
 ### Upgrading from 8.1 to 8.2
 
