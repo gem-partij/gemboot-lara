@@ -69,10 +69,12 @@ class MakeModel extends GeneratorCommand
 
         $modelName = $this->qualifyClass($this->getNameInput());
 
+        // Only reference the service when it is generated too; otherwise the
+        // controller pointed at a class that did not exist.
         $this->call('gemboot:make-controller', array_filter([
             'name'  => "{$controller}Controller",
             '--model' => $modelName,
-            '--service' => "{$service}Service",
+            '--service' => $this->option('service') ? "{$service}Service" : null,
             '--resource' => $this->option('resource'),
         ]));
     }
