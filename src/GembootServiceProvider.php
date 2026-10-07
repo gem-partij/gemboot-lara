@@ -56,10 +56,16 @@ class GembootServiceProvider extends ServiceProvider
         Auth::extend('gemboot-sso-token', function ($app, $name, array $config) {
             $provider = Auth::createUserProvider($config['provider']);
 
-            return new SSOGuard(
+            $guard = new SSOGuard(
                 $provider,
                 $app['request']
             );
+
+            // Hand every new request to the guard, so it doesn't keep the first
+            // request's user (tests with several requests, Octane workers).
+            $app->refresh('request', $guard, 'setRequest');
+
+            return $guard;
         });
 
         Auth::provider('gemboot-sso-provider', function ($app, array $config) {

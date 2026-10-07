@@ -83,4 +83,34 @@ class GembootSSOGuardTest extends TestCase
             $this->assertNull(Cache::get('sso_token_' . sha1($token)));
         }
     }
+
+    function test_guard_follows_each_new_request()
+    {
+        // Laravel creates the guard once per app. Without setRequest() it kept the
+        // first request's user, so a later request without a token was still
+        // authenticated (tests with several requests, Octane workers).
+        config()->set('auth.guards.api', ['driver' => 'gemboot-sso-token', 'provider' => 'gemboot-sso']);
+        config()->set('auth.providers.gemboot-sso', ['driver' => 'gemboot-sso-provider']);
+        Http::fake(['primary.test/*' => Http::response(['data' => ['id' => 7]])]);
+        $this->app['router']->get('/sso-user', fn () => response()->json(['id' => auth('api')->id()]))->middleware('auth:api');
+
+        $this->getJson('/sso-user', ['Authorization' => 'Bearer token-123'])->assertOk()->assertJson(['id' => 7]);
+        $this->getJson('/sso-user')->assertStatus(401);
+    }
+
+    function test_acting_as_keeps_the_user_across_requests()
+    {
+        // A user set with setUser()/actingAs() is not tied to a token, so a new
+        // request must not reset it.
+        config()->set('auth.guards.api', ['driver' => 'gemboot-sso-token', 'provider' => 'gemboot-sso']);
+        config()->set('auth.providers.gemboot-sso', ['driver' => 'gemboot-sso-provider']);
+        Http::fake();
+        $this->app['router']->get('/sso-user', fn () => response()->json(['id' => auth('api')->id()]))->middleware('auth:api');
+
+        $this->actingAs(new \Gemboot\SSO\Auth\SSOUser(['id' => 9]), 'api');
+
+        $this->getJson('/sso-user')->assertOk()->assertJson(['id' => 9]);
+        $this->getJson('/sso-user')->assertOk()->assertJson(['id' => 9]);
+        Http::assertNothingSent();
+    }
 }
