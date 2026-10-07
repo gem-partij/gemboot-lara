@@ -80,6 +80,7 @@ Step-by-step guides with examples live in [`docs/`](docs/README.md):
 | [Models](docs/MODEL.md), [Services](docs/SERVICE.md), [Controllers](docs/CONTROLLER.md) | Building a CRUD API, search, hooks, validation |
 | [Routes and query parameters](docs/ROUTES.md) | Search, sorting, and paging from the client side |
 | [Caching](docs/CACHING.md) | Cached lists and records, cleared on changes, per user |
+| [Testing your API](docs/TESTING.md) | Test protected routes without a running auth service (`GembootAuth::fake()`) |
 | [Commands](docs/COMMANDS.md), [Configuration](docs/CONFIGURATION.md), [File handler](docs/FILE_HANDLER.md) | Reference |
 
 The rest of this README is an overview.
@@ -352,6 +353,11 @@ Only the latest major version gets new features.
 | 6.x | 11 | ^8.2 |
 | 7.x | ^11, ^12 | ^8.2 |
 | **8.x (current)** | **^12, ^13** | **^8.3** |
+
+### Upgrading from 8.3 to 8.4
+
+- **New: `GembootAuth::fake()`** replaces the auth service in your tests ([guide](docs/TESTING.md)).
+- **The SSO guard now follows each request.** It used to keep the first request's user for the lifetime of the app, which affected tests with several requests and long-running servers such as Octane. Users set with `actingAs()` are kept as before.
 
 ### Upgrading from 8.2 to 8.3
 
