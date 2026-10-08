@@ -40,6 +40,12 @@ php artisan vendor:publish --tag=gemboot
 
 See [The SSO guard](AUTH.md#the-sso-guard).
 
+## Authorization
+
+| Key | Env variable | Default | Purpose |
+|---|---|---|---|
+| `authorization.permissions_as_abilities` | `GEMBOOT_PERMISSIONS_AS_ABILITIES` | `false` | Answer Laravel ability checks (`$this->authorize('report.read')`, `@can`, `->can()`) with the `gemboot` guard user's permissions ([details](AUTH.md#laravels-can-with-your-permissions)) |
+
 ## Request IDs
 
 | Key | Env variable | Default | Purpose |

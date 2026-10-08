@@ -199,6 +199,41 @@ $this->app->singleton(TokenVerifier::class, MyTokenVerifier::class);
 
 When the user's roles or permissions are known like this, `role:` and `permission:` answer from them, without calling `has-role` or `has-permission-to`. They do that only after the guard has found the user in the same request, for example behind `auth:api`. Otherwise they ask the auth service, as always.
 
+### Laravel's `can` with your permissions
+
+Laravel checks abilities by name: `$this->authorize('report.read')`, `@can('report.read')`, `->can('report.read')` on a route, or `Gate::allows('report.read')`. Gemboot can answer those names with the permissions from your auth service:
+
+```dotenv
+GEMBOOT_PERMISSIONS_AS_ABILITIES=true
+```
+
+Then this works with the `gemboot` guard:
+
+```php
+Route::middleware('auth:api')
+    ->get('/reports', [ReportController::class, 'index'])
+    ->can('report.read');
+
+public function export()
+{
+    return $this->responseSuccessOrException(function () {
+        $this->authorize('report.export'); // 403 if the user lacks it
+
+        return $this->service->export();
+    });
+}
+```
+
+Each check asks the auth service's `has-permission-to`, cached with `GEMBOOT_AUTH_CACHE_TTL`, unless [your own verifier](#your-own-verifier) already knows the permissions. A name with `|` needs all its parts, as with `permission:`.
+
+Gemboot only answers names that your app leaves open. Three cases stay with Laravel:
+
+- **Abilities you define yourself** with `Gate::define('report.read', ...)`. Your definition decides.
+- **Policy checks**, which pass a model or class: `$this->authorize('update', $order)`.
+- **Other users**: guests, and users from other guards.
+
+Gemboot only ever grants. A missing permission leaves the decision to Laravel, which denies an ability nobody defined. It's off by default because it changes what `Gate::allows()` answers for names your app never defined.
+
 ## Calling the auth service directly: `AuthLibrary`
 
 `Gemboot\Libraries\AuthLibrary` (also the `GembootAuth` facade) talks to the auth service for you. A typical use is offering login and logout routes in your API:

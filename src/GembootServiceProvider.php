@@ -4,7 +4,9 @@ namespace Gemboot;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Gemboot\Auth\GembootGuard;
+use Gemboot\Auth\PermissionGate;
 use Gemboot\Auth\RemoteTokenVerifier;
 use Gemboot\Auth\TokenVerifier;
 use Gemboot\SSO\Auth\SSOGuard;
@@ -81,6 +83,9 @@ class GembootServiceProvider extends ServiceProvider
 
             return $guard;
         });
+
+        // Permission names as Laravel abilities, when turned on in the config.
+        Gate::before(fn ($user, $ability, $arguments) => PermissionGate::before($user, $ability, $arguments));
 
         Auth::provider('gemboot-sso-provider', function ($app, array $config) {
             return new SSOUserProvider();
