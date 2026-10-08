@@ -5,6 +5,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Http\Request;
 use Gemboot\Middleware\TokenValidated;
+use Gemboot\SSO\Auth\SSOUser;
+use Illuminate\Support\Facades\Gate;
 use Cache;
 
 use Throwable;
@@ -23,6 +25,12 @@ abstract class CoreRestResourceController extends CoreRestController implements 
 {
     protected $merge_store_data_with = [];
     protected $merge_update_data_with = [];
+
+    /**
+     * Check the model's Laravel policy on every action (viewAny, view, create,
+     * update, delete). Off by default; turn it on per controller.
+     */
+    protected $authorizeWithPolicy = false;
 
     protected $cache_seconds = [
         'index' => 0, // default 0 seconds
@@ -74,6 +82,8 @@ abstract class CoreRestResourceController extends CoreRestController implements 
     public function index()
     {
         return $this->responseSuccessOrException(function () {
+            $this->authorizeAction('viewAny', $this->model ? get_class($this->model) : null);
+
             if ($this->cache_seconds['index'] > 0) {
                 // Key from the sorted query string only. implode() over request()->all()
                 // dropped parameter names and failed on nested arrays such as user_login.
@@ -113,6 +123,8 @@ abstract class CoreRestResourceController extends CoreRestController implements 
                     'errors' => $validator->errors(),
                 ]);
             }
+
+            $this->authorizeAction('create', $this->model ? get_class($this->model) : null);
 
             $before_store_resp = $this->beforeStoreHooks($request);
 
@@ -161,12 +173,17 @@ abstract class CoreRestResourceController extends CoreRestController implements 
                     $cache_key = $this->modelTableName . '_show_' . sha1(json_encode([$id, $query, $this->cacheScope()]));
                     $cache_seconds = $this->cache_seconds['show'];
 
-                    return $this->controllerCache()->remember($cache_key, $cache_seconds, function () use ($id) {
+                    $record = $this->controllerCache()->remember($cache_key, $cache_seconds, function () use ($id) {
                         return $this->service->findOrFail($id, $this->addWithOnShow);
                     });
                 } else {
-                    return $this->service->findOrFail($id, $this->addWithOnShow);
+                    $record = $this->service->findOrFail($id, $this->addWithOnShow);
                 }
+
+                // Also for cached records: caching must never skip authorization.
+                $this->authorizeAction('view', $record);
+
+                return $record;
             });
         } catch (Throwable $e) {
             return $this->handleException($e);
@@ -197,6 +214,10 @@ abstract class CoreRestResourceController extends CoreRestController implements 
                 return $this->responseBadRequest([
                     'errors' => $validator->errors(),
                 ]);
+            }
+
+            if ($this->authorizeWithPolicy) {
+                $this->authorizeAction('update', $this->service->findOrFail($id, false));
             }
 
             $before_update_resp = $this->beforeUpdateHooks($request, $id);
@@ -237,6 +258,10 @@ abstract class CoreRestResourceController extends CoreRestController implements 
     public function destroy($id)
     {
         try {
+            if ($this->authorizeWithPolicy) {
+                $this->authorizeAction('delete', $this->service->findOrFail($id, false));
+            }
+
             $data = $this->service->delete($id);
 
             return $this->responseSuccess([
@@ -323,5 +348,50 @@ abstract class CoreRestResourceController extends CoreRestController implements 
         ksort($query);
 
         return $query;
+    }
+
+    /**
+     * The user that policies receive: the Laravel guard's user, or else the user
+     * TokenValidated merged into the request, wrapped as an SSOUser (attributes
+     * readable as $user->id, $user->name, ...). Override to use your own model.
+     */
+    protected function policyUser()
+    {
+        if ($user = auth()->user()) {
+            return $user;
+        }
+
+        $login = request()->attributes->get(TokenValidated::USER_LOGIN_MERGED) ? request('user_login') : null;
+
+        return is_array($login) ? new SSOUser($login) : null;
+    }
+
+    /**
+     * Check the model's policy for an action when $authorizeWithPolicy is on.
+     * A denial becomes a ForbiddenException, i.e. a 403 in the Gemboot format.
+     *
+     * Fails closed: with the flag on but no policy found (wrong namespace, typo),
+     * the request is refused with a 500 and a logged LogicException, instead of
+     * silently skipping the checks the developer asked for.
+     */
+    private function authorizeAction(string $ability, $target): void
+    {
+        if (!$this->authorizeWithPolicy) {
+            return;
+        }
+
+        if ($this->model === null || Gate::getPolicyFor($this->model) === null) {
+            throw new \LogicException(sprintf(
+                '%s has $authorizeWithPolicy = true, but no policy is registered for %s.',
+                static::class,
+                $this->model ? get_class($this->model) : 'its model (none set)'
+            ));
+        }
+
+        $response = Gate::forUser($this->policyUser())->inspect($ability, $target);
+
+        if ($response->denied()) {
+            throw new ForbiddenException($response->message() ?: 'This action is unauthorized.');
+        }
     }
 }

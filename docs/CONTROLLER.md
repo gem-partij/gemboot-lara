@@ -89,6 +89,58 @@ If validation fails, the client gets a 400 with the errors under `data.errors`:
 
 Nothing is saved, and the database transaction is rolled back.
 
+### Who may see or change which record: policies
+
+By default, any user who passes your route middleware can read, change, or delete **any** record by its id. For data that belongs to users, such as orders or profiles, that's usually wrong: user 7 shouldn't be able to open `/api/orders/12` if order 12 belongs to someone else.
+
+Write a normal [Laravel policy](https://laravel.com/docs/authorization#creating-policies) and turn on policy checks in the controller:
+
+```php
+namespace App\Policies;
+
+use App\Models\Order;
+
+class OrderPolicy
+{
+    public function viewAny($user): bool             { return true; }
+    public function view($user, Order $order): bool  { return $order->user_id == $user->id; }
+    public function create($user): bool              { return true; }
+    public function update($user, Order $order): bool { return $order->user_id == $user->id; }
+    public function delete($user, Order $order): bool { return false; }
+}
+```
+
+```php
+class OrderController extends GembootResourceController
+{
+    protected $authorizeWithPolicy = true;
+}
+```
+
+Laravel finds `App\Policies\OrderPolicy` for `App\Models\Order` automatically. Now each action checks the matching policy method:
+
+| Action | Policy method |
+|---|---|
+| `index` | `viewAny($user)` |
+| `show` | `view($user, $record)` |
+| `store` | `create($user)` |
+| `update` | `update($user, $record)` |
+| `destroy` | `delete($user, $record)` |
+
+When a method returns `false`, the client gets a 403 and nothing is saved:
+
+```json
+{ "status": 403, "message": "Forbidden", "data": { "error": "This action is unauthorized." } }
+```
+
+Notes:
+
+- **Which `$user`:** with the SSO guard, it's the guard's user. With the `token-validated` middleware, it's the `user_login` data, so `$user->id` and the other fields from your auth service's `me` answer work. To use your own user model instead, override `policyUser()` in the controller.
+- **Guests** (no user at all) are denied unless a policy method accepts a nullable user (`?User $user`).
+- **Cached records are checked too.** The policy runs after the record is loaded, also when it comes from the `show` cache.
+- Policy checks are **off by default**, so existing policies elsewhere in your app don't suddenly change your API. Controllers without `$authorizeWithPolicy = true` behave as before.
+- **No policy found means no access.** With `$authorizeWithPolicy = true` but no policy for the model (for example a wrong namespace or a typo in the class name), every action answers 500, and your log names the missing policy. The checks are never skipped silently.
+
 ### Fixed values on save
 
 Values the client must not choose, such as a tenant or owner id, go into these properties. They are merged into the client's data and win over it:

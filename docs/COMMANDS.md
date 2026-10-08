@@ -97,6 +97,36 @@ The command exits with code `1` when it finds a problem, so you can run it in a 
 php artisan gemboot:doctor --skip-network || exit 1
 ```
 
+## `gemboot:permissions`
+
+```sh
+php artisan gemboot:permissions [--json]
+```
+
+Lists every role and permission your routes check with `role:` and `permission:`, and which routes need them. Middleware groups and class names are included, not only the short aliases.
+
+```text
+Roles (1)
+  admin
+      GET /api/users
+      POST /api/users
+
+Permissions (3)
+  report.read
+      GET /api/reports
+  user.raed
+      GET /api/users/export
+  user.read
+      GET /api/users/{user}
+
+Possible typos (names that differ by one or two characters):
+  ! user.raed  <->  user.read
+```
+
+Use it to tell the auth team which roles and permissions a service needs, and to catch typos before they turn into 403s in production. With `--json`, the same information comes as JSON (`roles`, `permissions`, `possible_typos`) for scripts.
+
+Permissions checked inside your code, such as `GembootPermission::requirePermission('...')`, aren't listed; only route middleware is.
+
 ## Built-in help
 
 Every command describes its options:
