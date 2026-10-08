@@ -69,7 +69,27 @@ Notes:
 
 - On PostgreSQL, the services use `ILIKE`, so text search ignores upper and lower case.
 - If the search text contains `%`, Gemboot uses it as your own pattern: `search('kopi%', 'name')` finds names that *start* with "kopi".
-- The third argument is the mode: `'or'` (the default) or `'and'`. It decides how this condition combines with others.
+- The third argument is the mode: `'or'` (the default) or `'and'`. It decides how this condition joins the conditions **before** it.
+
+### Searching inside an already limited query
+
+With the default `'or'` mode, a search added to a limited query **widens** it:
+
+```php
+// WRONG: finds my orders OR any order named "kopi"
+Order::where('user_id', $userId)->search('kopi', 'name')->get();
+```
+
+Wrap the search in its own group, so it can only narrow the query:
+
+```php
+// Right: my orders whose name contains "kopi"
+Order::where('user_id', $userId)
+    ->where(fn ($q) => $q->search('kopi', 'name'))
+    ->get();
+```
+
+Gemboot's services do this for you: searches from the request (`?search=`, `?search_exact=`) are always grouped this way since 8.6.1, so a list you limit with `listAll($query)` or `getQueryListAll()` stays limited.
 
 ### Searching by date
 
