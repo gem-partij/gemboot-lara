@@ -89,6 +89,53 @@ If validation fails, the client gets a 400 with the errors under `data.errors`:
 
 Nothing is saved, and the database transaction is rolled back.
 
+#### With a FormRequest class
+
+If you already keep your rules in Laravel `FormRequest` classes, name them instead of overriding the two methods:
+
+```php
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
+
+class ProductController extends GembootResourceController
+{
+    protected $storeRequest = StoreProductRequest::class;
+    protected $updateRequest = UpdateProductRequest::class;
+}
+```
+
+The class is an ordinary FormRequest:
+
+```php
+class UpdateProductRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return GembootPermission::hasPermissionTo('product.update');
+    }
+
+    public function rules(): array
+    {
+        return [
+            'price' => 'integer|min:0',
+            // The route parameter works as usual: "product" in /products/{product}.
+            'sku' => [Rule::unique('products')->ignore($this->route('product'))],
+        ];
+    }
+}
+```
+
+Everything a FormRequest normally does still runs: `prepareForValidation()`, `authorize()`, the rules, and `passedValidation()`. The answers stay in the Gemboot format:
+
+| What happens | The client gets |
+|---|---|
+| A rule fails | 400 with the errors under `data.errors`, the same as above (not Laravel's usual 422) |
+| `authorize()` returns `false` | 403 with `data.error` |
+
+The hooks receive the FormRequest as `$request`, so they can call `$request->validated()`. The saved data is the FormRequest's input, including any changes `prepareForValidation()` made. When both are set, `$storeRequest` wins over `validateStoreRequest()`.
+
+Don't override `failedValidation()` or `failedAuthorization()` in these classes. Gemboot answers both cases itself.
+
 ### Who may see or change which record: policies
 
 By default, any user who passes your route middleware can read, change, or delete **any** record by its id. For data that belongs to users, such as orders or profiles, that's usually wrong: user 7 shouldn't be able to open `/api/orders/12` if order 12 belongs to someone else.
@@ -172,7 +219,9 @@ class ProductController extends GembootResourceController
 
 A field without a rule is dropped, even if the model would accept it. Fixed values from `$merge_store_data_with` and `$merge_update_data_with` are still added.
 
-With the option on but no rules in `validateStoreRequest()` or `validateUpdateRequest()`, nothing could ever be saved. Instead of silently storing nothing, that action answers 500, and your log names the method that needs rules.
+With a [FormRequest class](#with-a-formrequest-class), the fields with a rule in its `rules()` are saved.
+
+With the option on but no rules in `validateStoreRequest()` or `validateUpdateRequest()` (or the FormRequest's `rules()`), nothing could ever be saved. Instead of silently storing nothing, that action answers 500, and your log names the method that needs rules.
 
 ### Fixed values on save
 
