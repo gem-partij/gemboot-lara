@@ -141,6 +141,39 @@ Notes:
 - Policy checks are **off by default**, so existing policies elsewhere in your app don't suddenly change your API. Controllers without `$authorizeWithPolicy = true` behave as before.
 - **No policy found means no access.** With `$authorizeWithPolicy = true` but no policy for the model (for example a wrong namespace or a typo in the class name), every action answers 500, and your log names the missing policy. The checks are never skipped silently.
 
+### Save only validated fields
+
+By default, `store` and `update` pass everything the client sent to the model, filtered only by its `$fillable`. A model with `$guarded = []` then accepts **any** field, including ones like `is_admin` or `balance` that clients must never set.
+
+Turn on this option to save only the fields that have a validation rule:
+
+```php
+class ProductController extends GembootResourceController
+{
+    protected $saveValidatedOnly = true;
+
+    protected function validateStoreRequest($request)
+    {
+        return \Validator::make($request->all(), [
+            'name'  => 'required|max:100',
+            'price' => 'required|integer|min:0',
+        ]);
+    }
+
+    protected function validateUpdateRequest($request, $id)
+    {
+        return \Validator::make($request->all(), [
+            'name'  => 'sometimes|max:100',
+            'price' => 'sometimes|integer|min:0',
+        ]);
+    }
+}
+```
+
+A field without a rule is dropped, even if the model would accept it. Fixed values from `$merge_store_data_with` and `$merge_update_data_with` are still added.
+
+With the option on but no rules in `validateStoreRequest()` or `validateUpdateRequest()`, nothing could ever be saved. Instead of silently storing nothing, that action answers 500, and your log names the method that needs rules.
+
 ### Fixed values on save
 
 Values the client must not choose, such as a tenant or owner id, go into these properties. They are merged into the client's data and win over it:
