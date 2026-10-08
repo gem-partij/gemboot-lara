@@ -159,6 +159,16 @@ To turn them off, set `GEMBOOT_SECURITY_HEADERS=false`. To change them, for exam
 ],
 ```
 
+## Laravel authorization
+
+A denial from Laravel's authorization, such as `$this->authorize()`, `Gate::authorize()`, or a policy, becomes a 403 with its message:
+
+```json
+{ "status": 403, "message": "Forbidden", "data": { "error": "This action is unauthorized." } }
+```
+
+A policy that denies with another status keeps it. For example, `Response::denyAsNotFound()` gives a 404. Before 8.11, these denials became a 500.
+
 ## Unexpected errors
 
 Any other exception, such as a database error or a bug, becomes a 500:
