@@ -133,6 +133,25 @@ $this->getJson('/api/profile', ['Authorization' => 'Bearer x'])
 
 Then `auth()->user()->roles` and `->permissions` hold the roles and permissions you passed. Other HTTP calls of your app are not affected.
 
+## The `gemboot` guard
+
+The fake answers the [`gemboot` guard](AUTH.md#one-user-everywhere-the-gemboot-guard) too, because the guard asks the same `me` endpoint:
+
+```php
+GembootAuth::fake(user: ['id' => 9, 'name' => 'Ana']);
+
+$this->getJson('/api/profile', ['Authorization' => 'Bearer x'])
+    ->assertJsonPath('data.id', 9);
+```
+
+To skip the auth service entirely, use `actingAs()` with a `GembootUser`. Known roles and permissions let `role:` and `permission:` answer without the fake on `auth:api` routes:
+
+```php
+use Gemboot\Auth\GembootUser;
+
+$this->actingAs(new GembootUser(['id' => 9], roles: ['admin'], permissions: []), 'api');
+```
+
 ## Without the fake: `actingAs()`
 
 For the SSO guard, Laravel's own `actingAs()` also works, because the guard is a normal Laravel guard:

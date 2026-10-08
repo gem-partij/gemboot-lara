@@ -355,6 +355,11 @@ Only the latest major version gets new features.
 | 7.x | ^11, ^12 | ^8.2 |
 | **8.x (current)** | **^12, ^13** | **^8.3** |
 
+### Upgrading from 8.9 to 8.10
+
+- **New, opt-in: the `gemboot` guard.** Set `'api' => ['driver' => 'gemboot']` in `config/auth.php`, and `auth()->user()`, `$request->user()`, `auth:api`, Gates, and policies get the user from your auth service's `me` answer. Routes with `token-validated` keep working as before, and when the `gemboot` guard is the default guard, they hand their user to it without a second call ([guide](docs/AUTH.md#one-user-everywhere-the-gemboot-guard)).
+- **New: your own `TokenVerifier`.** Bind it to decide who a token belongs to. When it also returns roles and permissions, `role:` and `permission:` answer without calling the auth service.
+
 ### Upgrading from 8.8 to 8.9
 
 - **New, opt-in: request IDs.** Add the `Gemboot\Middleware\AssignRequestId` middleware, and every request gets an ID that appears in each log line and is passed to the next service, so one user action can be followed through all logs ([guide](docs/REQUEST_IDS.md)). Gemboot's calls to the auth service, the SSO user service, and the file handler now send the `X-Request-Id` header whenever a request ID is set.

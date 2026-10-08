@@ -4,6 +4,9 @@ namespace Gemboot;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Auth;
+use Gemboot\Auth\GembootGuard;
+use Gemboot\Auth\RemoteTokenVerifier;
+use Gemboot\Auth\TokenVerifier;
 use Gemboot\SSO\Auth\SSOGuard;
 use Gemboot\SSO\Auth\SSOUserProvider;
 
@@ -70,6 +73,15 @@ class GembootServiceProvider extends ServiceProvider
             return $guard;
         });
 
+        // One guard for every auth path: the bearer token's user, as answered by
+        // the bound TokenVerifier. No user provider needed.
+        Auth::extend('gemboot', function ($app, $name, array $config) {
+            $guard = new GembootGuard($app->make(TokenVerifier::class), $app['request']);
+            $app->refresh('request', $guard, 'setRequest');
+
+            return $guard;
+        });
+
         Auth::provider('gemboot-sso-provider', function ($app, array $config) {
             return new SSOUserProvider();
         });
@@ -80,6 +92,9 @@ class GembootServiceProvider extends ServiceProvider
         // Defaults for consumers who never published config/gemboot.php, and for
         // top-level keys added after they published it.
         $this->mergeConfigFrom(__DIR__ . '/../config/gemboot.php', 'gemboot');
+
+        // Apps can bind their own verifier before or after this provider runs.
+        $this->app->bindIf(TokenVerifier::class, RemoteTokenVerifier::class);
 
         // Register a class in the service container
         $this->app->bind('gemboot-request', function ($app) {

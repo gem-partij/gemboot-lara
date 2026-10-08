@@ -5,6 +5,8 @@ namespace Gemboot\Middleware;
 use Closure;
 use Illuminate\Http\Response;
 use Gemboot\Traits\JSONResponses;
+use Gemboot\Auth\GembootGuard;
+use Gemboot\Auth\GembootUser;
 use Gemboot\Libraries\AuthLibrary;
 use Gemboot\Support\FailedAuthLimiter;
 use Gemboot\Support\SecurityHeaders;
@@ -68,6 +70,14 @@ class TokenValidated
 
             $request->merge(['user_login' => (array) $response]);
             $request->attributes->set(self::USER_LOGIN_MERGED, true);
+
+            // With a gemboot default guard, auth()->user() and policies get this
+            // user without a second call. A user set with actingAs() stays.
+            $guard = GembootGuard::fromDefault();
+            if ($guard !== null && !$guard->hasUser()) {
+                $guard->setUserFromToken(GembootUser::fromAuthService((array) $response));
+            }
+
             return $next($request);
         }
     }

@@ -1,6 +1,6 @@
 # Authentication
 
-After this guide, you'll be able to protect routes by login, role, and permission, read the current user, and set up the SSO guard. You'll also know exactly what your central auth service has to provide.
+After this guide, you'll be able to protect routes by login, role, and permission, read the current user with Laravel's `auth()->user()`, and set up the SSO guard. You'll also know exactly what your central auth service has to provide.
 
 ## How it works
 
@@ -15,7 +15,8 @@ Client ──"Authorization: Bearer <token>"──▶ Your API (Gemboot middlewa
 There are two ways to use it:
 
 - **The middleware** (`token-validated`, `role`, `permission`). This is the most common setup and the one this guide starts with.
-- **The SSO guard**, which plugs into Laravel's own `auth` system. See [The SSO guard](#the-sso-guard) below.
+- **The `gemboot` guard**, which asks the same auth service but plugs into Laravel's own `auth` system. It works together with the middleware. See [One user everywhere](#one-user-everywhere-the-gemboot-guard) below.
+- **The SSO guard**, which asks a separate user service. See [The SSO guard](#the-sso-guard) below.
 
 Both need `GEMBOOT_AUTH_BASE_API` (or the SSO URLs) set, as described in [Installation](INSTALLATION.md).
 
@@ -76,6 +77,8 @@ The fields are whatever your auth service returns for `me`.
 
 You don't need to worry about `user_login` ending up in your database. `GembootResourceController` removes it before saving.
 
+To get the same user as a real Laravel user, with `auth()->user()` and policies, add the `gemboot` guard ([below](#one-user-everywhere-the-gemboot-guard)).
+
 ## Checking permissions inside your code
 
 Sometimes the check depends on data, not on the route. Use `GembootPermission` (registered as a facade):
@@ -106,6 +109,95 @@ Inside `responseSuccessOrException()`, the exception from `requirePermission()` 
 ## Who may see which record
 
 Route middleware decides who may call an endpoint at all. To decide which **records** a user may see or change (for example only their own orders), use a Laravel policy with the resource controller. See [Controllers: policies](CONTROLLER.md#who-may-see-or-change-which-record-policies).
+
+## One user everywhere: the `gemboot` guard
+
+With only the middleware, the current user is an array in `$request->user_login`. Laravel's `auth()->user()`, `$request->user()`, `Gate`, and policies don't see it. The `gemboot` guard fixes that. It asks the same `me` endpoint, so your auth service doesn't need anything new.
+
+In `config/auth.php`:
+
+```php
+'defaults' => [
+    'guard' => 'api',
+    // ...
+],
+
+'guards' => [
+    'api' => ['driver' => 'gemboot'],
+],
+```
+
+No user provider is needed. Now both of these routes get a real user:
+
+```php
+// With Laravel's auth middleware
+Route::middleware('auth:api')->get('/profile', function (Request $request) {
+    $user = $request->user(); // Gemboot\Auth\GembootUser
+
+    return GembootResponse::responseSuccess([
+        'id'   => $user->getAuthIdentifier(),
+        'name' => $user->name,
+    ]);
+});
+
+// With Gemboot's middleware, as before
+Route::middleware('token-validated')->get('/orders', function () {
+    $userId = auth()->id(); // the same user as $request->user_login
+    // ...
+});
+```
+
+In the second route, `token-validated` hands the user it already has to the guard, so there's no second call to the auth service. That only happens when the `gemboot` guard is the **default** guard, as in the config above.
+
+What the user offers:
+
+| | |
+|---|---|
+| `$user->name`, `$user->email`, ... | The fields of your auth service's `me` answer, the same as `user_login` |
+| `$user->getAuthIdentifier()`, `auth()->id()` | The `id` field, or `user.id` when the answer wraps the user in `user` |
+| `$user->hasRole('admin')` | Same as `GembootPermission::hasRole()`: asks the auth service |
+| `$user->hasPermissionTo('report.read')` | Same as `GembootPermission::hasPermissionTo()` |
+| `$user->toArray()` | The whole `me` answer |
+
+Policies receive this user too, including the [resource controller's policy checks](CONTROLLER.md#who-may-see-or-change-which-record-policies).
+
+What the client gets back on `auth:api` routes:
+
+| Situation | Answer |
+|---|---|
+| No token, or the auth service rejects it | `401`, in Laravel's format: `{"message": "Unauthenticated."}` |
+| The auth service can't be reached | `503` |
+| Too many failed attempts from this IP | `429` |
+
+On `token-validated` routes, the answers stay in the Gemboot format, as described above. Caching with `GEMBOOT_AUTH_CACHE_TTL` and the protection against token floods apply to the guard as well.
+
+### Your own verifier
+
+The guard asks a `TokenVerifier` who a token belongs to. The default one calls `me`. You can bind your own, for example one that also knows the user's roles and permissions:
+
+```php
+use Gemboot\Auth\GembootUser;
+use Gemboot\Auth\TokenVerifier;
+
+class MyTokenVerifier implements TokenVerifier
+{
+    public function verify(string $token): ?GembootUser
+    {
+        // Look the token up however your setup allows.
+        // Return null for an invalid token.
+        // Throw GembootServiceUnavailableException when you can't tell.
+
+        return new GembootUser($attributes, roles: ['admin'], permissions: ['report.read']);
+    }
+}
+```
+
+```php
+// AppServiceProvider::register()
+$this->app->singleton(TokenVerifier::class, MyTokenVerifier::class);
+```
+
+When the user's roles or permissions are known like this, `role:` and `permission:` answer from them, without calling `has-role` or `has-permission-to`. They do that only after the guard has found the user in the same request, for example behind `auth:api`. Otherwise they ask the auth service, as always.
 
 ## Calling the auth service directly: `AuthLibrary`
 
