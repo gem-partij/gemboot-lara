@@ -354,6 +354,14 @@ Only the latest major version gets new features.
 | 7.x | ^11, ^12 | ^8.2 |
 | **8.x (current)** | **^12, ^13** | **^8.3** |
 
+### Upgrading from 8.5 to 8.6
+
+- **Failed authentication attempts are limited per client IP**: after 60 rejected tokens or failed logins within a minute, the client gets 429 until the minute is over, without a call to your auth service. Requests without a token don't count. Change it with `GEMBOOT_AUTH_MAX_FAILED_ATTEMPTS` (`0` turns it off). **Behind a proxy or load balancer, configure Laravel's trusted proxies**, or all clients share one limit.
+- **Malformed and missing tokens are answered locally** (401) instead of being sent to the auth service.
+- **Connections to the auth service are reused** between calls (several middleware in one request, and every request of an Octane worker).
+
+See [Authentication: protection against token floods](docs/AUTH.md#protection-against-token-floods-and-password-guessing).
+
 ### Upgrading from 8.4 to 8.5
 
 - **New: per-record authorization with Laravel policies.** Set `protected $authorizeWithPolicy = true;` on a resource controller, and each action checks the model's policy (`viewAny`, `view`, `create`, `update`, `delete`). Off by default ([guide](docs/CONTROLLER.md#who-may-see-or-change-which-record-policies)).
