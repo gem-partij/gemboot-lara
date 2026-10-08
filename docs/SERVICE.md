@@ -74,6 +74,7 @@ public function index()
 | `delete($id)` | Deletes the record and returns it. |
 | `setWith(['category'])` | Relations to eager load in `listAll()` and `findOrFail()`. |
 | `setOrderBy(['created_at' => 'desc'])` | Default sort for `listAll()`, used when the request has no `?order=`. `['name']` sorts ascending. |
+| `setPagination('cursor')` | How `listAll()` pages: `'paginate'` (default), `'simple'`, or `'cursor'` ([details](ROUTES.md#faster-paging-for-large-tables)). |
 
 `store()` and `update()` only set the fields listed in the model's `$fillable`.
 

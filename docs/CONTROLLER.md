@@ -185,6 +185,14 @@ protected $orderBy = ['created_at' => 'desc'];
 
 `index` then returns the newest records first, unless the client sends its own `?order=`. List several columns in order of priority. A plain list such as `['name', 'price']` sorts ascending.
 
+### Paging mode
+
+```php
+protected $pagination = 'cursor';   // or 'simple'; default 'paginate'
+```
+
+`simple` and `cursor` skip the `COUNT(*)` query that `paginate` runs on every list. See [Faster paging for large tables](ROUTES.md#faster-paging-for-large-tables).
+
 ### Eager loading relations
 
 ```php

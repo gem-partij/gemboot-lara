@@ -45,6 +45,7 @@ See [The SSO guard](AUTH.md#the-sso-guard).
 | Key | Env variable | Default | Purpose |
 |---|---|---|---|
 | `pagination.max_page_len` | `GEMBOOT_MAX_PAGE_LEN` | `1000` | Upper limit for `?page_len`; `null` removes the limit |
+| `query.standard_parameters` | `GEMBOOT_STANDARD_QUERY_PARAMETERS` | `false` | Also accept `sort`, `per_page`, and `filter[...]` ([details](ROUTES.md#standard-parameter-names-opt-in)); on by default in 9.0 |
 
 ## Responses
 
