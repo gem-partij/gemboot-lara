@@ -25,6 +25,15 @@ class HttpClient
     protected $headers = [];
     protected $throwOnHttpError = false;
 
+    /**
+     * Guzzle clients shared per base URL and settings. Reusing one client lets
+     * Guzzle keep connections to the auth service open between calls (several
+     * middleware in one request, and every request of an Octane worker).
+     *
+     * @var array<string, Client>
+     */
+    private static array $sharedClients = [];
+
     public function __construct($baseUrl = null, $token = null)
     {
         $this->baseUrl = $baseUrl;
@@ -47,9 +56,13 @@ class HttpClient
         // In tests, GembootAuth::fake() answers instead of the real auth service.
         if (app()->bound(FakeAuthService::class)) {
             $config['handler'] = HandlerStack::create(app(FakeAuthService::class)->handler());
+            $this->client = new Client($config);
+
+            return;
         }
 
-        $this->client = new Client($config);
+        $key = sha1(serialize([$this->baseUrl, $config]));
+        $this->client = self::$sharedClients[$key] ??= new Client($config);
     }
 
     public function setBaseUrl($baseUrl)
