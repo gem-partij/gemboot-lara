@@ -354,6 +354,11 @@ Only the latest major version gets new features.
 | 7.x | ^11, ^12 | ^8.2 |
 | **8.x (current)** | **^12, ^13** | **^8.3** |
 
+### Upgrading from 8.4 to 8.5
+
+- **New: per-record authorization with Laravel policies.** Set `protected $authorizeWithPolicy = true;` on a resource controller, and each action checks the model's policy (`viewAny`, `view`, `create`, `update`, `delete`). Off by default ([guide](docs/CONTROLLER.md#who-may-see-or-change-which-record-policies)).
+- **New: `php artisan gemboot:permissions`** lists the roles and permissions your routes check, and flags likely typos ([details](docs/COMMANDS.md#gembootpermissions)).
+
 ### Upgrading from 8.3 to 8.4
 
 - **New: `GembootAuth::fake()`** replaces the auth service in your tests ([guide](docs/TESTING.md)).
