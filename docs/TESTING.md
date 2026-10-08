@@ -29,7 +29,7 @@ How it behaves:
 - `role:` and `permission:` are answered from the `roles` and `permissions` you pass.
 - Everything else is real: the middleware, `user_login` on the request, the 401/403/503 answers, and the auth cache.
 
-The fake is cleared automatically before the next test.
+The fake is cleared automatically before the next test. While it's active, the [limit on failed attempts](AUTH.md#protection-against-token-floods-and-password-guessing) is off, so tests that check 401s many times never get a 429.
 
 ## Common tests
 

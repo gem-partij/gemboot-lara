@@ -12,6 +12,19 @@ return [
         // working until its entries expire; AuthLibrary::logout() clears them.
         'cache_ttl' => env('GEMBOOT_AUTH_CACHE_TTL', 0),
 
+        // Authorization values longer than this, or with characters a token can't
+        // contain, are rejected (401) without calling the auth service.
+        'max_token_length' => env('GEMBOOT_AUTH_MAX_TOKEN_LENGTH', 8192),
+
+        // Failed attempts (rejected or malformed tokens, failed logins) allowed per
+        // client IP within decay_seconds; then 429 without calling the auth
+        // service. Requests without a token don't count. max = 0 turns it off.
+        // Behind a proxy, configure Laravel's TrustProxies.
+        'failed_attempts' => [
+            'max' => env('GEMBOOT_AUTH_MAX_FAILED_ATTEMPTS', 60),
+            'decay_seconds' => env('GEMBOOT_AUTH_FAILED_ATTEMPTS_DECAY', 60),
+        ],
+
         // Not read by Gemboot; kept for backward compatibility, removed in 9.0.
         'fallback' => [
             'base_url' => env('GEMBOOT_AUTH_BASE_URL_FALLBACK'),

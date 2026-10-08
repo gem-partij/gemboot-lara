@@ -191,6 +191,13 @@ class Doctor extends Command
             $this->note("Cache store '{$store}' has no tag support. CoreService caching (setObserver) is skipped, and controller caches only expire by time. Use redis or memcached if you need them.");
         }
 
+        $maxFailed = \Gemboot\Support\FailedAuthLimiter::max();
+        if ($maxFailed > 0) {
+            $this->note("Failed authentication attempts are limited to {$maxFailed} per client IP per minute (429 after that). Behind a proxy or load balancer, configure TrustProxies so the real client IP is used.");
+        } else {
+            $this->note('The limit on failed authentication attempts is off (GEMBOOT_AUTH_MAX_FAILED_ATTEMPTS=0).');
+        }
+
         if ((int) config('gemboot.auth.cache_ttl', 0) > 0) {
             $this->note('Auth answers are cached (GEMBOOT_AUTH_CACHE_TTL). Revoked tokens keep working until their entries expire.');
         }

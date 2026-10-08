@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Response;
 use Gemboot\Traits\JSONResponses;
 use Gemboot\Libraries\AuthLibrary;
+use Gemboot\Support\FailedAuthLimiter;
 use Gemboot\Support\SecurityHeaders;
 
 class TokenValidated
@@ -30,10 +31,19 @@ class TokenValidated
     public function handle($request, Closure $next, $validationType = null)
     {
         $auth = new AuthLibrary();
+        $hasToken = trim((string) $request->header('Authorization')) !== '';
+
+        // Too many failed attempts from this client: don't ask the auth service.
+        if ($hasToken && FailedAuthLimiter::tooManyAttempts()) {
+            return FailedAuthLimiter::response($validationType == 'client');
+        }
 
         if ($validationType == 'client') {
             $response = $auth->validateTokenClient($request);
             if (!$response) {
+                if ($hasToken && !$auth->isAuthServiceUnavailable()) {
+                    FailedAuthLimiter::hit();
+                }
                 $status = $auth->isAuthServiceUnavailable()
                     ? Response::HTTP_SERVICE_UNAVAILABLE
                     : Response::HTTP_UNAUTHORIZED;
@@ -46,6 +56,9 @@ class TokenValidated
         } else {
             $response = $auth->me(false, $request);
             if (!$response) {
+                if ($hasToken && !$auth->isAuthServiceUnavailable()) {
+                    FailedAuthLimiter::hit();
+                }
             if ($auth->isAuthServiceUnavailable()) {
                 // The auth service did not answer: not the user's fault, so no 401/403.
                 return $this->responseHttpError(Response::HTTP_SERVICE_UNAVAILABLE, ['error' => 'Auth service unavailable'], null, 'Auth service unavailable');

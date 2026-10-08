@@ -5,6 +5,8 @@ namespace Gemboot\Libraries;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Gemboot\Libraries\HttpClient;
+use Gemboot\Support\FailedAuthLimiter;
+use Gemboot\Support\TokenFormat;
 use Gemboot\Traits\GembootRequest;
 
 class AuthLibrary
@@ -72,6 +74,22 @@ class AuthLibrary
             && ($this->lastHttpCode === 0 || $this->lastHttpCode >= 500);
     }
 
+    /**
+     * A 401 answer for an Authorization value that can't be a token, without
+     * calling the auth service. Null when the value looks plausible.
+     */
+    protected function malformedTokenResponse($token)
+    {
+        if (TokenFormat::isPlausible($token)) {
+            return null;
+        }
+
+        return $this->trackResponse((object) [
+            'info' => (object) ['http_code' => 401],
+            'data' => null,
+        ]);
+    }
+
     protected function trackResponse($response)
     {
         $this->lastHttpCode = (int) ($response->info->http_code ?? 0);
@@ -87,6 +105,10 @@ class AuthLibrary
      */
     protected function authGet(string $endpoint, array $query, $token)
     {
+        if ($rejected = $this->malformedTokenResponse($token)) {
+            return $rejected;
+        }
+
         $ttl = (int) config('gemboot.auth.cache_ttl', 0);
         if ($ttl <= 0 || empty($token)) {
             return $this->trackResponse($this->httpClient->setToken($token)->get($endpoint, $query));
@@ -170,11 +192,22 @@ class AuthLibrary
             $request = request();
         }
 
+        // Failed logins count toward the per-IP limit (password guessing).
+        if (FailedAuthLimiter::tooManyAttempts()) {
+            $this->lastHttpCode = 429;
+
+            return $response_json ? FailedAuthLimiter::response() : false;
+        }
+
         $response = $this->trackResponse($this->httpClient->post("login", [
             'npp' => $npp,
             'password' => $password,
             'hwid' => ($request && $request->has('hwid')) ? $request->hwid : null,
         ]));
+
+        if (in_array($this->lastHttpCode, [400, 401, 403, 422], true)) {
+            FailedAuthLimiter::hit();
+        }
         // dd($response);
 
         if ($response_json) {
@@ -197,7 +230,8 @@ class AuthLibrary
         $token = $this->getRequestToken($request);
 
         if ($response_json) {
-            $response = $this->trackResponse($this->httpClient->setToken($token)->get("me"));
+            $response = $this->malformedTokenResponse($token)
+                ?? $this->trackResponse($this->httpClient->setToken($token)->get("me"));
             return $this->buildJsonResponse($response);
         }
 
@@ -219,7 +253,8 @@ class AuthLibrary
         $token = $this->getRequestToken($request);
 
         if ($response_json) {
-            $response = $this->trackResponse($this->httpClient->setToken($token)->get("validate-token"));
+            $response = $this->malformedTokenResponse($token)
+                ?? $this->trackResponse($this->httpClient->setToken($token)->get("validate-token"));
             return $this->buildJsonResponse($response);
         }
 
@@ -256,7 +291,7 @@ class AuthLibrary
         $token = $this->getRequestToken($request);
 
         if ($response_json) {
-            $response = $this->trackResponse($this->httpClient->setToken($token)->get("has-role", [
+            $response = $this->malformedTokenResponse($token) ?? $this->trackResponse($this->httpClient->setToken($token)->get("has-role", [
                 'role_name' => $role_name,
             ]));
             return $this->buildJsonResponse($response);
@@ -280,7 +315,7 @@ class AuthLibrary
         $token = $this->getRequestToken($request);
 
         if ($response_json) {
-            $response = $this->trackResponse($this->httpClient->setToken($token)->get("has-permission-to", [
+            $response = $this->malformedTokenResponse($token) ?? $this->trackResponse($this->httpClient->setToken($token)->get("has-permission-to", [
                 'permission_name' => $permission_name,
             ]));
             return $this->buildJsonResponse($response);
@@ -302,7 +337,8 @@ class AuthLibrary
         }
 
         $token = $this->getRequestToken($request);
-        $response = $this->trackResponse($this->httpClient->setToken($token)->post("logout"));
+        $response = $this->malformedTokenResponse($token)
+            ?? $this->trackResponse($this->httpClient->setToken($token)->post("logout"));
         $this->forgetCachedAuth($token);
 
         if ($response_json) {

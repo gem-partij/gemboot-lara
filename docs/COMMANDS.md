@@ -87,6 +87,7 @@ It checks:
 - the SSO guard, if you use it, has a user service URL
 - the middleware aliases and class aliases are registered
 - your cache store supports tags (needed for service caching)
+- the limit on failed authentication attempts (with a reminder about trusted proxies)
 - deprecated or risky settings, such as `GEMBOOT_RESPONSE_COMPRESSED`
 
 Each line starts with `✓` (fine), `i` (information), `!` (warning), or `✗` (problem). Warnings and problems come with a `Fix:` line.
