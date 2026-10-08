@@ -5,6 +5,10 @@ namespace Gemboot\Notifications;
 use NotificationChannels\Telegram\TelegramMessage;
 use Illuminate\Notifications\Notification;
 
+/**
+ * @deprecated since 8.8, removed in 9.0. Use Laravel notifications with the
+ *             laravel-notification-channels/telegram package directly, or a log channel.
+ */
 class Telegram extends Notification
 {
     public function via($notifiable)

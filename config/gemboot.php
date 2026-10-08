@@ -56,6 +56,8 @@ return [
         'base_url_auth' => env('GEMBOOT_GW_BASE_URL_AUTH'),
     ],
 
+    // Deprecated since 8.8, removed in 9.0: forward errors with a Laravel log
+    // channel instead (see docs/RESPONSES.md, "Error alerts").
     'notifications' => [
         'enable' => env('GEMBOOT_NOTIFICATIONS_ENABLE', true),
 

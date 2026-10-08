@@ -32,6 +32,12 @@ abstract class CoreRestResourceController extends CoreRestController implements 
      */
     protected $authorizeWithPolicy = false;
 
+    /**
+     * Save only the fields that have a validation rule (validateStoreRequest(),
+     * validateUpdateRequest()), not everything the client sent. Off by default.
+     */
+    protected $saveValidatedOnly = false;
+
     protected $cache_seconds = [
         'index' => 0, // default 0 seconds
         'show' => 0, // default 0 seconds
@@ -130,7 +136,7 @@ abstract class CoreRestResourceController extends CoreRestController implements 
 
             // jika before store tidak return apa-apa
             if (is_null($before_store_resp)) {
-                $saved_data = $this->service->store($this->requestDataToSave($request), $this->merge_store_data_with);
+                $saved_data = $this->service->store($this->requestDataToSave($request, $validator, 'validateStoreRequest'), $this->merge_store_data_with);
             } else {
                 $saved_data = $before_store_resp;
             }
@@ -224,7 +230,7 @@ abstract class CoreRestResourceController extends CoreRestController implements 
 
             // jika before store tidak return apa-apa
             if (is_null($before_update_resp)) {
-                $saved_data = $this->service->update($this->requestDataToSave($request), $id, $this->merge_update_data_with);
+                $saved_data = $this->service->update($this->requestDataToSave($request, $validator, 'validateUpdateRequest'), $id, $this->merge_update_data_with);
             } else {
                 $saved_data = $before_update_resp;
             }
@@ -308,8 +314,22 @@ abstract class CoreRestResourceController extends CoreRestController implements 
      * Request input for store()/update(), without the user that TokenValidated
      * merged in as "user_login" (it is not a column of the model).
      */
-    private function requestDataToSave(Request $request): array
+    private function requestDataToSave(Request $request, $validator, string $rulesMethod): array
     {
+        if ($this->saveValidatedOnly) {
+            // Fail closed: without rules nothing could be saved, which would only
+            // surface as data silently not being stored.
+            if (!$validator || $validator->getRules() === []) {
+                throw new \LogicException(sprintf(
+                    '%s has $saveValidatedOnly = true, but %s() returns no validation rules, so nothing could be saved.',
+                    static::class,
+                    $rulesMethod
+                ));
+            }
+
+            return $validator->validated();
+        }
+
         return $request->attributes->get(TokenValidated::USER_LOGIN_MERGED)
             ? $request->except('user_login')
             : $request->all();

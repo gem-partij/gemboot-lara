@@ -66,7 +66,7 @@ Both return the same JSON:
 { "status": 404, "message": "Not Found", "data": { "error": "Not Found" } }
 ```
 
-Any exception thrown inside the callback becomes an error response. Gemboot exceptions map to their status code, and Eloquent's `ModelNotFoundException` becomes a 404. Anything else becomes a 500, is logged, and can send a Telegram alert (see [Configuration](#configuration)).
+Any exception thrown inside the callback becomes an error response. Gemboot exceptions map to their status code, and Eloquent's `ModelNotFoundException` becomes a 404. Anything else becomes a 500 and goes through Laravel's `report()`, so it reaches your logs and any error tracker or log channel you've set up.
 
 ## Documentation
 
@@ -247,7 +247,7 @@ All settings live in **one file, `config/gemboot.php`**. Every value comes from 
 | `sso.fallback.*` | same names with `_FALLBACK` | Second user service for the SSO guard |
 | `sso.cache_ttl` | `GEMBOOT_SSO_CACHE_TTL` | Seconds to cache an SSO user (default 300) |
 | `file_handler.base_url` | `GEMBOOT_FILE_HANDLER_BASE_URL` | File upload service used by `FileHandler` |
-| `notifications.telegram.token`, `.chat_id` | `GEMBOOT_TELEGRAM_BOT_TOKEN`, `GEMBOOT_TELEGRAM_CHAT_ID` | Telegram alert on every unhandled 500. Off when the token is empty. |
+| `notifications.telegram.token`, `.chat_id` (deprecated) | `GEMBOOT_TELEGRAM_BOT_TOKEN`, `GEMBOOT_TELEGRAM_CHAT_ID` | Telegram alert on every unhandled 500. Off when the token is empty. |
 | `response.security_headers` | `GEMBOOT_SECURITY_HEADERS` | `Cache-Control: no-store` and `X-Content-Type-Options: nosniff` on every response (default on) |
 | `response.send_header_error` | `GEMBOOT_SEND_HEADER_ERROR` | Adds an `x-gemboot-error-message` header to error responses (default on) |
 | `response.compressed` | `GEMBOOT_RESPONSE_COMPRESSED` | **Deprecated, removed in 9.0.** gzip through `ob_gzhandler` (default off; leave compression to the web server) |
@@ -353,6 +353,11 @@ Only the latest major version gets new features.
 | 6.x | 11 | ^8.2 |
 | 7.x | ^11, ^12 | ^8.2 |
 | **8.x (current)** | **^12, ^13** | **^8.3** |
+
+### Upgrading from 8.7 to 8.8
+
+- **New, opt-in: save only validated fields.** `protected $saveValidatedOnly = true;` on a resource controller drops every field without a validation rule, so clients can't set fields like `is_admin` on models with `$guarded = []` ([details](docs/CONTROLLER.md#save-only-validated-fields)).
+- **Deprecated: Gemboot's Telegram alerts** (`GEMBOOT_TELEGRAM_*`, `TelegramLibrary`, `Gemboot\Notifications\Telegram`). They still work but log a deprecation notice, and will be removed in 9.0. Forward errors with a Laravel log channel instead ([how](docs/RESPONSES.md#error-alerts-telegram-slack-)).
 
 ### Upgrading from 8.6 to 8.7
 
