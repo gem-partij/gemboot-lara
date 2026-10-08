@@ -103,6 +103,10 @@ GembootPermission::hasPermissionTo(['invoice.approve', 'invoice.admin']);
 
 Inside `responseSuccessOrException()`, the exception from `requirePermission()` becomes a 403 response automatically.
 
+## Who may see which record
+
+Route middleware decides who may call an endpoint at all. To decide which **records** a user may see or change (for example only their own orders), use a Laravel policy with the resource controller. See [Controllers: policies](CONTROLLER.md#who-may-see-or-change-which-record-policies).
+
 ## Calling the auth service directly: `AuthLibrary`
 
 `Gemboot\Libraries\AuthLibrary` (also the `GembootAuth` facade) talks to the auth service for you. A typical use is offering login and logout routes in your API:
