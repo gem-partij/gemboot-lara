@@ -354,6 +354,12 @@ Only the latest major version gets new features.
 | 7.x | ^11, ^12 | ^8.2 |
 | **8.x (current)** | **^12, ^13** | **^8.3** |
 
+### Upgrading from 8.6 to 8.7
+
+- **New: faster paging modes.** `protected $pagination = 'cursor';` (or `'simple'`) on a controller skips the `COUNT(*)` query that every list request runs ([details](docs/ROUTES.md#faster-paging-for-large-tables)).
+- **New, opt-in: standard parameter names** `sort`, `per_page`, and `filter[...]` with `GEMBOOT_STANDARD_QUERY_PARAMETERS=true` ([details](docs/ROUTES.md#standard-parameter-names-opt-in)).
+- **`?order=` with a column the table doesn't have now answers 400** instead of a database error (500).
+
 ### Upgrading from 8.5 to 8.6
 
 - **Failed authentication attempts are limited per client IP**: after 60 rejected tokens or failed logins within a minute, the client gets 429 until the minute is over, without a call to your auth service. Requests without a token don't count. Change it with `GEMBOOT_AUTH_MAX_FAILED_ATTEMPTS` (`0` turns it off). **Behind a proxy or load balancer, configure Laravel's trusted proxies**, or all clients share one limit.
