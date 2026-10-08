@@ -40,6 +40,15 @@ php artisan vendor:publish --tag=gemboot
 
 See [The SSO guard](AUTH.md#the-sso-guard).
 
+## Request IDs
+
+| Key | Env variable | Default | Purpose |
+|---|---|---|---|
+| `request_id.header` | `GEMBOOT_REQUEST_ID_HEADER` | `X-Request-Id` | Header that carries the ID, for incoming, outgoing, and the response |
+| `request_id.accept_incoming` | `GEMBOOT_REQUEST_ID_ACCEPT_INCOMING` | `true` | Reuse the ID a caller sent; `false` for services clients reach directly |
+
+Used by the `AssignRequestId` middleware. See [Request IDs](REQUEST_IDS.md).
+
 ## Lists
 
 | Key | Env variable | Default | Purpose |

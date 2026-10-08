@@ -2,6 +2,7 @@
 
 namespace Gemboot\FileHandler;
 
+use Gemboot\Support\RequestId;
 use Gemboot\Traits\GembootRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\Response as HttpResponse;
@@ -64,6 +65,7 @@ class FileHandler
         $token = $this->token ? $this->token : $this->getRequestToken($this->request, true);
 
         $http = Http::withToken($token)
+            ->withHeaders(RequestId::headers())
             ->get($this->baseUrl . "/api/ping");
 
         if ($http->failed()) {
@@ -97,6 +99,7 @@ class FileHandler
         }
 
         $http = Http::withToken($token)
+            ->withHeaders(RequestId::headers())
             ->attach(
                 'photo',
                 $photoContent,
@@ -138,6 +141,7 @@ class FileHandler
         }
 
         $http = Http::withToken($token)
+            ->withHeaders(RequestId::headers())
             ->attach(
                 'document',
                 $documentContent,

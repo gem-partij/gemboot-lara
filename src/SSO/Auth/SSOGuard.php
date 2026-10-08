@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
 use Gemboot\Exceptions\TooManyRequestsException;
 use Gemboot\Support\FailedAuthLimiter;
+use Gemboot\Support\RequestId;
 use Gemboot\Support\TokenFormat;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
@@ -32,7 +33,7 @@ class SSOGuard implements Guard
     }
 
     /**
-     * Mengecek apakah user terautentikasi.
+     * Whether a user is authenticated.
      */
     public function check(): bool
     {
@@ -40,7 +41,7 @@ class SSOGuard implements Guard
     }
 
     /**
-     * Mengecek apakah guest (tidak login).
+     * Whether the request is a guest (no user logged in).
      */
     public function guest(): bool
     {
@@ -48,7 +49,7 @@ class SSOGuard implements Guard
     }
 
     /**
-     * Mendapatkan ID dari user.
+     * The ID of the authenticated user.
      */
     public function id()
     {
@@ -56,7 +57,7 @@ class SSOGuard implements Guard
     }
 
     /**
-     * Validasi kredensial. Tidak digunakan karena kita pakai token.
+     * Validate credentials. Not used: this guard works with tokens.
      */
     public function validate(array $credentials = []): bool
     {
@@ -64,7 +65,7 @@ class SSOGuard implements Guard
     }
 
     /**
-     * Set user secara manual (jarang dipakai di SSO).
+     * Set the user by hand (rarely needed with SSO; actingAs() in tests uses it).
      */
     public function setUser(Authenticatable $user)
     {
@@ -74,13 +75,13 @@ class SSOGuard implements Guard
     }
 
     /**
-     * Mengembalikan user yang terautentikasi.
+     * The authenticated user.
      */
     public function user(): ?Authenticatable
     {
         if ($this->user) return $this->user;
 
-        // Ambil token dari header Authorization
+        // The token from the Authorization header.
         $token = $this->request->bearerToken();
         if (!$token) return null;
 
@@ -115,7 +116,7 @@ class SSOGuard implements Guard
             $fallbackGetUserUrl = config('gemboot.sso.fallback.user_service_url') . "/user/me";
         }
 
-        // Get data user ke user-service (pakai HTTP atau gRPC)
+        // Ask the user service for the user.
         try {
             $userResponse = $this->requestUser($getUserUrl, $token);
         } catch (ConnectionException $e) {
@@ -213,6 +214,7 @@ class SSOGuard implements Guard
     private function requestUser(string $url, string $token)
     {
         return Http::withToken($token)
+            ->withHeaders(RequestId::headers())
             ->get($url, [
                 'showRoles' => 'true',
                 'showPermissions' => 'true',
@@ -220,7 +222,7 @@ class SSOGuard implements Guard
     }
 
     /**
-     * Mengecek apakah sudah ada user yang diautentikasi.
+     * Whether a user has been resolved already.
      */
     public function hasUser(): bool
     {

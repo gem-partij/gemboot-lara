@@ -4,6 +4,7 @@ namespace Gemboot\Libraries;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
+use Gemboot\Support\RequestId;
 use Gemboot\Testing\FakeAuthService;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ClientException;
@@ -50,7 +51,7 @@ class HttpClient
             'connect_timeout' => (float) config('gemboot.http.connect_timeout', 10),
             // true, false, or a path to a CA bundle. Turn off only for local development.
             'verify' => config('gemboot.http.verify', true),
-            'http_errors' => false, // Kita handle error manual agar konsisten
+            'http_errors' => false, // Errors are handled below, so every caller gets the same result shape.
         ];
 
         // In tests, GembootAuth::fake() answers instead of the real auth service.
@@ -68,7 +69,7 @@ class HttpClient
     public function setBaseUrl($baseUrl)
     {
         $this->baseUrl = $baseUrl;
-        $this->initClient(); // Re-init client saat base URL berubah
+        $this->initClient(); // The client is bound to its base URL.
         return $this;
     }
 
@@ -96,21 +97,20 @@ class HttpClient
     }
 
     /**
-     * Unified Request Method
-     * Mengembalikan object standar:
-     * ->info (object: http_code)
-     * ->data (mixed: response body)
+     * Sends a request and returns the standard result object:
+     * ->info (object: http_code, content_type)
+     * ->data (mixed: the decoded response body)
      */
     protected function request($method, $url, $options = [])
     {
-        // LAZY INIT: Pastikan client sudah ada sebelum request
+        // Lazy init: make sure a client exists before sending.
         if (!$this->client) {
             $this->initClient();
         }
 
         try {
-            // Merge headers
-            $headers = $this->headers;
+            // The request ID first, so headers set with withHeaders() can replace it.
+            $headers = array_merge(RequestId::headers(), $this->headers);
             if ($this->token) {
                 $headers['Authorization'] = $this->token;
             }
@@ -125,7 +125,7 @@ class HttpClient
             $bodyContent = (string) $response->getBody();
             $data = json_decode($bodyContent, true); // Decode as array
 
-            // Error Handling jika throwOnHttpError aktif
+            // Throw on 4xx and 5xx only when throwOnHttpError() is on.
             if ($this->throwOnHttpError && $statusCode >= 400) {
                 throw new HttpException($statusCode, $response->getReasonPhrase());
             }
@@ -181,9 +181,7 @@ class HttpClient
 
     public function post($url = "", $data = [])
     {
-        // Gunakan 'json' untuk body request JSON standard
+        // Send the body as JSON.
         return $this->request('POST', $url, ['json' => $data]);
     }
-
-    // Tambahkan method lain jika perlu (put, delete, patch)
 }

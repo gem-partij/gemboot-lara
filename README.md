@@ -81,6 +81,7 @@ Step-by-step guides with examples live in [`docs/`](docs/README.md):
 | [Routes and query parameters](docs/ROUTES.md) | Search, sorting, and paging from the client side |
 | [Caching](docs/CACHING.md) | Cached lists and records, cleared on changes, per user |
 | [Testing your API](docs/TESTING.md) | Test protected routes without a running auth service (`GembootAuth::fake()`) |
+| [Request IDs](docs/REQUEST_IDS.md) | Follow one user action through the logs of every service |
 | [Commands](docs/COMMANDS.md), [Configuration](docs/CONFIGURATION.md), [File handler](docs/FILE_HANDLER.md) | Reference |
 
 The rest of this README is an overview.
@@ -353,6 +354,11 @@ Only the latest major version gets new features.
 | 6.x | 11 | ^8.2 |
 | 7.x | ^11, ^12 | ^8.2 |
 | **8.x (current)** | **^12, ^13** | **^8.3** |
+
+### Upgrading from 8.8 to 8.9
+
+- **New, opt-in: request IDs.** Add the `Gemboot\Middleware\AssignRequestId` middleware, and every request gets an ID that appears in each log line and is passed to the next service, so one user action can be followed through all logs ([guide](docs/REQUEST_IDS.md)). Gemboot's calls to the auth service, the SSO user service, and the file handler now send the `X-Request-Id` header whenever a request ID is set.
+- **New: FormRequest classes in the resource controller.** `protected $storeRequest = StoreProductRequest::class;` (and `$updateRequest`) instead of overriding `validateStoreRequest()` ([details](docs/CONTROLLER.md#with-a-formrequest-class)).
 
 ### Upgrading from 8.7 to 8.8
 

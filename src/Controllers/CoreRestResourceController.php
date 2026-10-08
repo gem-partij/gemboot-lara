@@ -4,6 +4,9 @@ namespace Gemboot\Controllers;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Http\Request;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\ValidationException;
 use Gemboot\Middleware\TokenValidated;
 use Gemboot\SSO\Auth\SSOUser;
 use Illuminate\Support\Facades\Gate;
@@ -37,6 +40,19 @@ abstract class CoreRestResourceController extends CoreRestController implements 
      * validateUpdateRequest()), not everything the client sent. Off by default.
      */
     protected $saveValidatedOnly = false;
+
+    /**
+     * FormRequest classes for store() and update(), instead of overriding
+     * validateStoreRequest() and validateUpdateRequest(). Their authorize() and
+     * rules() run as for an injected FormRequest, and the hooks receive them as
+     * $request. Failed rules answer 400 with data.errors, a denied authorize() 403.
+     *
+     * @var class-string<FormRequest>|null
+     */
+    protected $storeRequest = null;
+
+    /** @var class-string<FormRequest>|null */
+    protected $updateRequest = null;
 
     protected $cache_seconds = [
         'index' => 0, // default 0 seconds
@@ -120,9 +136,13 @@ abstract class CoreRestResourceController extends CoreRestController implements 
     {
         \DB::beginTransaction();
         try {
-            $validator = $this->validateStoreRequest($request);
+            [$request, $validator, $failed] = $this->validateForSave(
+                $request,
+                $this->storeRequest,
+                fn () => $this->validateStoreRequest($request)
+            );
 
-            if ($validator->fails()) {
+            if ($failed) {
                 // Close the transaction opened above before returning.
                 \DB::rollback();
                 return $this->responseBadRequest([
@@ -134,9 +154,9 @@ abstract class CoreRestResourceController extends CoreRestController implements 
 
             $before_store_resp = $this->beforeStoreHooks($request);
 
-            // jika before store tidak return apa-apa
+            // Save only when the before hook returned nothing.
             if (is_null($before_store_resp)) {
-                $saved_data = $this->service->store($this->requestDataToSave($request, $validator, 'validateStoreRequest'), $this->merge_store_data_with);
+                $saved_data = $this->service->store($this->requestDataToSave($request, $validator, $this->rulesSource($this->storeRequest, 'validateStoreRequest')), $this->merge_store_data_with);
             } else {
                 $saved_data = $before_store_resp;
             }
@@ -212,9 +232,13 @@ abstract class CoreRestResourceController extends CoreRestController implements 
     {
         \DB::beginTransaction();
         try {
-            $validator = $this->validateUpdateRequest($request, $id);
+            [$request, $validator, $failed] = $this->validateForSave(
+                $request,
+                $this->updateRequest,
+                fn () => $this->validateUpdateRequest($request, $id)
+            );
 
-            if ($validator->fails()) {
+            if ($failed) {
                 // Close the transaction opened above before returning.
                 \DB::rollback();
                 return $this->responseBadRequest([
@@ -228,9 +252,9 @@ abstract class CoreRestResourceController extends CoreRestController implements 
 
             $before_update_resp = $this->beforeUpdateHooks($request, $id);
 
-            // jika before store tidak return apa-apa
+            // Save only when the before hook returned nothing.
             if (is_null($before_update_resp)) {
-                $saved_data = $this->service->update($this->requestDataToSave($request, $validator, 'validateUpdateRequest'), $id, $this->merge_update_data_with);
+                $saved_data = $this->service->update($this->requestDataToSave($request, $validator, $this->rulesSource($this->updateRequest, 'validateUpdateRequest')), $id, $this->merge_update_data_with);
             } else {
                 $saved_data = $before_update_resp;
             }
@@ -311,19 +335,64 @@ abstract class CoreRestResourceController extends CoreRestController implements 
     }
 
     /**
+     * Validate the request for store() or update(), with the FormRequest class if
+     * one is set, otherwise with the validate*Request() method.
+     *
+     * A FormRequest is resolved as Laravel resolves an injected one (it runs
+     * prepareForValidation(), authorize(), and the rules) and is returned in
+     * place of $request, so the hooks and the saved data see its prepared input.
+     *
+     * @return array{0: Request, 1: \Illuminate\Contracts\Validation\Validator, 2: bool} the request, the validator, and whether validation failed
+     */
+    private function validateForSave(Request $request, ?string $formRequest, callable $validate): array
+    {
+        if ($formRequest === null) {
+            $validator = $validate();
+
+            return [$request, $validator, $validator->fails()];
+        }
+
+        if (!is_subclass_of($formRequest, FormRequest::class)) {
+            throw new \LogicException(sprintf('%s: %s is not a FormRequest class.', static::class, $formRequest));
+        }
+
+        try {
+            $resolved = app($formRequest);
+        } catch (AuthorizationException $e) {
+            throw new ForbiddenException($e->getMessage() ?: 'This action is unauthorized.');
+        } catch (ValidationException $e) {
+            return [$request, $e->validator, true];
+        }
+
+        // The validator that already ran; its validated() is what the FormRequest returns.
+        $validator = (fn () => $this->getValidatorInstance())->call($resolved);
+
+        return [$resolved, $validator, false];
+    }
+
+    /**
+     * Where the rules come from, for error messages: "validateStoreRequest()" or
+     * "App\Http\Requests\StoreProductRequest::rules()".
+     */
+    private function rulesSource(?string $formRequest, string $method): string
+    {
+        return $formRequest === null ? $method . '()' : $formRequest . '::rules()';
+    }
+
+    /**
      * Request input for store()/update(), without the user that TokenValidated
      * merged in as "user_login" (it is not a column of the model).
      */
-    private function requestDataToSave(Request $request, $validator, string $rulesMethod): array
+    private function requestDataToSave(Request $request, $validator, string $rulesSource): array
     {
         if ($this->saveValidatedOnly) {
             // Fail closed: without rules nothing could be saved, which would only
             // surface as data silently not being stored.
             if (!$validator || $validator->getRules() === []) {
                 throw new \LogicException(sprintf(
-                    '%s has $saveValidatedOnly = true, but %s() returns no validation rules, so nothing could be saved.',
+                    '%s has $saveValidatedOnly = true, but %s returns no validation rules, so nothing could be saved.',
                     static::class,
-                    $rulesMethod
+                    $rulesSource
                 ));
             }
 
