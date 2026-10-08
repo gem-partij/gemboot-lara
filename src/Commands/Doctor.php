@@ -212,6 +212,14 @@ class Doctor extends Command
             );
         }
 
+        $telegramToken = config('gemboot.notifications.telegram.token');
+        if (!empty($telegramToken) && $telegramToken !== 'YOUR BOT TOKEN HERE') {
+            $this->warning(
+                'Telegram error alerts (GEMBOOT_TELEGRAM_BOT_TOKEN) are deprecated and will be removed in 9.0.',
+                'Forward errors with a Laravel log channel instead, e.g. Monolog\Handler\TelegramBotHandler (see docs/RESPONSES.md, "Error alerts").'
+            );
+        }
+
         if (SecurityHeaders::get() === []) {
             $this->note('Security headers are off (GEMBOOT_SECURITY_HEADERS=false).');
         } else {

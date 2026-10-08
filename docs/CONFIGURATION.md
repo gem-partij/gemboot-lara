@@ -55,7 +55,9 @@ See [The SSO guard](AUTH.md#the-sso-guard).
 | `response.send_header_error` | `GEMBOOT_SEND_HEADER_ERROR` | `true` | Adds an `x-gemboot-error-message` header to `responseError()` responses |
 | `response.compressed` | `GEMBOOT_RESPONSE_COMPRESSED` | `false` | **Deprecated, removed in 9.0.** gzip inside PHP; let your web server compress instead |
 
-## Error alerts
+## Error alerts (deprecated)
+
+**Deprecated since 8.8, removed in 9.0.** Forward errors with a Laravel log channel instead ([how](RESPONSES.md#error-alerts-telegram-slack-)).
 
 | Key | Env variable | Default | Purpose |
 |---|---|---|---|

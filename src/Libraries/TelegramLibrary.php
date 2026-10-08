@@ -4,6 +4,11 @@ namespace Gemboot\Libraries;
 
 use Telegram\Bot\Api;
 
+/**
+ * @deprecated since 8.8, removed in 9.0. Unexpected errors already go through
+ *             report(); forward them with a Laravel log channel instead (Monolog's
+ *             TelegramBotHandler, Slack, ...). See docs/RESPONSES.md.
+ */
 class TelegramLibrary
 {
 
@@ -19,6 +24,13 @@ class TelegramLibrary
 
     public function __construct()
     {
+        // Reported once per process; Laravel logs it to the deprecations channel.
+        static $deprecationReported = false;
+        if (!$deprecationReported) {
+            $deprecationReported = true;
+            trigger_error('Gemboot\Libraries\TelegramLibrary and the gemboot.notifications.telegram settings are deprecated and will be removed in gemboot-lara 9.0. Use a Laravel log channel (e.g. Monolog\Handler\TelegramBotHandler) instead.', E_USER_DEPRECATED);
+        }
+
         $this->token = app('config')->get('gemboot.notifications.telegram.token');
         $this->chat_id = app('config')->get('gemboot.notifications.telegram.chat_id');
         // $this->chat_id = 328200606;

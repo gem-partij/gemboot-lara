@@ -171,7 +171,32 @@ The client only sees a generic message, because the real one can contain interna
 
 With `APP_DEBUG=true`, the response also includes the real message and a `trace`, which helps during development.
 
-Optionally, Gemboot sends a Telegram message for every unexpected 500. Set `GEMBOOT_TELEGRAM_BOT_TOKEN` and `GEMBOOT_TELEGRAM_CHAT_ID` to turn it on. A failure to send never changes the response.
+### Error alerts (Telegram, Slack, ...)
+
+Because unexpected errors go through `report()`, Laravel's log channels can forward them anywhere. For Telegram, add a channel with Monolog's built-in handler to `config/logging.php`:
+
+```php
+'channels' => [
+    'stack' => [
+        'driver' => 'stack',
+        'channels' => ['daily', 'telegram'],
+    ],
+
+    'telegram' => [
+        'driver' => 'monolog',
+        'handler' => Monolog\Handler\TelegramBotHandler::class,
+        'with' => [
+            'apiKey' => env('TELEGRAM_BOT_TOKEN'),
+            'channel' => env('TELEGRAM_CHAT_ID'),
+        ],
+        'level' => 'error',
+    ],
+],
+```
+
+Laravel's built-in `slack` driver works the same way for Slack.
+
+Gemboot's own Telegram alerts (`GEMBOOT_TELEGRAM_BOT_TOKEN` and `GEMBOOT_TELEGRAM_CHAT_ID`, and the `TelegramLibrary` class) are **deprecated since 8.8 and will be removed in 9.0**. They still work in 8.x, but log a deprecation notice. To switch, set up the log channel above and remove the two `GEMBOOT_TELEGRAM_*` variables. `php artisan gemboot:doctor` warns while they're set.
 
 ## Responding directly
 
