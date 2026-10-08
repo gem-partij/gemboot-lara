@@ -269,27 +269,34 @@ class CoreService implements CoreServiceContract
         }
 
         if (!is_null($search)) {
-            if (!is_array($search) && !is_array($search_field)) {
-                if ($search_exact) {
-                    $model = $model->searchExact($search, $search_field, $search_mode, $search_operator);
+            // Request-driven search must narrow the query, never widen it. The
+            // scopes' "or" mode adds orWhere(); applied directly to a scoped query
+            // (e.g. where('user_id', 7)) that produced "user_id = 7 OR name LIKE ..."
+            // and returned other users' rows. The group keeps "user_id = 7 AND (...)".
+            $model = $model->where(function ($group) use ($search, $search_field, $search_mode, $search_exact, $search_operator) {
+                if (!is_array($search) && !is_array($search_field)) {
+                    if ($search_exact) {
+                        $group = $group->searchExact($search, $search_field, $search_mode, $search_operator);
+                    } else {
+                        $group = $group->search($search, $search_field, $search_mode, $search_operator);
+                    }
                 } else {
-                    $model = $model->search($search, $search_field, $search_mode, $search_operator);
-                }
-            } else {
-                // support multiple search
-                if (!is_array($search)) {
-                    $search = [$search];
-                }
-                if (!is_array($search_field)) {
-                    $search_field = [$search_field];
-                }
+                    // support multiple search
+                    if (!is_array($search)) {
+                        $search = [$search];
+                    }
+                    if (!is_array($search_field)) {
+                        $search_field = [$search_field];
+                    }
 
-                if ($search_exact) {
-                    $model = $model->searchExactMultiple($search, $search_field, $search_mode, $search_operator);
-                } else {
-                    $model = $model->searchMultiple($search, $search_field, $search_mode, $search_operator);
+                    if ($search_exact) {
+                        $group = $group->searchExactMultiple($search, $search_field, $search_mode, $search_operator);
+                    } else {
+                        $group = $group->searchMultiple($search, $search_field, $search_mode, $search_operator);
+                    }
                 }
-            }
+        
+            });
         }
 
         return $model;
