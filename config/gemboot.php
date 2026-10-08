@@ -86,6 +86,13 @@ return [
         'accept_incoming' => env('GEMBOOT_REQUEST_ID_ACCEPT_INCOMING', true),
     ],
 
+    'authorization' => [
+        // Answer Laravel ability checks ($this->authorize('report.read'), @can,
+        // ->can() on routes) with the permissions of the gemboot guard's user.
+        // Only abilities without arguments that the app hasn't defined itself.
+        'permissions_as_abilities' => env('GEMBOOT_PERMISSIONS_AS_ABILITIES', false),
+    ],
+
     'query' => [
         // Also accept the standard parameter names ?sort=-name,price, ?per_page=,
         // and ?filter[field]=value next to order/atoz, page_len, and search.

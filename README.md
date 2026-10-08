@@ -66,7 +66,7 @@ Both return the same JSON:
 { "status": 404, "message": "Not Found", "data": { "error": "Not Found" } }
 ```
 
-Any exception thrown inside the callback becomes an error response. Gemboot exceptions map to their status code, and Eloquent's `ModelNotFoundException` becomes a 404. Anything else becomes a 500 and goes through Laravel's `report()`, so it reaches your logs and any error tracker or log channel you've set up.
+Any exception thrown inside the callback becomes an error response. Gemboot exceptions map to their status code, and Eloquent's `ModelNotFoundException` becomes a 404, and a denial from Laravel's authorization (`$this->authorize()`, policies) a 403. Anything else becomes a 500 and goes through Laravel's `report()`, so it reaches your logs and any error tracker or log channel you've set up.
 
 ## Documentation
 
@@ -354,6 +354,11 @@ Only the latest major version gets new features.
 | 6.x | 11 | ^8.2 |
 | 7.x | ^11, ^12 | ^8.2 |
 | **8.x (current)** | **^12, ^13** | **^8.3** |
+
+### Upgrading from 8.10 to 8.11
+
+- **New, opt-in: permissions as Laravel abilities.** With `GEMBOOT_PERMISSIONS_AS_ABILITIES=true` and the `gemboot` guard, `$this->authorize('report.read')`, `@can`, and `->can('report.read')` on routes check your auth service's permissions ([details](docs/AUTH.md#laravels-can-with-your-permissions)).
+- **Authorization denials inside `responseSuccessOrException()` now answer 403** (or the status the policy chose, such as 404) instead of 500. Before, `$this->authorize()` failing in the callback was reported as a server error.
 
 ### Upgrading from 8.9 to 8.10
 

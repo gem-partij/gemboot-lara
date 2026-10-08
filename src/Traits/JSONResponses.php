@@ -6,6 +6,7 @@ use Exception;
 use Throwable;
 use Illuminate\Http\Response;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Auth\Access\AuthorizationException;
 use Gemboot\Exceptions\HttpErrorException;
 use Gemboot\Exceptions\BadRequestException;
 use Gemboot\Exceptions\UnauthorizedException;
@@ -310,7 +311,7 @@ trait JSONResponses
     }
 
     /**
-     * SUCCESS (200) OR ERROR RESPONSE (500), Using Tansaction
+     * SUCCESS (200) OR ERROR RESPONSE (500), using a transaction
      *
      * @param array $data response data
      *
@@ -368,9 +369,9 @@ trait JSONResponses
     {
         // 1. Handle Validation Exception (Specific Case)
         if ($e instanceof ValidationFailException) {
-            // Ambil data error array dari exception
+            // The validation errors carried by the exception.
             $errors = $e->getData();
-            // Fallback backward compatibility jika data kosong tapi message berisi json
+            // Backward compatibility: no data, but the message may hold the errors as JSON.
             if (empty($errors)) {
                 $decoded = json_decode($e->getMessage(), true);
                 $errors = $decoded ?: ['error' => $e->getMessage()];
@@ -384,13 +385,13 @@ trait JSONResponses
             $data = $e->getData();
             $message = $e->getMessage();
 
-            // Jika tidak ada data spesifik, bungkus message sebagai error
+            // Without specific data, the message becomes data.error.
             if (empty($data)) {
                 $data = ['error' => $message];
             }
 
             return $this->responseHttpError(
-                $e->getStatusCode(), // Method dari Symfony HttpException
+                $e->getStatusCode(), // From Symfony's HttpException
                 $data,
                 null,
                 $message
@@ -402,7 +403,16 @@ trait JSONResponses
             return $this->responseNotFound(['error' => 'Data Not Found!'], null, 'Data Not Found!');
         }
 
-        // 4. Default / Unexpected Exception (500)
+        // 4. Laravel authorization: $this->authorize(), Gate::authorize(), policies.
+        // A denial is the client's problem (403, or the status the policy chose),
+        // not a server error.
+        if ($e instanceof AuthorizationException) {
+            $status = $e->hasStatus() ? $e->status() : Response::HTTP_FORBIDDEN;
+
+            return $this->handleException(new HttpErrorException($status, $e->getMessage() ?: 'This action is unauthorized.', [], $e));
+        }
+
+        // 5. Default / Unexpected Exception (500)
         return $this->responseException($e);
     }
 }
