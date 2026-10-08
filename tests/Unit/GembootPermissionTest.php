@@ -15,6 +15,12 @@ class GembootPermissionTest extends TestCase
     {
         parent::setUp();
         config()->set('gemboot.auth.base_api', static::$fakeAuthUrl);
+
+        // Gemboot only asks the auth service when the request carries a token
+        // (since 8.6, a missing token is rejected locally).
+        $request = \Illuminate\Http\Request::create('/');
+        $request->headers->set('Authorization', 'Bearer test-token');
+        $this->app->instance('request', $request);
     }
 
     function test_has_role()

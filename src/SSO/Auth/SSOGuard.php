@@ -4,6 +4,9 @@ namespace Gemboot\SSO\Auth;
 
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
+use Gemboot\Exceptions\TooManyRequestsException;
+use Gemboot\Support\FailedAuthLimiter;
+use Gemboot\Support\TokenFormat;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
@@ -18,6 +21,9 @@ class SSOGuard implements Guard
 
     /** True when $user was resolved from the request's token (not set with setUser()). */
     protected $userFromToken = false;
+
+    /** Token already rejected for this request; counted once toward the limit. */
+    protected $rejectedToken = null;
 
     public function __construct(UserProvider $provider, Request $request)
     {
@@ -78,6 +84,19 @@ class SSOGuard implements Guard
         $token = $this->request->bearerToken();
         if (!$token) return null;
 
+        // user() can be called several times per request; count a rejection once.
+        if ($token === $this->rejectedToken) {
+            return null;
+        }
+
+        if (FailedAuthLimiter::tooManyAttempts()) {
+            throw new TooManyRequestsException('Too many failed authentication attempts');
+        }
+
+        if (!TokenFormat::isPlausible('Bearer ' . $token)) {
+            return $this->reject($token);
+        }
+
         $cacheKey = 'sso_token_' . sha1($token);
 
         $cached = Cache::get($cacheKey);
@@ -109,13 +128,13 @@ class SSOGuard implements Guard
 
         if (!$userResponse || !$userResponse->ok()) {
             if (empty($fallbackGetUserUrl)) {
-                return null;
+                return $userResponse && $userResponse->serverError() ? null : $this->reject($token);
             }
 
             $userResponse = $this->requestUser($fallbackGetUserUrl, $token);
 
             if (!$userResponse->ok()) {
-                return null;
+                return $userResponse->serverError() ? null : $this->reject($token);
             }
         }
 
@@ -128,7 +147,7 @@ class SSOGuard implements Guard
         // A 200 reply without a user object (an HTML page, {"data": null}, ...)
         // must not authenticate the request or be cached.
         if (!is_array($userData) || empty($userData)) {
-            return null;
+            return $this->reject($token);
         }
         $userData['roles'] = isset($userResponseJSON['roles']) ? $userResponseJSON['roles'] : null;
         $userData['permissions'] = isset($userResponseJSON['permissions']) ? $userResponseJSON['permissions'] : null;
@@ -149,6 +168,7 @@ class SSOGuard implements Guard
     public function setRequest(Request $request)
     {
         $this->request = $request;
+        $this->rejectedToken = null;
 
         if ($this->userFromToken) {
             $this->user = null;
@@ -173,6 +193,18 @@ class SSOGuard implements Guard
         }
 
         $this->user = null;
+    }
+
+    /**
+     * Remember a rejected token for this request and count it toward the
+     * per-IP limit of failed attempts.
+     */
+    private function reject(string $token): ?Authenticatable
+    {
+        $this->rejectedToken = $token;
+        FailedAuthLimiter::hit();
+
+        return null;
     }
 
     /**

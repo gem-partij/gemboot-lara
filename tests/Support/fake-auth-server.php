@@ -6,6 +6,7 @@
 //   has-role and has-permission-to answer for any token, like before.
 // - Token "Bearer flaky" gets a 500 on its first request and 200 afterwards.
 // - Paths under /broken/ always answer 500 (auth service outage).
+// - POST login succeeds with password "secret", anything else gets 401.
 // - Every request is appended to the file in FAKE_AUTH_LOG, so tests can count calls.
 
 header('Content-Type: application/json');
@@ -40,6 +41,16 @@ if ($token === 'Bearer flaky' && $log) {
 if ($path === 'me' || $path === 'validate-token') {
     if ($token === 'Bearer good' || $token === 'Bearer flaky') {
         $reply(200, ['id' => 1, 'name' => 'Ana']);
+    } else {
+        $reply(401, null);
+    }
+    return;
+}
+
+if ($path === 'login') {
+    $body = json_decode(file_get_contents('php://input'), true) ?: [];
+    if (($body['password'] ?? null) === 'secret') {
+        $reply(200, ['token' => 'good']);
     } else {
         $reply(401, null);
     }

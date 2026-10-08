@@ -147,6 +147,38 @@ Now the same token is checked against the auth service at most once a minute per
 
 Leave it at `0` (the default) if tokens must stop working the moment they're revoked.
 
+## Protection against token floods and password guessing
+
+Every request with a token makes your API ask the auth service. Without limits, someone sending thousands of fake tokens would make every Gemboot service flood your auth service. Gemboot protects it in two ways, for the middleware, the SSO guard, and `AuthLibrary`.
+
+**Junk is rejected locally.** An `Authorization` value that can't be a token, such as one with spaces or `<` inside, or longer than 8 KB, gets a 401 without a call to the auth service. A missing token is also answered locally. Real tokens are never affected: Gemboot allows an optional scheme name ("Bearer") followed by the characters [RFC 6750](https://www.rfc-editor.org/rfc/rfc6750#section-2.1) permits, which covers JWTs and opaque tokens.
+
+**Failed attempts are limited per client IP.** After 60 failed attempts within a minute, the client gets a 429 for the rest of that minute, again without a call to the auth service:
+
+```json
+{ "status": 429, "message": "Too Many Requests", "data": { "error": "Too many failed authentication attempts" } }
+```
+
+The answer includes a `Retry-After` header with the seconds to wait. What counts as a failed attempt:
+
+| Counts | Doesn't count |
+|---|---|
+| a token the auth service rejects | a request without any token |
+| a malformed token | an auth service outage (503) |
+| a failed `AuthLibrary::login()` (password guessing) | a missing role or permission (403) |
+
+While blocked, the client IP gets 429 even with a valid token, until the minute is over.
+
+Settings:
+
+```dotenv
+GEMBOOT_AUTH_MAX_FAILED_ATTEMPTS=60        # 0 turns the limit off
+GEMBOOT_AUTH_FAILED_ATTEMPTS_DECAY=60      # seconds
+GEMBOOT_AUTH_MAX_TOKEN_LENGTH=8192
+```
+
+**Behind a proxy or load balancer**, configure Laravel's [trusted proxies](https://laravel.com/docs/requests#configuring-trusted-proxies). Otherwise every client appears with the proxy's IP and shares one limit.
+
 ## The SSO guard
 
 Instead of the middleware, you can use Laravel's own authentication with the `gemboot-sso-token` driver. Then `auth()->user()`, `$request->user()`, and Laravel's `auth:` middleware work as usual.
