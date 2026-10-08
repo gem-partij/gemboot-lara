@@ -76,6 +76,16 @@ return [
         'connect_timeout' => env('GEMBOOT_HTTP_CONNECT_TIMEOUT', 10),
     ],
 
+    // Request IDs (the AssignRequestId middleware): one ID per user action, in
+    // the logs of every service it passes through.
+    'request_id' => [
+        'header' => env('GEMBOOT_REQUEST_ID_HEADER', 'X-Request-Id'),
+
+        // Reuse the ID a caller sent. Set false on services that clients reach
+        // directly without a gateway, so clients can't choose the IDs in your logs.
+        'accept_incoming' => env('GEMBOOT_REQUEST_ID_ACCEPT_INCOMING', true),
+    ],
+
     'query' => [
         // Also accept the standard parameter names ?sort=-name,price, ?per_page=,
         // and ?filter[field]=value next to order/atoz, page_len, and search.

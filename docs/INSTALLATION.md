@@ -64,6 +64,8 @@ use Illuminate\Foundation\Configuration\Middleware;
 })
 ```
 
+Optional, but useful once you run more than one service: request IDs, so you can follow one user action through the logs of all of them. See [Request IDs](REQUEST_IDS.md).
+
 ## 4. Protect a route and check that it works
 
 Add a test route to `routes/api.php`:
