@@ -27,6 +27,9 @@ class CoreService implements CoreServiceContract
     protected $cacheKeyPostfix = "";
     protected $observer = null;
 
+    /** How listAll() pages results: 'paginate' (with total), 'simple', or 'cursor'. */
+    protected $pagination = 'paginate';
+
     public function __construct(Eloquent $model, $with = [], $orderBy = [])
     {
         $this->model = $model;
@@ -48,6 +51,17 @@ class CoreService implements CoreServiceContract
     public function setOrderBy($orderBy)
     {
         $this->orderBy = $orderBy;
+        return $this;
+    }
+
+    /**
+     * 'paginate' (default): pages with a total count (one extra COUNT query).
+     * 'simple': next/previous only, no COUNT query.
+     * 'cursor': next/previous via ?cursor=, no COUNT query, fast on large tables.
+     */
+    public function setPagination(string $pagination)
+    {
+        $this->pagination = $pagination;
         return $this;
     }
 
@@ -306,6 +320,24 @@ class CoreService implements CoreServiceContract
             });
         }
 
+        // ?filter[field]=value (standard parameters): exact matches, all required.
+        // They go through the same scopes, so hidden columns and relation names
+        // are checked as for search.
+        $filters = request('filter');
+        if ($this->standardQueryParameters() && !$disable_search && is_array($filters) && $filters !== []) {
+            foreach ($filters as $field => $value) {
+                if (!is_string($field) || !(is_string($value) || is_numeric($value))) {
+                    throw new BadRequestException('Invalid filter.');
+                }
+            }
+
+            $model = $model->where(function ($group) use ($filters) {
+                foreach ($filters as $field => $value) {
+                    $group = $group->searchExact((string) $value, $field, 'and');
+                }
+            });
+        }
+
         return $model;
     }
 
@@ -315,10 +347,23 @@ class CoreService implements CoreServiceContract
             $model = $this->freshModelQuery();
         }
 
+        $order = null;
+        $atoz = null;
         if (request()->has('order')) {
-            $order = request()->has('order') ? request('order') : $this->getModelPrimaryKeyName();
+            $order = request('order');
             $atoz = request()->has('atoz') ? request('atoz') : 'asc';
+        } elseif ($this->standardQueryParameters() && is_string(request('sort')) && trim(request('sort')) !== '') {
+            // ?sort=-created_at,name: comma-separated, "-" for descending.
+            $order = [];
+            $atoz = [];
+            foreach (explode(',', request('sort')) as $item) {
+                $item = trim($item);
+                $order[] = ltrim($item, '-+');
+                $atoz[] = str_starts_with($item, '-') ? 'desc' : 'asc';
+            }
+        }
 
+        if (!is_null($order)) {
             // support multiple order by
             if (!is_array($order)) {
                 $order = [$order];
@@ -326,6 +371,7 @@ class CoreService implements CoreServiceContract
             if (!is_array($atoz)) {
                 $atoz = [$atoz];
             }
+            $sortable = $this->sortableColumns($model);
             $hidden = $model instanceof Eloquent
                 ? $model->getHidden()
                 : (method_exists($model, 'getModel') ? $model->getModel()->getHidden() : []);
@@ -336,6 +382,10 @@ class CoreService implements CoreServiceContract
                 // Sorting by a hidden column leaks its ordering; an invalid direction
                 // used to surface as a 500 from orderBy().
                 if (!is_string($order_item) || in_array($order_item, $hidden, true)) {
+                    throw new BadRequestException('Invalid order field.');
+                }
+                // Unknown columns used to reach the database and fail with a 500.
+                if (!in_array($order_item, $sortable, true)) {
                     throw new BadRequestException('Invalid order field.');
                 }
                 if (!is_string($atoz_item) || !in_array(strtolower($atoz_item), ['asc', 'desc'], true)) {
@@ -393,6 +443,9 @@ class CoreService implements CoreServiceContract
     protected function getPageLength(): int
     {
         $page_len = request('page_len');
+        if (is_null($page_len) && $this->standardQueryParameters()) {
+            $page_len = request('per_page');
+        }
         $page_len = is_numeric($page_len) && (int) $page_len > 0 ? (int) $page_len : 30;
 
         $max = config('gemboot.pagination.max_page_len', 1000);
@@ -424,7 +477,67 @@ class CoreService implements CoreServiceContract
             return $query->paginate(999);
         }
 
-        return $query->paginate($this->getPageLength());
+        $perPage = $this->getPageLength();
+
+        switch ($this->pagination) {
+            case 'simple':
+                return $query->simplePaginate($perPage);
+            case 'cursor':
+                return $this->withCursorTieBreaker($query)->cursorPaginate($perPage);
+            case 'paginate':
+                return $query->paginate($perPage);
+            default:
+                throw new \LogicException("Unknown pagination mode '{$this->pagination}'. Use 'paginate', 'simple', or 'cursor'.");
+        }
+    }
+
+    /**
+     * Cursor pagination needs a unique sort order; with only non-unique columns
+     * (e.g. ?order=name), rows with equal values could be skipped or repeated
+     * between pages. Add the primary key last, unless it is already sorted on.
+     */
+    protected function withCursorTieBreaker($query)
+    {
+        $key = $this->getModelPrimaryKeyName();
+        if (!is_string($key) || $key === '') {
+            return $query;
+        }
+        $table = $this->getModelTableName();
+
+        $base = method_exists($query, 'getQuery') ? $query->getQuery() : $query;
+        if ($base instanceof \Illuminate\Database\Eloquent\Builder) {
+            $base = $base->getQuery();
+        }
+
+        $direction = 'asc';
+        foreach ((array) ($base->orders ?? []) as $order) {
+            if (in_array($order['column'] ?? null, [$key, "{$table}.{$key}"], true)) {
+                return $query;
+            }
+            $direction = $order['direction'] ?? $direction;
+        }
+
+        return $query->orderBy("{$table}.{$key}", $direction);
+    }
+
+    /**
+     * Columns a client may sort by: the model's table columns, plain or as
+     * "table.column".
+     */
+    protected function sortableColumns($model): array
+    {
+        $instance = $model instanceof Eloquent ? $model : (method_exists($model, 'getModel') ? $model->getModel() : $this->model);
+        $columns = $instance->getConnection()->getSchemaBuilder()->getColumnListing($instance->getTable());
+
+        return array_merge($columns, array_map(fn ($c) => $instance->getTable() . '.' . $c, $columns));
+    }
+
+    /**
+     * Standard query parameter names (sort, per_page, filter[...]), opt-in in 8.x.
+     */
+    protected function standardQueryParameters(): bool
+    {
+        return (bool) config('gemboot.query.standard_parameters', false);
     }
 
 

@@ -16,6 +16,9 @@ abstract class CoreRestController extends CoreController
     protected $with = [];
     protected $orderBy = [];
 
+    /** Pagination mode for the service: 'paginate', 'simple', 'cursor', or null to keep the service's own. */
+    protected $pagination = null;
+
     protected $service;
     protected $response;
 
@@ -37,6 +40,10 @@ abstract class CoreRestController extends CoreController
                 $this->service = $service;
                 $this->service->setWith($this->with);
                 $this->service->setOrderBy($this->orderBy);
+            }
+
+            if (!is_null($this->pagination)) {
+                $this->service->setPagination($this->pagination);
             }
 
             $this->modelPrimaryKeyName = $model->getKeyName();

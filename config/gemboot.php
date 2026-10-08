@@ -74,6 +74,13 @@ return [
         'connect_timeout' => env('GEMBOOT_HTTP_CONNECT_TIMEOUT', 10),
     ],
 
+    'query' => [
+        // Also accept the standard parameter names ?sort=-name,price, ?per_page=,
+        // and ?filter[field]=value next to order/atoz, page_len, and search.
+        // Off by default in 8.x (clients may already send these names); on in 9.0.
+        'standard_parameters' => env('GEMBOOT_STANDARD_QUERY_PARAMETERS', false),
+    ],
+
     'pagination' => [
         // Upper limit for ?page_len. null removes the limit.
         'max_page_len' => env('GEMBOOT_MAX_PAGE_LEN', 1000),
