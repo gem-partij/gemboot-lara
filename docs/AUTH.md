@@ -421,6 +421,8 @@ For the middleware and `AuthLibrary`, these endpoints under `GEMBOOT_AUTH_BASE_A
 
 Gemboot forwards the client's `Authorization` header as-is. Any status other than 200 means "no", except connection errors and 5xx, which mean "unavailable" (503).
 
+To check a real auth service against this table, run [`php artisan gemboot:contract-test`](COMMANDS.md#gembootcontract-test).
+
 ### Service-to-service calls: `token-validated:client`
 
 For routes called by other services rather than users, `token-validated:client` only asks `validate-token` and doesn't load a user. Its error answers are short: `{"status": "Unauthorized"}` (401) or `{"status": "Service Unavailable"}` (503).

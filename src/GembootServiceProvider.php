@@ -17,6 +17,7 @@ use Gemboot\GembootResponse;
 use Gemboot\GembootPermission;
 use Gemboot\GembootValidator;
 use Gemboot\Libraries\AuthLibrary;
+use Gemboot\Commands\ContractTest;
 use Gemboot\Commands\Doctor;
 use Gemboot\Commands\Permissions;
 use Gemboot\Commands\GembootTest;
@@ -31,6 +32,7 @@ class GembootServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             // Export gemboot commands
             $this->commands([
+                ContractTest::class,
                 Doctor::class,
                 Permissions::class,
                 GembootTest::class,

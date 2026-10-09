@@ -134,6 +134,8 @@ php artisan gemboot:doctor
 
 It lists anything that's wrong (missing URL, unreachable auth service, TLS off, ...), each with a fix.
 
+To check that the auth service also answers the way Gemboot expects, run `php artisan gemboot:contract-test` with a valid token.
+
 ### 3. Protect routes
 
 Register the middleware aliases in `bootstrap/app.php`:
@@ -354,6 +356,10 @@ Only the latest major version gets new features.
 | 6.x | 11 | ^8.2 |
 | 7.x | ^11, ^12 | ^8.2 |
 | **8.x (current)** | **^12, ^13** | **^8.3** |
+
+### Upgrading from 8.13 to 8.14
+
+- **New: `php artisan gemboot:contract-test`** checks that an auth service answers `me`, `validate-token`, `has-role`, and `has-permission-to` the way Gemboot expects, before you point a service at it ([details](docs/COMMANDS.md#gembootcontract-test)).
 
 ### Upgrading from 8.12 to 8.13
 
