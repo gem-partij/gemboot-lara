@@ -3,9 +3,12 @@
 return [
 
     'auth' => [
+        // Base URL of the auth service's endpoints (me, has-role, ...), used by
+        // the auth middleware, the gemboot guard, and AuthLibrary.
+        'base_api' => env('GEMBOOT_AUTH_BASE_API'),
+
         // Not read by Gemboot; kept for backward compatibility, removed in 9.0.
         'base_url' => env('GEMBOOT_AUTH_BASE_URL'),
-        'base_api' => env('GEMBOOT_AUTH_BASE_API'),
 
         // Seconds to cache auth service answers per token (me, validate-token,
         // has-role, has-permission-to). 0 disables the cache. A revoked token keeps
@@ -39,17 +42,22 @@ return [
     ],
 
     'sso' => [
-        'auth_service_url' => env('GEMBOOT_AUTH_SERVICE_URL'),
+        // The SSO guard calls get_user_url, or {user_service_url}/user/me.
         'user_service_url' => env('GEMBOOT_USER_SERVICE_URL'),
-        'validate_token_url' => env('GEMBOOT_SSO_VALIDATE_TOKEN_URL'),
         'get_user_url' => env('GEMBOOT_SSO_GET_USER_URL'),
         'cache_ttl' => env('GEMBOOT_SSO_CACHE_TTL', 300),
 
+        // Not read by Gemboot; kept for backward compatibility, removed in 9.0.
+        'auth_service_url' => env('GEMBOOT_AUTH_SERVICE_URL'),
+        'validate_token_url' => env('GEMBOOT_SSO_VALIDATE_TOKEN_URL'),
+
         'fallback' => [
-            'auth_service_url' => env('GEMBOOT_AUTH_SERVICE_URL_FALLBACK'),
             'user_service_url' => env('GEMBOOT_USER_SERVICE_URL_FALLBACK'),
-            'validate_token_url' => env('GEMBOOT_SSO_VALIDATE_TOKEN_URL_FALLBACK'),
             'get_user_url' => env('GEMBOOT_SSO_GET_USER_URL_FALLBACK'),
+
+            // Not read by Gemboot; kept for backward compatibility, removed in 9.0.
+            'auth_service_url' => env('GEMBOOT_AUTH_SERVICE_URL_FALLBACK'),
+            'validate_token_url' => env('GEMBOOT_SSO_VALIDATE_TOKEN_URL_FALLBACK'),
         ],
     ],
 

@@ -360,6 +360,7 @@ Only the latest major version gets new features.
 ### Upgrading from 8.13 to 8.14
 
 - **New: `php artisan gemboot:contract-test`** checks that an auth service answers `me`, `validate-token`, `has-role`, and `has-permission-to` the way Gemboot expects, before you point a service at it ([details](docs/COMMANDS.md#gembootcontract-test)).
+- **8.14.1: the SSO guard answers 503 during an outage** (user service unreachable or answering 5xx), like the auth middleware. Before, it answered 500 when there was no connection, and 401 for a 5xx, which made clients log users out ([details](docs/AUTH.md#the-sso-guard)).
 
 ### Upgrading from 8.12 to 8.13
 
@@ -456,6 +457,21 @@ Behavior changes worth checking:
 - The Telegram alert and the debug trace in error responses are read through `config()`, so they keep working after `php artisan config:cache`.
 
 Full notes: [v8.0.0 release](https://github.com/gem-partij/gemboot-lara/releases/tag/8.0.0).
+
+### Upgrading from 6.x to 7.x
+
+7.0 was released without upgrade notes; these were written later. Response envelope, middleware aliases, and config keys didn't change. What can break code that uses Gemboot's classes directly:
+
+- **Exceptions** now extend Symfony's `HttpException` (through `GembootHttpErrorException`). The HTTP status is `$e->getStatusCode()`. `$e->getCode()` used to be the status and is now `0`.
+  - Specific exceptions take `($message, $data = [], $previous = null)`, for example `new GembootNotFoundException('Order not found')`.
+  - `GembootHttpErrorException` takes the status first: `new GembootHttpErrorException(418, "I'm a teapot")`.
+- **New exceptions and aliases:** `GembootConflictException`, `GembootMethodNotAllowedException`, `GembootUnprocessableEntityException`, `GembootTooManyRequestsException`, `GembootServiceUnavailableException`, `GembootHttpErrorException`, `GembootValidationFailException`.
+- **`GembootValidationFailException`** keeps the validation errors as data (`getData()`), and they appear under `data.error` in the response.
+- **`HttpClient`** uses Guzzle instead of curl:
+  - `get()` and `post()` no longer take a third `$absolute_url` argument.
+  - The decoded body in `->data` is an array, not an object: `$response->data['user']`, not `$response->data->user`.
+- **TLS certificates are verified.** The curl client had certificate checks off. In 8.x, `GEMBOOT_HTTP_VERIFY` points Gemboot at your own CA bundle.
+- **8.14.1 also clarified `config/gemboot.php`:** `auth.base_api` is the setting Gemboot reads. `auth.base_url`, `sso.auth_service_url`, and `sso.validate_token_url` are not read at all.
 
 ## Working on this package
 

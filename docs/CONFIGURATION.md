@@ -39,6 +39,8 @@ php artisan vendor:publish --tag=gemboot
 | `sso.fallback.get_user_url` | `GEMBOOT_SSO_GET_USER_URL_FALLBACK` | none | Full URL of the second user service |
 | `sso.cache_ttl` | `GEMBOOT_SSO_CACHE_TTL` | `300` | Seconds to cache a user per token |
 
+`sso.auth_service_url` and `sso.validate_token_url` (`GEMBOOT_AUTH_SERVICE_URL`, `GEMBOOT_SSO_VALIDATE_TOKEN_URL`, and their `_FALLBACK` variants) exist in the file but aren't used. They'll be removed in 9.0.
+
 See [The SSO guard](AUTH.md#the-sso-guard).
 
 ## Authorization
