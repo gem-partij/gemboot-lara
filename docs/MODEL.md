@@ -44,6 +44,7 @@ Two Eloquent settings matter more than usual, because a Gemboot API exposes your
 
 - **`$fillable`** decides which fields a client can set through `store` and `update`. Keep it to the fields clients may really change.
 - **`$hidden`** keeps fields out of JSON responses. Put passwords, tokens, and other secrets there. Gemboot also refuses to search or sort by hidden fields.
+- **`$searchableFields` and `$sortableFields`** decide what clients may search and sort by. See [Limiting what clients can search and sort](#limiting-what-clients-can-search-and-sort).
 
 ## Searching from code
 
@@ -138,6 +139,44 @@ class Product extends GembootModel
 ```
 
 We also recommend declaring return types on relations (`: BelongsTo`). Then Gemboot can tell a relation from any other public method.
+
+## Limiting what clients can search and sort
+
+Without any list, clients can search and sort by every column that isn't in `$hidden`. That's convenient, but it also means a new column is searchable the moment you add it, and a search on a large unindexed text column can slow down the whole table.
+
+List what clients may use instead:
+
+```php
+class Product extends GembootModel
+{
+    protected $searchableFields = ['name', 'sku', 'created_at', 'category.name'];
+    protected $sortableFields   = ['name', 'price', 'created_at'];
+}
+```
+
+Now:
+
+| Request | Answer |
+|---|---|
+| `?search=kopi&search_field=name` | searches `name` |
+| `?search=drinks&search_field=category.name` | searches the related category's name |
+| `?search=kopi&search_field=description` | `400 Bad Request`: not listed |
+| `?search=kopi` (no field) | searches only the listed columns of the table itself: `name` and `sku` here |
+| `?order=price` | sorts by price |
+| `?order=stock` | `400 Bad Request`: not listed |
+
+Details:
+
+- **Relations** are listed as `relation.column`, and only that exact column of that relation is allowed. `category.name` doesn't allow `category.secret_note`.
+- **Search without a field** skips the primary key and the date columns, as before, even when they're listed. If nothing is left to search, it finds nothing instead of everything.
+- **Date search** (`?search=2026-10&search_field=created_at`) needs the date column in the list.
+- **`filter[...]`** ([standard parameters](ROUTES.md#standard-parameter-names-opt-in)) follows `$searchableFields`, and **`sort`** follows `$sortableFields`.
+- **Your own default sort** (`$orderBy` on a controller or service) isn't limited. Only what the client asks for is.
+- `$hidden` still applies on top of the lists: a hidden column stays unsearchable even if you list it.
+
+The two lists are independent. You can set only one of them.
+
+Both lists are optional in 8.x. **9.0 will require them** on models exposed through the API, so adding them now makes that upgrade a no-op for your app.
 
 ## Composite primary keys
 

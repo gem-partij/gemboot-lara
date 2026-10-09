@@ -141,6 +141,7 @@ All return `400 Bad Request`:
 
 - `search_field` names a relation that doesn't exist or isn't allowed
 - `search_field` or `order` names a hidden column (password, tokens, ...)
+- `search_field` or `order` names a field the model doesn't list in `$searchableFields` or `$sortableFields` ([details](MODEL.md#limiting-what-clients-can-search-and-sort))
 - `atoz` is anything other than `asc` or `desc`
 - `order` or `sort` names a column the table doesn't have
 - a `filter[...]` value is an array instead of a single value

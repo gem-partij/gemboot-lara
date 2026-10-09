@@ -355,6 +355,10 @@ Only the latest major version gets new features.
 | 7.x | ^11, ^12 | ^8.2 |
 | **8.x (current)** | **^12, ^13** | **^8.3** |
 
+### Upgrading from 8.12 to 8.13
+
+- **New, opt-in: search and sort allowlists on models.** `protected $searchableFields = ['name', 'category.name'];` and `protected $sortableFields = ['name', 'created_at'];` limit what clients may search and sort by; anything else gets a 400. Without the lists nothing changes. 9.0 will require them, so adding them now prepares that upgrade ([details](docs/MODEL.md#limiting-what-clients-can-search-and-sort)).
+
 ### Upgrading from 8.11 to 8.12
 
 - **New, opt-in: a grace period for short auth outages.** With `GEMBOOT_AUTH_OUTAGE_GRACE=60`, users keep working during a short outage, with the last good answer for their token ([details](docs/AUTH.md#short-outages-keep-users-working)).

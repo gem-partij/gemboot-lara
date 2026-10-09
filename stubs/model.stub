@@ -20,6 +20,11 @@ class {{ class }} extends GembootModel
     // protected $fillable = [
     // ];
 
+    // Fields clients may search and sort by (?search_field=, ?order=).
+    // Without these lists, every column that isn't hidden is allowed.
+    // protected $searchableFields = [];
+    // protected $sortableFields = [];
+
     /**==========
      * APPENDS
     **/

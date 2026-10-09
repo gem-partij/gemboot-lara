@@ -521,13 +521,14 @@ class CoreService implements CoreServiceContract
     }
 
     /**
-     * Columns a client may sort by: the model's table columns, plain or as
-     * "table.column".
+     * Columns a client may sort by, plain or as "table.column": the model's
+     * $sortableFields when it sets them, otherwise every column of its table.
      */
     protected function sortableColumns($model): array
     {
         $instance = $model instanceof Eloquent ? $model : (method_exists($model, 'getModel') ? $model->getModel() : $this->model);
-        $columns = $instance->getConnection()->getSchemaBuilder()->getColumnListing($instance->getTable());
+        $columns = method_exists($instance, 'getSortableFields') ? $instance->getSortableFields() : null;
+        $columns ??= $instance->getConnection()->getSchemaBuilder()->getColumnListing($instance->getTable());
 
         return array_merge($columns, array_map(fn ($c) => $instance->getTable() . '.' . $c, $columns));
     }

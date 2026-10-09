@@ -23,6 +23,32 @@ trait MainModelAbilities
         return $this->getConnection()->getSchemaBuilder()->getColumnListing($this->getTable());
     }
 
+    /**
+     * Fields clients may search ("name", "author.name"), or null when the model
+     * sets no list and every column that isn't hidden may be searched.
+     *
+     * Set it on the model: protected $searchableFields = ['name', 'author.name'];
+     */
+    public function getSearchableFields(): ?array
+    {
+        return property_exists($this, 'searchableFields') && is_array($this->searchableFields)
+            ? array_values($this->searchableFields)
+            : null;
+    }
+
+    /**
+     * Columns clients may sort by, or null when the model sets no list and every
+     * column of the table may be used.
+     *
+     * Set it on the model: protected $sortableFields = ['name', 'created_at'];
+     */
+    public function getSortableFields(): ?array
+    {
+        return property_exists($this, 'sortableFields') && is_array($this->sortableFields)
+            ? array_values($this->sortableFields)
+            : null;
+    }
+
 
     /**
      * =========================
@@ -50,6 +76,7 @@ trait MainModelAbilities
 
         if (!empty($field)) {
             if (in_array($field, $arr_date_fields)) {
+                $this->assertSearchableColumn($field);
                 return $this->getQueryDateSearch($query, $string, $field);
             }
 
@@ -73,7 +100,11 @@ trait MainModelAbilities
         } else {
             $primary = $this->getKeyName();
             // Hidden columns (password, tokens, ...) are never searched.
-            $cols = array_diff($this->getTableColumns(), $this->getHidden());
+            $cols = $this->columnsForSearchWithoutField();
+            if ($cols === []) {
+                // Nothing may be searched: find nothing rather than everything.
+                return $query->whereRaw('0 = 1');
+            }
 
             return $query->where(function (Builder $q) use ($mode, $primary, $cols, $string_like, $arr_date_fields, $operator) {
                 if ($mode == 'or') {
@@ -109,6 +140,7 @@ trait MainModelAbilities
 
         if (!empty($field)) {
             if (in_array($field, $arr_date_fields)) {
+                $this->assertSearchableColumn($field);
                 return $this->getQueryDateSearch($query, $string, $field);
             }
 
@@ -132,7 +164,11 @@ trait MainModelAbilities
         } else {
             $primary = $this->getKeyName();
             // Hidden columns (password, tokens, ...) are never searched.
-            $cols = array_diff($this->getTableColumns(), $this->getHidden());
+            $cols = $this->columnsForSearchWithoutField();
+            if ($cols === []) {
+                // Nothing may be searched: find nothing rather than everything.
+                return $query->whereRaw('0 = 1');
+            }
 
             return $query->where(function (Builder $q) use ($mode, $primary, $cols, $string, $arr_date_fields, $operator) {
                 if ($mode == 'or') {
@@ -313,6 +349,45 @@ trait MainModelAbilities
         if (in_array($column, $this->getHidden(), true)) {
             throw new BadRequestException('Invalid search field.');
         }
+
+        $allowed = $this->getSearchableFields();
+        if ($allowed !== null && !in_array($column, $allowed, true)) {
+            throw new BadRequestException('Invalid search field.');
+        }
+    }
+
+    /**
+     * With $searchableFields set, "relation.column" must be listed exactly.
+     *
+     * @throws BadRequestException
+     */
+    protected function assertSearchableRelationField($relation_name, $col_name)
+    {
+        $allowed = $this->getSearchableFields();
+        if ($allowed !== null && !in_array($relation_name . '.' . $col_name, $allowed, true)) {
+            throw new BadRequestException('Invalid search field.');
+        }
+    }
+
+    /**
+     * Columns a search without search_field covers: the table's columns that
+     * aren't hidden, narrowed to $searchableFields when the model sets it.
+     * Empty when the list leaves nothing the scopes would search (they always
+     * skip the primary key and the date columns).
+     */
+    protected function columnsForSearchWithoutField(): array
+    {
+        $cols = array_diff($this->getTableColumns(), $this->getHidden());
+
+        $allowed = $this->getSearchableFields();
+        if ($allowed === null) {
+            return $cols;
+        }
+
+        $cols = array_values(array_intersect($cols, $allowed));
+        $searched = array_diff($cols, [$this->getKeyName(), 'created_at', 'updated_at', 'deleted_at']);
+
+        return $searched === [] ? [] : $cols;
     }
 
     /**
@@ -385,6 +460,7 @@ trait MainModelAbilities
 
     protected function getQueryWhereHas(Builder &$query, $relation_name, $col_name, $operator, $string_search)
     {
+        $this->assertSearchableRelationField($relation_name, $col_name);
         $this->assertSearchableRelation($relation_name);
 
         return $query->whereHas($relation_name, function (Builder $q) use ($col_name, $operator, $string_search) {
@@ -397,6 +473,7 @@ trait MainModelAbilities
 
     protected function getQueryOrWhereHas(Builder &$query, $relation_name, $col_name, $operator, $string_search)
     {
+        $this->assertSearchableRelationField($relation_name, $col_name);
         $this->assertSearchableRelation($relation_name);
 
         return $query->orWhereHas($relation_name, function (Builder $q) use ($col_name, $operator, $string_search) {
