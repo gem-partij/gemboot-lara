@@ -4,7 +4,9 @@ namespace Gemboot\Libraries;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Gemboot\Events\AuthServiceUnavailable;
 use Gemboot\Libraries\HttpClient;
+use Gemboot\Support\RequestId;
 use Gemboot\Support\FailedAuthLimiter;
 use Gemboot\Support\TokenFormat;
 use Gemboot\Traits\GembootRequest;
@@ -97,11 +99,44 @@ class AuthLibrary
     }
 
     /**
+     * trackResponse() for an answer from the network, plus the
+     * AuthServiceUnavailable event when there was none.
+     */
+    private function track(string $endpoint, $response)
+    {
+        $this->trackResponse($response);
+
+        if ($this->isAuthServiceUnavailable()) {
+            $this->reportUnavailable($endpoint, false);
+        }
+
+        return $response;
+    }
+
+    private function reportUnavailable(string $endpoint, bool $servedFromLastGoodAnswer): void
+    {
+        event(new AuthServiceUnavailable($endpoint, (int) $this->lastHttpCode, $servedFromLastGoodAnswer, RequestId::current()));
+    }
+
+    /**
+     * Seconds a token's last good answer stays usable during an outage, after
+     * it would normally expire (gemboot.auth.outage_grace). 0 = off.
+     */
+    private function outageGrace(): int
+    {
+        return max(0, (int) config('gemboot.auth.outage_grace', 0));
+    }
+
+    /**
      * GET an auth service endpoint, optionally cached per token.
      *
      * Caching is off unless gemboot.auth.cache_ttl is above 0. Only definite answers
      * (200 and 4xx) are cached, never outages. A revoked token keeps working until
      * its entries expire; logout() invalidates them for this token.
+     *
+     * With gemboot.auth.outage_grace above 0, the last 200 answer is also kept for
+     * cache_ttl + outage_grace seconds and answers in its place while the auth
+     * service is unavailable. Rejections (4xx) are never reused.
      */
     protected function authGet(string $endpoint, array $query, $token)
     {
@@ -110,12 +145,13 @@ class AuthLibrary
         }
 
         $ttl = (int) config('gemboot.auth.cache_ttl', 0);
-        if ($ttl <= 0 || empty($token)) {
-            return $this->trackResponse($this->httpClient->setToken($token)->get($endpoint, $query));
+        $grace = $this->outageGrace();
+        if (($ttl <= 0 && $grace <= 0) || empty($token)) {
+            return $this->track($endpoint, $this->httpClient->setToken($token)->get($endpoint, $query));
         }
 
         $key = $this->authCacheKey($token, $endpoint, $query);
-        $cached = Cache::get($key);
+        $cached = $ttl > 0 ? Cache::get($key) : null;
         if (is_array($cached) && isset($cached['code'])) {
             return $this->trackResponse((object) [
                 'info' => (object) ['http_code' => $cached['code']],
@@ -124,8 +160,26 @@ class AuthLibrary
         }
 
         $response = $this->trackResponse($this->httpClient->setToken($token)->get($endpoint, $query));
-        if ($this->lastHttpCode === 200 || ($this->lastHttpCode >= 400 && $this->lastHttpCode < 500)) {
+
+        if ($this->isAuthServiceUnavailable()) {
+            $lastGood = $grace > 0 ? Cache::get($key . ':last_good') : null;
+            $this->reportUnavailable($endpoint, is_array($lastGood));
+
+            if (is_array($lastGood)) {
+                return $this->trackResponse((object) [
+                    'info' => (object) ['http_code' => 200],
+                    'data' => $lastGood['data'] ?? null,
+                ]);
+            }
+
+            return $response;
+        }
+
+        if ($ttl > 0 && ($this->lastHttpCode === 200 || ($this->lastHttpCode >= 400 && $this->lastHttpCode < 500))) {
             Cache::put($key, ['code' => $this->lastHttpCode, 'data' => $response->data ?? null], $ttl);
+        }
+        if ($grace > 0 && $this->lastHttpCode === 200) {
+            Cache::put($key . ':last_good', ['data' => $response->data ?? null], max(0, $ttl) + $grace);
         }
 
         return $response;
@@ -141,7 +195,7 @@ class AuthLibrary
 
     protected function forgetCachedAuth($token)
     {
-        if ((int) config('gemboot.auth.cache_ttl', 0) <= 0 || empty($token)) {
+        if (((int) config('gemboot.auth.cache_ttl', 0) <= 0 && $this->outageGrace() <= 0) || empty($token)) {
             return;
         }
 
@@ -152,8 +206,7 @@ class AuthLibrary
 
 
     /**
-     * Helper Safe Response Check
-     * Mengambil HTTP Code dengan aman dari object response
+     * Whether a result object is a 200 answer, safe for missing fields.
      */
     protected function isSuccess($response)
     {
@@ -166,8 +219,7 @@ class AuthLibrary
     }
 
     /**
-     * Helper Get Data Safe
-     * Mengambil data payload dengan aman
+     * The payload of a result object, without the API's "data" wrapper.
      */
     protected function getData($response)
     {
@@ -199,7 +251,7 @@ class AuthLibrary
             return $response_json ? FailedAuthLimiter::response() : false;
         }
 
-        $response = $this->trackResponse($this->httpClient->post("login", [
+        $response = $this->track('login', $this->httpClient->post("login", [
             'npp' => $npp,
             'password' => $password,
             'hwid' => ($request && $request->has('hwid')) ? $request->hwid : null,
@@ -231,7 +283,7 @@ class AuthLibrary
 
         if ($response_json) {
             $response = $this->malformedTokenResponse($token)
-                ?? $this->trackResponse($this->httpClient->setToken($token)->get("me"));
+                ?? $this->track('me', $this->httpClient->setToken($token)->get("me"));
             return $this->buildJsonResponse($response);
         }
 
@@ -254,7 +306,7 @@ class AuthLibrary
 
         if ($response_json) {
             $response = $this->malformedTokenResponse($token)
-                ?? $this->trackResponse($this->httpClient->setToken($token)->get("validate-token"));
+                ?? $this->track('validate-token', $this->httpClient->setToken($token)->get("validate-token"));
             return $this->buildJsonResponse($response);
         }
 
@@ -291,7 +343,7 @@ class AuthLibrary
         $token = $this->getRequestToken($request);
 
         if ($response_json) {
-            $response = $this->malformedTokenResponse($token) ?? $this->trackResponse($this->httpClient->setToken($token)->get("has-role", [
+            $response = $this->malformedTokenResponse($token) ?? $this->track('has-role', $this->httpClient->setToken($token)->get("has-role", [
                 'role_name' => $role_name,
             ]));
             return $this->buildJsonResponse($response);
@@ -315,7 +367,7 @@ class AuthLibrary
         $token = $this->getRequestToken($request);
 
         if ($response_json) {
-            $response = $this->malformedTokenResponse($token) ?? $this->trackResponse($this->httpClient->setToken($token)->get("has-permission-to", [
+            $response = $this->malformedTokenResponse($token) ?? $this->track('has-permission-to', $this->httpClient->setToken($token)->get("has-permission-to", [
                 'permission_name' => $permission_name,
             ]));
             return $this->buildJsonResponse($response);
@@ -338,7 +390,7 @@ class AuthLibrary
 
         $token = $this->getRequestToken($request);
         $response = $this->malformedTokenResponse($token)
-            ?? $this->trackResponse($this->httpClient->setToken($token)->post("logout"));
+            ?? $this->track('logout', $this->httpClient->setToken($token)->post("logout"));
         $this->forgetCachedAuth($token);
 
         if ($response_json) {

@@ -355,6 +355,11 @@ Only the latest major version gets new features.
 | 7.x | ^11, ^12 | ^8.2 |
 | **8.x (current)** | **^12, ^13** | **^8.3** |
 
+### Upgrading from 8.11 to 8.12
+
+- **New, opt-in: a grace period for short auth outages.** With `GEMBOOT_AUTH_OUTAGE_GRACE=60`, users keep working during a short outage, with the last good answer for their token ([details](docs/AUTH.md#short-outages-keep-users-working)).
+- **New: events for alerts and metrics.** `Gemboot\Events\AuthServiceUnavailable` and `Gemboot\Events\TokenRejected` ([details](docs/AUTH.md#events-for-alerts-and-metrics)).
+
 ### Upgrading from 8.10 to 8.11
 
 - **New, opt-in: permissions as Laravel abilities.** With `GEMBOOT_PERMISSIONS_AS_ABILITIES=true` and the `gemboot` guard, `$this->authorize('report.read')`, `@can`, and `->can('report.read')` on routes check your auth service's permissions ([details](docs/AUTH.md#laravels-can-with-your-permissions)).

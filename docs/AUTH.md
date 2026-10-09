@@ -274,6 +274,58 @@ Now the same token is checked against the auth service at most once a minute per
 
 Leave it at `0` (the default) if tokens must stop working the moment they're revoked.
 
+## Short outages: keep users working
+
+When the auth service can't be reached, or answers with a 5xx error, every protected request answers 503. For short outages, such as a restart or a deploy, you can let users who were just working keep working:
+
+```dotenv
+GEMBOOT_AUTH_OUTAGE_GRACE=60
+```
+
+Now, during an outage, Gemboot answers with the last good answer the auth service gave for that token, if that answer is recent enough. How recent:
+
+| `GEMBOOT_AUTH_CACHE_TTL` | The last good answer is used if it's at most ... old |
+|---|---|
+| `0` | 60 seconds (the grace period) |
+| `30` | 90 seconds (30 seconds of cache, then 60 seconds of grace) |
+
+This covers `token-validated`, `role:`, `permission:`, `GembootPermission`, and the `gemboot` guard. Only successful answers are reused. A token the auth service rejected stays rejected, and a token nobody used before the outage still gets a 503. `AuthLibrary::logout()` clears the saved answers for that token.
+
+The trade-off: a token revoked at the auth service shortly before the outage keeps working until its last answer is too old. Leave it at `0` (the default) if that's not acceptable.
+
+Every outage still fires the `AuthServiceUnavailable` event (below), so your alerts work even while users keep working.
+
+## Events for alerts and metrics
+
+Gemboot fires two Laravel events. Listen to them to send alerts or count failures, without changing Gemboot.
+
+| Event | Fired when | Properties |
+|---|---|---|
+| `Gemboot\Events\AuthServiceUnavailable` | A call to the auth service (or the SSO guard's user service) gets no connection or a 5xx answer | `endpoint` (`me`, `has-role`, `user/me`, ...), `status` (`0` = no connection), `servedFromLastGoodAnswer`, `requestId` |
+| `Gemboot\Events\TokenRejected` | A token is refused, by the format check or by the auth service | `reason` (`malformed` or `rejected`), `source` (`token-validated`, `token-validated:client`, `gemboot-guard`, `sso-guard`), `ip`, `requestId` |
+
+The token itself is never part of an event. Requests without a token fire nothing. `requestId` is filled when you use [request IDs](REQUEST_IDS.md), so an alert points to the exact request in your logs.
+
+For example, a Slack alert when the auth service is down, at most once every five minutes:
+
+```php
+use Gemboot\Events\AuthServiceUnavailable;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
+
+// AppServiceProvider::boot()
+Event::listen(function (AuthServiceUnavailable $event) {
+    if (Cache::add('auth-down-alerted', true, now()->addMinutes(5))) {
+        Log::channel('slack')->critical('Auth service unavailable', [
+            'endpoint' => $event->endpoint,
+            'status' => $event->status,
+            'request_id' => $event->requestId,
+        ]);
+    }
+});
+```
+
 ## Protection against token floods and password guessing
 
 Every request with a token makes your API ask the auth service. Without limits, someone sending thousands of fake tokens would make every Gemboot service flood your auth service. Gemboot protects it in two ways, for the middleware, the SSO guard, and `AuthLibrary`.

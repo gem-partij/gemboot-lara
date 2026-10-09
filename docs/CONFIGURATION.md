@@ -16,6 +16,7 @@ php artisan vendor:publish --tag=gemboot
 | `auth.cache_ttl` | `GEMBOOT_AUTH_CACHE_TTL` | `0` (off) | Seconds to cache the auth service's answers per token ([details](AUTH.md#caching-auth-answers)) |
 | `auth.failed_attempts.max` | `GEMBOOT_AUTH_MAX_FAILED_ATTEMPTS` | `60` | Failed authentication attempts per client IP before answering 429; `0` turns the limit off ([details](AUTH.md#protection-against-token-floods-and-password-guessing)) |
 | `auth.failed_attempts.decay_seconds` | `GEMBOOT_AUTH_FAILED_ATTEMPTS_DECAY` | `60` | Window for the limit above |
+| `auth.outage_grace` | `GEMBOOT_AUTH_OUTAGE_GRACE` | `0` (off) | During an outage, keep using a token's last good answer for this many seconds after it would normally expire ([details](AUTH.md#short-outages-keep-users-working)) |
 | `auth.max_token_length` | `GEMBOOT_AUTH_MAX_TOKEN_LENGTH` | `8192` | Longer `Authorization` values are rejected without calling the auth service |
 
 `auth.base_url` and `auth.fallback.*` exist in the file but aren't used. They'll be removed in 9.0.
