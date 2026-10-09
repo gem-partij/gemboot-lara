@@ -82,6 +82,18 @@ If validation fails, the callback doesn't run and the client gets:
 
 A third argument takes custom validation messages, as in Laravel's `Validator::make()`.
 
+Laravel's own validation inside the callback gives the same answer, so you can also write:
+
+```php
+return $this->responseSuccessOrException(function () use ($request) {
+    $data = $request->validate(['name' => 'required', 'email' => 'required|email']);
+
+    return User::create($data);
+});
+```
+
+A failed `$request->validate()` or `Validator::validate()` answers 400 with the errors under `data.error`, exactly as above. Before 8.11.1, it became a 500.
+
 ### Two variants
 
 - `responseSuccessOrExceptionUsingTransaction($callback, $rules, $messages)` runs the callback inside a database transaction. It commits on success and rolls back if anything throws. Use it when the callback writes to more than one table.
