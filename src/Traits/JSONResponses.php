@@ -7,6 +7,7 @@ use Throwable;
 use Illuminate\Http\Response;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Validation\ValidationException;
 use Gemboot\Exceptions\HttpErrorException;
 use Gemboot\Exceptions\BadRequestException;
 use Gemboot\Exceptions\UnauthorizedException;
@@ -368,6 +369,12 @@ trait JSONResponses
     protected function handleException(Throwable $e)
     {
         // 1. Handle Validation Exception (Specific Case)
+        // Laravel's own validation ($request->validate(), Validator::validate())
+        // answers like Gemboot's: 400 with the errors in data.error.
+        if ($e instanceof ValidationException) {
+            return $this->handleException(new ValidationFailException($e->errors(), 'Validation Failed', 400, $e));
+        }
+
         if ($e instanceof ValidationFailException) {
             // The validation errors carried by the exception.
             $errors = $e->getData();
