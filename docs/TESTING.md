@@ -155,6 +155,8 @@ $this->getJson('/api/profile', ['Authorization' => 'Bearer x'])
 
 Then `auth()->user()->roles` and `->permissions` hold the roles and permissions you passed. Other HTTP calls of your app are not affected.
 
+With a fallback user service configured (`GEMBOOT_SSO_GET_USER_URL_FALLBACK` or `GEMBOOT_USER_SERVICE_URL_FALLBACK`), `fakeOutage()` makes the guard try both services, so `assertCalled('user/me', 2)` is the expected count. The guard then answers `503`.
+
 ## The `gemboot` guard
 
 The fake answers the [`gemboot` guard](AUTH.md#one-user-everywhere-the-gemboot-guard) too, because the guard asks the same `me` endpoint:

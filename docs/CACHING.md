@@ -105,6 +105,34 @@ The resource controller has the same `cacheScope()` method for its own cache.
 
 Only share when you're sure the query doesn't depend on the user, including code in `getQueryListAll()` overrides and in the queries you pass to `listAll()`.
 
+## Laravel 13: the cache allow-list
+
+Laravel 13 can limit which classes come back out of the cache, with `serializable_classes` in `config/cache.php`. New Laravel 13 projects may set it to `false` (no classes at all), and older projects don't have the key, which means no limit.
+
+The service cache and the controller cache store **objects**: your models and the paginator around them. With the allow-list on, they come back broken (`__PHP_Incomplete_Class`), and the request fails with an error. List the classes they need:
+
+```php
+// config/cache.php
+'serializable_classes' => [
+    // Every model you cache, and the models of the relations it loads ($with).
+    App\Models\Product::class,
+    App\Models\Category::class,
+
+    // Always needed.
+    Illuminate\Database\Eloquent\Collection::class,
+
+    // The paginator of the paging mode you use.
+    Illuminate\Pagination\LengthAwarePaginator::class,  // 'paginate' (the default)
+    Illuminate\Pagination\Paginator::class,             // 'simple'
+    Illuminate\Pagination\CursorPaginator::class,       // 'cursor'
+    Illuminate\Pagination\Cursor::class,                // 'cursor'
+],
+```
+
+A quick check after changing the list: call a cached list twice. The second call comes from the cache and must answer the same.
+
+Gemboot's **auth** caches (`GEMBOOT_AUTH_CACHE_TTL`, the outage grace period, the SSO guard's user cache) only store plain arrays. The allow-list doesn't affect them.
+
 ## Next
 
 - [Configuration](CONFIGURATION.md)
