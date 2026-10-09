@@ -98,6 +98,43 @@ The command exits with code `1` when it finds a problem, so you can run it in a 
 php artisan gemboot:doctor --skip-network || exit 1
 ```
 
+## `gemboot:contract-test`
+
+```sh
+php artisan gemboot:contract-test [--url=] [--token=] [--role=] [--permission=] [--json]
+```
+
+Checks that an auth service answers the way Gemboot expects, endpoint by endpoint. `gemboot:doctor` only checks that the auth service is reachable. This command checks what it says. Run it before you point a service at a new auth service or a new API version, or give it to the auth team to run before they deploy.
+
+```sh
+php artisan gemboot:contract-test --url=https://auth.example.com/api/auth --role=staff --permission=report.read
+```
+
+Without `--token`, it asks for a token and hides what you type, so the token stays out of your shell history. The token is never printed. Leave the question empty to run only the checks that need no token.
+
+What it checks:
+
+| Check | Fails when | Because |
+|---|---|---|
+| `me` without a token, with an invalid token | the answer is 200 | Gemboot reads 200 as "valid", so anyone would get in |
+| the same, and `validate-token` with an invalid token | the answer is 5xx | Gemboot reads 5xx as an outage and answers 503 instead of 401 |
+| `me` with your token | not 200, or no user in the answer | `token-validated` would answer 401 |
+| `validate-token` with your token | not 200 | `token-validated:client` would reject it. The body may have any shape |
+| `has-role`, `has-permission-to` | not 200 with a boolean `has_role` / `has_permission_to` | `role:` and `permission:` would answer 403 for everyone |
+| a role and a permission nobody has | the answer is "yes" | `role:` and `permission:` would let every user in |
+| `--role`, `--permission` | the answer is "no" | the user should have them |
+
+A `data` wrapper around the answers is fine everywhere. Some things are only warnings, because Gemboot still works but behaves differently than its docs say:
+
+- `me` has no `id` (or `user.id`): with the [`gemboot` guard](AUTH.md#one-user-everywhere-the-gemboot-guard), `auth()->id()` is null.
+- `role:admin|editor` doesn't mean "either one".
+- `permission:a|b` lets in users with only one of the two. Gemboot's docs say "a|b" needs both.
+- `has_any_permission` is missing: `GembootPermission::hasPermissionTo([...])` with an array reads it.
+
+`login` and `logout` are not called. `logout` would end the session of the token you passed.
+
+The command exits with code `1` when a check fails. `--json` prints the results for scripts.
+
 ## `gemboot:permissions`
 
 ```sh
