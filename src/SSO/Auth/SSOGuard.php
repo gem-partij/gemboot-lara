@@ -4,6 +4,8 @@ namespace Gemboot\SSO\Auth;
 
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
+use Gemboot\Events\AuthServiceUnavailable;
+use Gemboot\Events\TokenRejected;
 use Gemboot\Exceptions\TooManyRequestsException;
 use Gemboot\Support\FailedAuthLimiter;
 use Gemboot\Support\RequestId;
@@ -95,7 +97,7 @@ class SSOGuard implements Guard
         }
 
         if (!TokenFormat::isPlausible('Bearer ' . $token)) {
-            return $this->reject($token);
+            return $this->reject($token, TokenRejected::MALFORMED);
         }
 
         $cacheKey = 'sso_token_' . sha1($token);
@@ -200,10 +202,11 @@ class SSOGuard implements Guard
      * Remember a rejected token for this request and count it toward the
      * per-IP limit of failed attempts.
      */
-    private function reject(string $token): ?Authenticatable
+    private function reject(string $token, string $reason = TokenRejected::REJECTED): ?Authenticatable
     {
         $this->rejectedToken = $token;
         FailedAuthLimiter::hit();
+        TokenRejected::dispatch($reason, 'sso-guard');
 
         return null;
     }
@@ -213,12 +216,23 @@ class SSOGuard implements Guard
      */
     private function requestUser(string $url, string $token)
     {
-        return Http::withToken($token)
-            ->withHeaders(RequestId::headers())
-            ->get($url, [
-                'showRoles' => 'true',
-                'showPermissions' => 'true',
-            ]);
+        try {
+            $response = Http::withToken($token)
+                ->withHeaders(RequestId::headers())
+                ->get($url, [
+                    'showRoles' => 'true',
+                    'showPermissions' => 'true',
+                ]);
+        } catch (ConnectionException $e) {
+            event(new AuthServiceUnavailable('user/me', 0, false, RequestId::current()));
+            throw $e;
+        }
+
+        if ($response->serverError()) {
+            event(new AuthServiceUnavailable('user/me', $response->status(), false, RequestId::current()));
+        }
+
+        return $response;
     }
 
     /**

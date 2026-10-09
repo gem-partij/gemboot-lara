@@ -16,6 +16,12 @@ return [
         // contain, are rejected (401) without calling the auth service.
         'max_token_length' => env('GEMBOOT_AUTH_MAX_TOKEN_LENGTH', 8192),
 
+        // Seconds a token's last good answer may still be used while the auth
+        // service is unreachable or failing, after it would normally expire (see
+        // cache_ttl). 0 = off: outages answer 503 right away. A token revoked at the
+        // auth service shortly before an outage keeps working for this long.
+        'outage_grace' => env('GEMBOOT_AUTH_OUTAGE_GRACE', 0),
+
         // Failed attempts (rejected or malformed tokens, failed logins) allowed per
         // client IP within decay_seconds; then 429 without calling the auth
         // service. Requests without a token don't count. max = 0 turns it off.

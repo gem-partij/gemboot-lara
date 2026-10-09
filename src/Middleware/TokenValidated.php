@@ -7,9 +7,11 @@ use Illuminate\Http\Response;
 use Gemboot\Traits\JSONResponses;
 use Gemboot\Auth\GembootGuard;
 use Gemboot\Auth\GembootUser;
+use Gemboot\Events\TokenRejected;
 use Gemboot\Libraries\AuthLibrary;
 use Gemboot\Support\FailedAuthLimiter;
 use Gemboot\Support\SecurityHeaders;
+use Gemboot\Support\TokenFormat;
 
 class TokenValidated
 {
@@ -45,6 +47,7 @@ class TokenValidated
             if (!$response) {
                 if ($hasToken && !$auth->isAuthServiceUnavailable()) {
                     FailedAuthLimiter::hit();
+                    $this->tokenRejected($request, 'token-validated:client');
                 }
                 $status = $auth->isAuthServiceUnavailable()
                     ? Response::HTTP_SERVICE_UNAVAILABLE
@@ -60,6 +63,7 @@ class TokenValidated
             if (!$response) {
                 if ($hasToken && !$auth->isAuthServiceUnavailable()) {
                     FailedAuthLimiter::hit();
+                    $this->tokenRejected($request, 'token-validated');
                 }
             if ($auth->isAuthServiceUnavailable()) {
                 // The auth service did not answer: not the user's fault, so no 401/403.
@@ -80,6 +84,15 @@ class TokenValidated
 
             return $next($request);
         }
+    }
+
+    private function tokenRejected($request, string $source): void
+    {
+        $reason = TokenFormat::isPlausible($request->header('Authorization'))
+            ? TokenRejected::REJECTED
+            : TokenRejected::MALFORMED;
+
+        TokenRejected::dispatch($reason, $source);
     }
 
     /**

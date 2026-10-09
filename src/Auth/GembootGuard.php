@@ -2,6 +2,7 @@
 
 namespace Gemboot\Auth;
 
+use Gemboot\Events\TokenRejected;
 use Gemboot\Exceptions\TooManyRequestsException;
 use Gemboot\Support\FailedAuthLimiter;
 use Gemboot\Support\TokenFormat;
@@ -80,13 +81,13 @@ class GembootGuard implements Guard
         }
 
         if (!TokenFormat::isPlausible('Bearer ' . $token)) {
-            return $this->reject($token);
+            return $this->reject($token, TokenRejected::MALFORMED);
         }
 
         // Throws ServiceUnavailableException (503) when the answer is unknown.
         $user = $this->verifier->verify($token);
         if ($user === null) {
-            return $this->reject($token);
+            return $this->reject($token, TokenRejected::REJECTED);
         }
 
         $this->user = $user;
@@ -149,10 +150,11 @@ class GembootGuard implements Guard
      * Remember a rejected token for this request and count it toward the
      * per-IP limit of failed attempts.
      */
-    private function reject(string $token): null
+    private function reject(string $token, string $reason): null
     {
         $this->rejectedToken = $token;
         FailedAuthLimiter::hit();
+        TokenRejected::dispatch($reason, 'gemboot-guard');
 
         return null;
     }
