@@ -404,6 +404,8 @@ The guard asks for the user's roles and permissions in the same call, and caches
 Auth::guard('api')->forgetCachedUser();
 ```
 
+**Outages:** when the user service can't be reached or answers with a 5xx error, the guard answers `503`, like the auth middleware, so clients don't log users out. Before 8.14.1 it answered 500 (no connection) or 401 (5xx).
+
 **Fallback service:** `GEMBOOT_USER_SERVICE_URL_FALLBACK` (or `GEMBOOT_SSO_GET_USER_URL_FALLBACK`) names a second user service. It is tried when the first can't be reached, and also when the first rejects the token. So a rejected token is sent to the fallback as well. A later major version will only use the fallback during outages.
 
 ## What your auth service must provide

@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
 use Gemboot\Events\AuthServiceUnavailable;
 use Gemboot\Events\TokenRejected;
+use Gemboot\Exceptions\ServiceUnavailableException;
 use Gemboot\Exceptions\TooManyRequestsException;
 use Gemboot\Support\FailedAuthLimiter;
 use Gemboot\Support\RequestId;
@@ -118,26 +119,27 @@ class SSOGuard implements Guard
             $fallbackGetUserUrl = config('gemboot.sso.fallback.user_service_url') . "/user/me";
         }
 
-        // Ask the user service for the user.
-        try {
-            $userResponse = $this->requestUser($getUserUrl, $token);
-        } catch (ConnectionException $e) {
-            // Primary unreachable: try the fallback instead of failing right away.
-            if (empty($fallbackGetUserUrl)) {
-                throw $e;
-            }
-            $userResponse = null;
-        }
+        // Ask the user service for the user. Null means it couldn't be reached.
+        $userResponse = $this->requestUserOrNull($getUserUrl, $token);
 
         if (!$userResponse || !$userResponse->ok()) {
-            if (empty($fallbackGetUserUrl)) {
-                return $userResponse && $userResponse->serverError() ? null : $this->reject($token);
+            // A definite "no" (4xx) from the primary; an outage is no answer at all.
+            $primaryRejected = $userResponse !== null && !$userResponse->serverError();
+
+            if (!empty($fallbackGetUserUrl)) {
+                $userResponse = $this->requestUserOrNull($fallbackGetUserUrl, $token);
             }
 
-            $userResponse = $this->requestUser($fallbackGetUserUrl, $token);
+            if (!$userResponse || !$userResponse->ok()) {
+                $unavailable = !$userResponse || $userResponse->serverError();
 
-            if (!$userResponse->ok()) {
-                return $userResponse->serverError() ? null : $this->reject($token);
+                // Nobody could tell whether the token is valid: answer 503, like the
+                // auth middleware, so clients don't log users out during an outage.
+                if ($unavailable && !$primaryRejected) {
+                    throw new ServiceUnavailableException('Auth service unavailable');
+                }
+
+                return $this->reject($token);
             }
         }
 
@@ -209,6 +211,18 @@ class SSOGuard implements Guard
         TokenRejected::dispatch($reason, 'sso-guard');
 
         return null;
+    }
+
+    /**
+     * requestUser(), with null instead of an exception when there's no connection.
+     */
+    private function requestUserOrNull(string $url, string $token)
+    {
+        try {
+            return $this->requestUser($url, $token);
+        } catch (ConnectionException) {
+            return null;
+        }
     }
 
     /**
