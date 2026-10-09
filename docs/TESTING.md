@@ -31,6 +31,28 @@ How it behaves:
 
 The fake is cleared automatically before the next test. While it's active, the [limit on failed attempts](AUTH.md#protection-against-token-floods-and-password-guessing) is off, so tests that check 401s many times never get a 429.
 
+### Keep tests away from the real auth service
+
+The fake only answers calls to the URLs Gemboot knows about. If your `.env` points `GEMBOOT_AUTH_BASE_API` or the SSO URLs at a real server, a typo or a missing setting in a test can still reach it. Two lines in `setUp()` rule that out:
+
+```php
+protected function setUp(): void
+{
+    parent::setUp();
+
+    // Hosts that don't exist, so nothing can reach the real auth service.
+    config([
+        'gemboot.auth.base_api' => 'http://auth.test/api/auth',
+        'gemboot.sso.get_user_url' => 'http://users.test/user/me',
+    ]);
+
+    // Any other HTTP call made with Laravel's Http client fails the test.
+    Http::preventStrayRequests();
+}
+```
+
+`GembootAuth::fake()` works together with `Http::preventStrayRequests()`: the calls it answers aren't stray.
+
 ## Common tests
 
 **Not logged in:**

@@ -65,10 +65,10 @@ class TokenValidated
                     FailedAuthLimiter::hit();
                     $this->tokenRejected($request, 'token-validated');
                 }
-            if ($auth->isAuthServiceUnavailable()) {
-                // The auth service did not answer: not the user's fault, so no 401/403.
-                return $this->responseHttpError(Response::HTTP_SERVICE_UNAVAILABLE, ['error' => 'Auth service unavailable'], null, 'Auth service unavailable');
-            }
+                if ($auth->isAuthServiceUnavailable()) {
+                    // The auth service did not answer: not the user's fault, so no 401/403.
+                    return $this->responseHttpError(Response::HTTP_SERVICE_UNAVAILABLE, ['error' => 'Auth service unavailable'], null, 'Auth service unavailable');
+                }
                 return $this->responseUnauthorized();
             }
 
